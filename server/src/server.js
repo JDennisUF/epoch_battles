@@ -6,7 +6,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
-const connectDB = require('./config/database');
+const { connectDB } = require('./config/database');
+const models = require('./models'); // Load models and associations
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/games');
 const userRoutes = require('./routes/users');

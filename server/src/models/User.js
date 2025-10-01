@@ -54,11 +54,7 @@ const User = sequelize.define('User', {
   },
   currentGameId: {
     type: DataTypes.UUID,
-    allowNull: true,
-    references: {
-      model: 'Games',
-      key: 'id'
-    }
+    allowNull: true
   }
 }, {
   tableName: 'users',

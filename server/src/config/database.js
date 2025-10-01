@@ -1,14 +1,16 @@
 const { Sequelize } = require('sequelize');
 
-const sequelize = new Sequelize(process.env.DATABASE_URL || process.env.SUPABASE_DB_URL, {
+// Use Session pooler (IPv4 compatible)
+const connectionString = 'postgresql://postgres.mclklzjokfzsclzqayzq:MnJVeronLlcf6OaL@aws-1-us-east-1.pooler.supabase.com:5432/postgres';
+
+const sequelize = new Sequelize(connectionString, {
   dialect: 'postgres',
-  protocol: 'postgres',
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
   dialectOptions: {
-    ssl: process.env.NODE_ENV === 'production' ? {
+    ssl: {
       require: true,
       rejectUnauthorized: false
-    } : false
+    }
   },
   pool: {
     max: 5,
