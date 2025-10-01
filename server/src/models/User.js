@@ -1,101 +1,115 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
+const { sequelize } = require('../config/database');
 
-const userSchema = new mongoose.Schema({
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   username: {
-    type: String,
-    required: [true, 'Username is required'],
+    type: DataTypes.STRING,
+    allowNull: false,
     unique: true,
-    trim: true,
-    minlength: [3, 'Username must be at least 3 characters'],
-    maxlength: [20, 'Username must be less than 20 characters'],
-    match: [/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores']
-  },
-  email: {
-    type: String,
-    required: [true, 'Email is required'],
-    unique: true,
-    lowercase: true,
-    trim: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please enter a valid email']
-  },
-  passwordHash: {
-    type: String,
-    required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters']
-  },
-  stats: {
-    gamesPlayed: {
-      type: Number,
-      default: 0
-    },
-    wins: {
-      type: Number,
-      default: 0
-    },
-    losses: {
-      type: Number,
-      default: 0
-    },
-    ranking: {
-      type: Number,
-      default: 1000
+    validate: {
+      len: [3, 20],
+      is: /^[a-zA-Z0-9_]+$/
     }
   },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+    validate: {
+      isEmail: true
+    }
+  },
+  passwordHash: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      len: [6, 255]
+    }
+  },
+  gamesPlayed: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  wins: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  losses: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  ranking: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1000
+  },
   isOnline: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
   currentGameId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Game',
-    default: null
+    type: DataTypes.UUID,
+    allowNull: true,
+    references: {
+      model: 'Games',
+      key: 'id'
+    }
   }
 }, {
-  timestamps: true
+  tableName: 'users',
+  timestamps: true,
+  indexes: [
+    {
+      fields: ['username']
+    },
+    {
+      fields: ['email']
+    },
+    {
+      fields: ['ranking']
+    }
+  ]
 });
 
-// Index for faster queries
-userSchema.index({ username: 1 });
-userSchema.index({ email: 1 });
-userSchema.index({ 'stats.ranking': -1 });
-
-// Pre-save hook to hash password
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('passwordHash')) return next();
-  
-  try {
+// Hash password before saving
+User.beforeCreate(async (user) => {
+  if (user.passwordHash) {
     const salt = await bcrypt.genSalt(12);
-    this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
-    next();
-  } catch (error) {
-    next(error);
+    user.passwordHash = await bcrypt.hash(user.passwordHash, salt);
   }
 });
 
-// Method to compare password
-userSchema.methods.comparePassword = async function(candidatePassword) {
+User.beforeUpdate(async (user) => {
+  if (user.changed('passwordHash')) {
+    const salt = await bcrypt.genSalt(12);
+    user.passwordHash = await bcrypt.hash(user.passwordHash, salt);
+  }
+});
+
+// Instance methods
+User.prototype.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.passwordHash);
 };
 
-// Method to get public profile
-userSchema.methods.getPublicProfile = function() {
+User.prototype.getPublicProfile = function() {
   return {
-    id: this._id,
+    id: this.id,
     username: this.username,
-    stats: this.stats,
+    stats: {
+      gamesPlayed: this.gamesPlayed,
+      wins: this.wins,
+      losses: this.losses,
+      ranking: this.ranking,
+      winRate: this.gamesPlayed > 0 ? ((this.wins / this.gamesPlayed) * 100).toFixed(1) : 0
+    },
     isOnline: this.isOnline,
     createdAt: this.createdAt
   };
 };
 
-// Virtual for win rate
-userSchema.virtual('stats.winRate').get(function() {
-  if (this.stats.gamesPlayed === 0) return 0;
-  return (this.stats.wins / this.stats.gamesPlayed * 100).toFixed(1);
-});
-
-// Ensure virtual fields are serialized
-userSchema.set('toJSON', { virtuals: true });
-
-module.exports = mongoose.model('User', userSchema);
+module.exports = User;

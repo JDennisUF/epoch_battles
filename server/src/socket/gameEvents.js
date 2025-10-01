@@ -7,7 +7,7 @@ const gameEvents = (socket, io) => {
     const { targetUserId } = data;
     
     try {
-      const targetUser = await User.findById(targetUserId);
+      const targetUser = await User.findByPk(targetUserId);
       if (!targetUser || !targetUser.isOnline) {
         socket.emit('invite_error', { message: 'User not found or offline' });
         return;
@@ -15,7 +15,7 @@ const gameEvents = (socket, io) => {
 
       const invitation = {
         from: {
-          id: socket.user._id,
+          id: socket.user.id,
           username: socket.user.username
         },
         timestamp: new Date()
@@ -36,7 +36,7 @@ const gameEvents = (socket, io) => {
     const { accepted, fromUserId } = data;
     
     try {
-      const fromUser = await User.findById(fromUserId);
+      const fromUser = await User.findByPk(fromUserId);
       if (!fromUser || !fromUser.isOnline) {
         socket.emit('response_error', { message: 'Inviter is no longer online' });
         return;
@@ -44,7 +44,7 @@ const gameEvents = (socket, io) => {
 
       if (accepted) {
         // Create new game
-        const game = new Game({
+        const game = await Game.create({
           players: [
             {
               userId: fromUserId,
@@ -52,29 +52,21 @@ const gameEvents = (socket, io) => {
               color: 'blue'
             },
             {
-              userId: socket.user._id,
+              userId: socket.user.id,
               username: socket.user.username,
               color: 'red'
             }
           ],
-          status: 'setup',
-          gameState: {
-            board: Array(10).fill(null).map(() => Array(10).fill(null)),
-            currentPlayer: 'blue',
-            turnNumber: 1,
-            phase: 'setup'
-          }
+          status: 'setup'
         });
 
-        await game.save();
-
         // Update users' current game
-        await User.findByIdAndUpdate(fromUserId, { currentGameId: game._id });
-        await User.findByIdAndUpdate(socket.user._id, { currentGameId: game._id });
+        await User.update({ currentGameId: game.id }, { where: { id: fromUserId } });
+        await User.update({ currentGameId: game.id }, { where: { id: socket.user.id } });
 
         // Notify both players
         const gameData = {
-          gameId: game._id,
+          gameId: game.id,
           players: game.players,
           gameState: game.gameState
         };
@@ -84,8 +76,8 @@ const gameEvents = (socket, io) => {
 
         // Join both players to game room
         io.sockets.sockets.forEach((s) => {
-          if (s.user && (s.user._id.toString() === fromUserId || s.user._id.toString() === socket.user._id.toString())) {
-            s.join(`game_${game._id}`);
+          if (s.user && (s.user.id === fromUserId || s.user.id === socket.user.id)) {
+            s.join(`game_${game.id}`);
           }
         });
 
@@ -107,14 +99,14 @@ const gameEvents = (socket, io) => {
     const { gameId } = data;
     
     try {
-      const game = await Game.findById(gameId);
+      const game = await Game.findByPk(gameId);
       if (!game) {
         socket.emit('join_error', { message: 'Game not found' });
         return;
       }
 
       // Check if user is a player in this game
-      const isPlayer = game.players.some(p => p.userId.toString() === socket.user._id.toString());
+      const isPlayer = game.players.some(p => p.userId === socket.user.id);
       if (!isPlayer) {
         socket.emit('join_error', { message: 'You are not a player in this game' });
         return;
@@ -122,7 +114,7 @@ const gameEvents = (socket, io) => {
 
       socket.join(`game_${gameId}`);
       socket.emit('game_joined', {
-        gameId: game._id,
+        gameId: game.id,
         players: game.players,
         gameState: game.gameState
       });

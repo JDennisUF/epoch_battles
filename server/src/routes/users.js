@@ -7,12 +7,14 @@ const router = express.Router();
 // Get online users for lobby
 router.get('/online', auth, async (req, res) => {
   try {
-    const onlineUsers = await User.find({ 
-      isOnline: true,
-      _id: { $ne: req.user._id } // Exclude current user
-    })
-    .select('username stats isOnline')
-    .sort({ 'stats.ranking': -1 });
+    const onlineUsers = await User.findAll({
+      where: { 
+        isOnline: true,
+        id: { [require('sequelize').Op.ne]: req.user.id }
+      },
+      attributes: ['id', 'username', 'gamesPlayed', 'wins', 'losses', 'ranking', 'isOnline'],
+      order: [['ranking', 'DESC']]
+    });
 
     res.json({ users: onlineUsers });
   } catch (error) {
@@ -28,16 +30,20 @@ router.get('/leaderboard/:page?', async (req, res) => {
     const limit = 20;
     const skip = (page - 1) * limit;
 
-    const users = await User.find({
-      'stats.gamesPlayed': { $gte: 5 } // Only show users with at least 5 games
-    })
-    .select('username stats')
-    .sort({ 'stats.ranking': -1 })
-    .skip(skip)
-    .limit(limit);
+    const users = await User.findAll({
+      where: {
+        gamesPlayed: { [require('sequelize').Op.gte]: 5 }
+      },
+      attributes: ['id', 'username', 'gamesPlayed', 'wins', 'losses', 'ranking'],
+      order: [['ranking', 'DESC']],
+      offset: skip,
+      limit: limit
+    });
 
-    const totalUsers = await User.countDocuments({
-      'stats.gamesPlayed': { $gte: 5 }
+    const totalUsers = await User.count({
+      where: {
+        gamesPlayed: { [require('sequelize').Op.gte]: 5 }
+      }
     });
 
     res.json({
@@ -59,8 +65,10 @@ router.get('/leaderboard/:page?', async (req, res) => {
 router.get('/:username', async (req, res) => {
   try {
     const { username } = req.params;
-    const user = await User.findOne({ username })
-      .select('username stats createdAt');
+    const user = await User.findOne({ 
+      where: { username },
+      attributes: ['id', 'username', 'gamesPlayed', 'wins', 'losses', 'ranking', 'createdAt']
+    });
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -82,14 +90,16 @@ router.get('/search/:query', auth, async (req, res) => {
       return res.status(400).json({ message: 'Search query must be at least 2 characters' });
     }
 
-    const users = await User.find({
-      username: { $regex: query, $options: 'i' },
-      _id: { $ne: req.user._id }, // Exclude current user
-      isOnline: true
-    })
-    .select('username stats isOnline')
-    .limit(10)
-    .sort('username');
+    const users = await User.findAll({
+      where: {
+        username: { [require('sequelize').Op.iLike]: `%${query}%` },
+        id: { [require('sequelize').Op.ne]: req.user.id },
+        isOnline: true
+      },
+      attributes: ['id', 'username', 'gamesPlayed', 'wins', 'losses', 'ranking', 'isOnline'],
+      limit: 10,
+      order: ['username']
+    });
 
     res.json({ users });
   } catch (error) {

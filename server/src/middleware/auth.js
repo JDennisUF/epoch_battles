@@ -10,7 +10,9 @@ const auth = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId).select('-passwordHash');
+    const user = await User.findByPk(decoded.userId, {
+      attributes: { exclude: ['passwordHash'] }
+    });
     
     if (!user) {
       return res.status(401).json({ message: 'Invalid token, user not found' });
@@ -47,7 +49,9 @@ const socketAuth = async (socket, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.userId).select('-passwordHash');
+    const user = await User.findByPk(decoded.userId, {
+      attributes: { exclude: ['passwordHash'] }
+    });
     
     if (!user) {
       return next(new Error('Invalid token, user not found'));

@@ -10,10 +10,10 @@ const socketHandler = (io) => {
     console.log(`🔌 User ${socket.user.username} connected`);
 
     // Update user online status
-    await User.findByIdAndUpdate(socket.user._id, { isOnline: true });
+    await User.update({ isOnline: true }, { where: { id: socket.user.id } });
 
     // Join user to their personal room
-    socket.join(`user_${socket.user._id}`);
+    socket.join(`user_${socket.user.id}`);
 
     // Handle user joining lobby
     socket.on('join_lobby', () => {
@@ -22,7 +22,7 @@ const socketHandler = (io) => {
       
       // Broadcast to lobby that user is online
       socket.to('lobby').emit('user_online', {
-        userId: socket.user._id,
+        userId: socket.user.id,
         username: socket.user.username
       });
     });
@@ -31,7 +31,7 @@ const socketHandler = (io) => {
     socket.on('leave_lobby', () => {
       socket.leave('lobby');
       socket.to('lobby').emit('user_offline', {
-        userId: socket.user._id,
+        userId: socket.user.id,
         username: socket.user.username
       });
     });
@@ -48,7 +48,7 @@ const socketHandler = (io) => {
 
       const chatMessage = {
         id: Date.now(),
-        userId: socket.user._id,
+        userId: socket.user.id,
         username: socket.user.username,
         message: message.trim(),
         timestamp: new Date()
@@ -69,18 +69,18 @@ const socketHandler = (io) => {
       
       try {
         // Update user offline status
-        await User.findByIdAndUpdate(socket.user._id, { isOnline: false });
+        await User.update({ isOnline: false }, { where: { id: socket.user.id } });
 
         // Notify lobby users
         socket.to('lobby').emit('user_offline', {
-          userId: socket.user._id,
+          userId: socket.user.id,
           username: socket.user.username
         });
 
         // Handle game disconnection if user was in a game
         if (socket.user.currentGameId) {
           socket.to(`game_${socket.user.currentGameId}`).emit('player_disconnected', {
-            userId: socket.user._id,
+            userId: socket.user.id,
             username: socket.user.username
           });
         }

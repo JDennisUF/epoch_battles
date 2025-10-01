@@ -32,7 +32,12 @@ router.post('/register', [
 
     // Check if user already exists
     const existingUser = await User.findOne({
-      $or: [{ email }, { username }]
+      where: {
+        [require('sequelize').Op.or]: [
+          { email },
+          { username }
+        ]
+      }
     });
 
     if (existingUser) {
@@ -44,16 +49,14 @@ router.post('/register', [
     }
 
     // Create new user
-    const user = new User({
+    const user = await User.create({
       username,
       email,
-      passwordHash: password // Will be hashed by pre-save hook
+      passwordHash: password // Will be hashed by beforeCreate hook
     });
 
-    await user.save();
-
     // Generate token
-    const token = generateToken(user._id);
+    const token = generateToken(user.id);
 
     res.status(201).json({
       message: 'User registered successfully',
@@ -85,7 +88,12 @@ router.post('/login', [
 
     // Find user by username or email
     const user = await User.findOne({
-      $or: [{ username }, { email: username }]
+      where: {
+        [require('sequelize').Op.or]: [
+          { username },
+          { email: username }
+        ]
+      }
     });
 
     if (!user) {
@@ -103,7 +111,7 @@ router.post('/login', [
     await user.save();
 
     // Generate token
-    const token = generateToken(user._id);
+    const token = generateToken(user.id);
 
     res.json({
       message: 'Login successful',
