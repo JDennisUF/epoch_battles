@@ -1,0 +1,44 @@
+{
+  "name": "epoch-battles-client",
+  "version": "1.0.0",
+  "description": "Frontend client for Epoch Battles strategy game",
+  "main": "src/App.jsx",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "lint": "eslint src/",
+    "typecheck": "echo 'No TypeScript configured'"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.15.0",
+    "socket.io-client": "^4.7.2",
+    "axios": "^1.5.0",
+    "styled-components": "^6.0.7"
+  },
+  "devDependencies": {
+    "react-scripts": "^5.0.1",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/user-event": "^14.4.3",
+    "eslint": "^8.47.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "keywords": ["game", "strategy", "react", "multiplayer"],
+  "author": "Your Name",
+  "license": "MIT"
+}
