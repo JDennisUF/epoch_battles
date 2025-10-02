@@ -1,0 +1,136 @@
+{
+  "pieces": {
+    "overlord_ai": {
+      "id": "overlord_ai",
+      "name": "Overlord AI",
+      "rank": 1,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Strongest unit, defeated only by Hacker when attacked",
+      "symbol": "\ud83e\udd16",
+      "description": "The ruling artificial intelligence"
+    },
+    "warlord": {
+      "id": "warlord",
+      "name": "Warlord",
+      "rank": 2,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "\ud83d\udc51",
+      "description": "Commanding officer of the fleet"
+    },
+    "battle_commander": {
+      "id": "battle_commander",
+      "name": "Battle Commander",
+      "rank": 3,
+      "count": 2,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "\u2694",
+      "description": "High-ranking combat strategist"
+    },
+    "mech_pilot": {
+      "id": "mech_pilot",
+      "name": "Mech Pilot",
+      "rank": 4,
+      "count": 3,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "\ud83d\udee1",
+      "description": "Pilots a battle mech"
+    },
+    "star_captain": {
+      "id": "star_captain",
+      "name": "Star Captain",
+      "rank": 5,
+      "count": 4,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "\ud83d\ude80",
+      "description": "Commands starship crews"
+    },
+    "lieutenant_droid": {
+      "id": "lieutenant_droid",
+      "name": "Lieutenant Droid",
+      "rank": 6,
+      "count": 4,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "\ud83e\udd16",
+      "description": "Synthetic officer"
+    },
+    "enforcer_bot": {
+      "id": "enforcer_bot",
+      "name": "Enforcer Bot",
+      "rank": 7,
+      "count": 4,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "\ud83d\udd27",
+      "description": "Combat drone"
+    },
+    "engineer": {
+      "id": "engineer",
+      "name": "Engineer",
+      "rank": 8,
+      "count": 5,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Only unit that can disable energy mines",
+      "symbol": "\ud83d\udee0",
+      "description": "Maintains and disables mines"
+    },
+    "recon_drone": {
+      "id": "recon_drone",
+      "name": "Recon Drone",
+      "rank": 9,
+      "count": 8,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Can move multiple spaces in a straight line",
+      "symbol": "\ud83d\udce1",
+      "description": "Fast surveillance unit"
+    },
+    "hacker": {
+      "id": "hacker",
+      "name": "Hacker",
+      "rank": 10,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Defeats Overlord AI when attacking, weakest otherwise",
+      "symbol": "\ud83d\udcbb",
+      "description": "Cyber warrior specialized in AI disruption"
+    },
+    "data_core": {
+      "id": "data_core",
+      "name": "Data Core",
+      "rank": null,
+      "count": 1,
+      "moveable": false,
+      "canAttack": false,
+      "special": "Must be captured to win",
+      "symbol": "\ud83d\udcbe",
+      "description": "Central storage of vital information"
+    },
+    "mine": {
+      "id": "plasma_mine",
+      "name": "Plasma Mine",
+      "rank": null,
+      "count": 6,
+      "moveable": false,
+      "canAttack": false,
+      "special": "Destroys any attacking unit except Engineers",
+      "symbol": "\ud83d\udca3",
+      "description": "Hidden explosive plasma mine"
+    }
+  }
+}

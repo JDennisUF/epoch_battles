@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import axios from 'axios';
 import { useSocket } from '../hooks/useSocket';
 import { useAuth } from '../hooks/useAuth';
 
@@ -204,9 +206,30 @@ const DeclineButton = styled.button`
 
 function Lobby() {
   const { user } = useAuth();
-  const { socket, connected, onlineUsers, joinLobby, invitePlayer, respondToInvitation } = useSocket();
+  const { socket, connected, joinLobby, invitePlayer, respondToInvitation } = useSocket();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [gameInvitations, setGameInvitations] = useState([]);
+  const [onlineUsers, setOnlineUsers] = useState([]);
+
+  // Fetch online users from API
+  useEffect(() => {
+    const fetchOnlineUsers = async () => {
+      try {
+        const response = await axios.get('/users/online');
+        setOnlineUsers(response.data.users);
+      } catch (error) {
+        console.error('Failed to fetch online users:', error);
+      }
+    };
+
+    if (user) {
+      fetchOnlineUsers();
+      // Refresh every 30 seconds
+      const interval = setInterval(fetchOnlineUsers, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   useEffect(() => {
     if (connected) {
@@ -231,11 +254,29 @@ function Lobby() {
 
     const handleGameCreated = (gameData) => {
       addNotification('Game created! Redirecting...', 'success');
-      // TODO: Navigate to game page
+      // Navigate to game page with game data passed in state to avoid race condition
+      setTimeout(() => {
+        navigate('/game', { state: { gameData } });
+      }, 1000);
     };
 
     const handleInvitationDeclined = (data) => {
       addNotification(`${data.from} declined your invitation`, 'info');
+    };
+
+    const handleUserOnline = (userData) => {
+      setOnlineUsers(prev => {
+        const filtered = prev.filter(u => u.id !== userData.userId);
+        return [...filtered, {
+          id: userData.userId,
+          username: userData.username,
+          isOnline: true
+        }];
+      });
+    };
+
+    const handleUserOffline = (userData) => {
+      setOnlineUsers(prev => prev.filter(u => u.id !== userData.userId));
     };
 
     socket.on('game_invitation', handleGameInvitation);
@@ -243,6 +284,8 @@ function Lobby() {
     socket.on('invite_error', handleInviteError);
     socket.on('game_created', handleGameCreated);
     socket.on('invitation_declined', handleInvitationDeclined);
+    socket.on('user_online', handleUserOnline);
+    socket.on('user_offline', handleUserOffline);
 
     return () => {
       socket.off('game_invitation', handleGameInvitation);
@@ -250,6 +293,8 @@ function Lobby() {
       socket.off('invite_error', handleInviteError);
       socket.off('game_created', handleGameCreated);
       socket.off('invitation_declined', handleInvitationDeclined);
+      socket.off('user_online', handleUserOnline);
+      socket.off('user_offline', handleUserOffline);
     };
   }, [socket]);
 
@@ -319,15 +364,15 @@ function Lobby() {
             ) : (
               <OnlineUsersList>
                 {onlineUsers.map(user => (
-                  <UserItem key={user.userId}>
+                  <UserItem key={user.id}>
                     <UserInfo>
                       <UserName>{user.username}</UserName>
                       <UserStats>
-                        {user.stats?.wins || 0}W - {user.stats?.losses || 0}L
+                        {user.wins || 0}W - {user.losses || 0}L
                       </UserStats>
                     </UserInfo>
                     <InviteButton 
-                      onClick={() => handleInvitePlayer(user.userId)}
+                      onClick={() => handleInvitePlayer(user.id)}
                       disabled={!connected}
                     >
                       Invite

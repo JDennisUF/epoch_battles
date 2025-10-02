@@ -1,0 +1,88 @@
+{
+  "combatRules": {
+    "description": "Combat resolution rules for Epoch Battles",
+    "rules": [
+      {
+        "condition": "attacker_rank < defender_rank",
+        "result": "attacker_wins",
+        "description": "Lower rank number beats higher rank number"
+      },
+      {
+        "condition": "attacker_rank > defender_rank", 
+        "result": "defender_wins",
+        "description": "Higher rank number loses to lower rank number"
+      },
+      {
+        "condition": "attacker_rank === defender_rank",
+        "result": "both_destroyed",
+        "description": "Equal ranks destroy each other"
+      }
+    ],
+    "specialCases": [
+      {
+        "attacker": "spy",
+        "defender": "marshal",
+        "result": "attacker_wins",
+        "description": "Spy defeats Marshal when attacking"
+      },
+      {
+        "attacker": "marshal", 
+        "defender": "spy",
+        "result": "attacker_wins",
+        "description": "Marshal defeats Spy when attacking"
+      },
+      {
+        "attacker": "*",
+        "defender": "bomb",
+        "result": "attacker_destroyed",
+        "exception": "miner",
+        "description": "Bombs destroy attacking units except Miners"
+      },
+      {
+        "attacker": "miner",
+        "defender": "bomb", 
+        "result": "defender_destroyed",
+        "description": "Miners can defuse bombs"
+      },
+      {
+        "attacker": "*",
+        "defender": "flag",
+        "result": "game_won",
+        "description": "Capturing the flag wins the game"
+      }
+    ]
+  },
+  "movementRules": {
+    "default": {
+      "maxDistance": 1,
+      "directions": ["up", "down", "left", "right"],
+      "canJump": false
+    },
+    "scout": {
+      "maxDistance": 99,
+      "directions": ["up", "down", "left", "right"],
+      "canJump": false,
+      "mustStop": "when_blocked_or_attacking"
+    },
+    "immobile": {
+      "maxDistance": 0,
+      "directions": [],
+      "canJump": false,
+      "pieces": ["bomb", "flag"]
+    }
+  },
+  "gamePhases": {
+    "setup": {
+      "description": "Players place their pieces on their starting rows",
+      "actions": ["place_piece", "ready_up"]
+    },
+    "playing": {
+      "description": "Turn-based movement and combat",
+      "actions": ["move_piece", "attack", "forfeit"]
+    },
+    "finished": {
+      "description": "Game over, winner determined",
+      "actions": ["view_result", "rematch"]
+    }
+  }
+}

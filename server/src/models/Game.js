@@ -17,7 +17,7 @@ const Game = sequelize.define('Game', {
     allowNull: false,
     defaultValue: {
       board: Array(10).fill(null).map(() => Array(10).fill(null)),
-      currentPlayer: 'blue',
+      currentPlayer: 'home',
       turnNumber: 1,
       phase: 'setup',
       winner: null,
@@ -34,8 +34,8 @@ const Game = sequelize.define('Game', {
     defaultValue: {
       initialTime: 900000, // 15 minutes
       increment: 10000,    // 10 seconds
-      blueTimeLeft: 900000,
-      redTimeLeft: 900000,
+      homeTimeLeft: 900000,
+      awayTimeLeft: 900000,
       lastMoveTime: null
     }
   },
@@ -72,7 +72,7 @@ Game.prototype.getGameStateForPlayer = function(playerId) {
   const gameState = {
     ...this.gameState,
     playerColor,
-    opponentColor: playerColor === 'blue' ? 'red' : 'blue'
+    opponentColor: playerColor === 'home' ? 'away' : 'home'
   };
 
   // Hide opponent pieces if game is in playing phase
@@ -111,8 +111,8 @@ Game.prototype.getOpponent = function(playerId) {
 
 Game.prototype.switchTurn = function() {
   const newGameState = { ...this.gameState };
-  newGameState.currentPlayer = newGameState.currentPlayer === 'blue' ? 'red' : 'blue';
-  newGameState.turnNumber += newGameState.currentPlayer === 'blue' ? 1 : 0;
+  newGameState.currentPlayer = newGameState.currentPlayer === 'home' ? 'away' : 'home';
+  newGameState.turnNumber += newGameState.currentPlayer === 'home' ? 1 : 0;
   this.gameState = newGameState;
 };
 

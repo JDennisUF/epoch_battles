@@ -8,10 +8,15 @@ Epoch Battles is a 2-player online strategy board game inspired by Stratego. Pla
 ### Board & Setup
 - 10x10 grid battlefield with water obstacles in center
 - Each player has 40 pieces: 1 Flag, 6 Bombs, 1 Spy, 1 Marshal, and various ranked units
+- The player who sends the invite becomes the "Home" army (plays first)
+- The player who accepts the invite becomes the "Away" army
 - Players place pieces on their side of the board (4 rows each)
 - Unit identities remain hidden from opponent until combat
 
-### Unit Types & Combat System
+### Army Themes & Unit Types
+The game supports multiple army themes, each with unique units but identical gameplay mechanics. Available themes:
+
+**Default Army (Classic Stratego):**
 ```
 Rank 1: Marshal (1) - Strongest unit, defeated only by Spy
 Rank 2: General (1) - Second strongest
@@ -26,6 +31,28 @@ Rank 10: Spy (1) - Defeats Marshal when attacking
 Special: Flag (1) - Capture to win
 Special: Bomb (6) - Immobile, destroys attacking units except Miners
 ```
+
+**Fantasy Army:**
+- Dragon Lord (Rank 1) - Defeated only by Thief
+- Archmage, Paladin, Knight, Ranger, Apprentice, Warrior
+- Dwarf Miner (disables Cursed Runes), Scout Hawk (mobile)
+- Thief (defeats Dragon Lord), Sacred Relic (flag), Cursed Rune (bomb)
+
+**Medieval Army:**
+- King (Rank 1) - Defeated only by Assassin
+- Queen, Knight Commander, Knight, Captain of Arms, Squire, Peasant Militia
+- Sapper (disables Traps), Scout Rider (mobile)
+- Assassin (defeats King), Banner (flag), Trap (bomb)
+
+**Sci-Fi Army:**
+- Overlord AI, Battle Commander, Star Captain, Mech Pilot, Lieutenant Droid, etc.
+- Engineer (disables Plasma Mines), Recon Drone (mobile)
+- Hacker (defeats Overlord AI), Data Core (flag), Plasma Mine (bomb)
+
+**Post-Apocalyptic Army:**
+- Warlord, Raider Chief, Tank Commander, Sniper, Gunner, etc.
+- Demolitionist (disables Explosives), Motor Scout (mobile)
+- Saboteur (defeats Warlord), Survivor Camp (flag), Explosives Cache (bomb)
 
 ### Win Conditions
 1. Capture opponent's flag
@@ -93,10 +120,53 @@ Special: Bomb (6) - Immobile, destroys attacking units except Miners
 │   │   ├── utils/
 │   │   │   ├── gameLogic.js
 │   │   │   └── constants.js
+│   │   ├── data/
+│   │   │   ├── armies/
+│   │   │   │   ├── default.json
+│   │   │   │   ├── fantasy/
+│   │   │   │   │   ├── fantasy.json
+│   │   │   │   │   └── *.png (unit images)
+│   │   │   │   ├── medieval/
+│   │   │   │   │   ├── medieval.json
+│   │   │   │   │   └── *.png (unit images)
+│   │   │   │   ├── sci_fi/
+│   │   │   │   │   ├── sci-fi.json
+│   │   │   │   │   └── *.png (unit images)
+│   │   │   │   └── post_apocalyptic/
+│   │   │   │       ├── post-apocalyptic.json
+│   │   │   │       └── *.png (unit images)
+│   │   │   └── maps/
+│   │   │       └── classic.json
 │   │   └── App.jsx
 │   ├── package.json
 │   └── public/
 ```
+
+### Army Data Structure
+Each army theme is defined by a JSON file containing piece definitions:
+
+```javascript
+{
+  "pieces": {
+    "unit_id": {
+      "id": "unit_id",          // Must match filename for image
+      "name": "Display Name",
+      "rank": 1-10,              // Combat rank (lower = stronger)
+      "count": 1-8,              // Number of this unit in army
+      "moveable": true/false,     // Can move during game
+      "canAttack": true/false,    // Can initiate combat
+      "special": "description",   // Special abilities text
+      "symbol": "🐉",            // Unicode emoji for display
+      "description": "Lore text"
+    }
+  }
+}
+```
+
+**Image Assets:**
+- Each unit has a corresponding PNG image: `{unit.id}.png`
+- Images stored in same directory as army JSON file
+- Example: `thief.png` for unit with `"id": "thief"`
 
 ### Database Schema (MongoDB)
 
@@ -126,7 +196,7 @@ Special: Bomb (6) - Immobile, destroys attacking units except Miners
     {
       userId: ObjectId,
       username: String,
-      color: String // 'blue' or 'red'
+      color: String // 'home' or 'away'
     }
   ],
   gameState: {
@@ -181,6 +251,33 @@ Special: Bomb (6) - Immobile, destroys attacking units except Miners
 - Load testing for concurrent games
 - Deploy to production (Docker + cloud hosting)
 - Monitoring and logging setup
+
+### Map Data Structure
+Maps define battlefield layout and army placement zones:
+
+```javascript
+{
+  "id": "classic",
+  "name": "Classic Battlefield",
+  "description": "Traditional 10x10 battlefield",
+  "boardSize": {
+    "width": 10,
+    "height": 10
+  },
+  "setupRows": {
+    "home": [0, 1, 2, 3],    // Home army setup area
+    "away": [6, 7, 8, 9]     // Away army setup area
+  },
+  "waterSquares": [          // Impassable terrain
+    {"x": 2, "y": 4}, {"x": 3, "y": 4},
+    {"x": 6, "y": 4}, {"x": 7, "y": 4},
+    {"x": 2, "y": 5}, {"x": 3, "y": 5},
+    {"x": 6, "y": 5}, {"x": 7, "y": 5}
+  ],
+  "theme": "military",
+  "difficulty": "standard"
+}
+```
 
 ## Key Technical Considerations
 

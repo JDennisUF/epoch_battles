@@ -1,4 +1,5 @@
 const express = require('express');
+const { Op } = require('sequelize');
 const { auth } = require('../middleware/auth');
 const Game = require('../models/Game');
 
@@ -7,15 +8,22 @@ const router = express.Router();
 // Get user's current game
 router.get('/current', auth, async (req, res) => {
   try {
-    if (!req.user.currentGameId) {
+    console.log('Getting current game for user:', req.user.id, 'currentGameId:', req.user.currentGameId);
+    
+    // Refresh user data to get latest currentGameId
+    const freshUser = await require('../models/User').findByPk(req.user.id);
+    if (!freshUser || !freshUser.currentGameId) {
+      console.log('No current game found for user');
       return res.json({ game: null });
     }
 
-    const game = await Game.findById(req.user.currentGameId);
+    const game = await Game.findByPk(freshUser.currentGameId);
     if (!game) {
+      console.log('Game not found with ID:', freshUser.currentGameId);
       return res.json({ game: null });
     }
 
+    console.log('Found game:', game.id, 'status:', game.status);
     res.json({ game });
   } catch (error) {
     console.error('Get current game error:', error);
@@ -27,14 +35,14 @@ router.get('/current', auth, async (req, res) => {
 router.get('/:gameId', auth, async (req, res) => {
   try {
     const { gameId } = req.params;
-    const game = await Game.findById(gameId);
+    const game = await Game.findByPk(gameId);
     
     if (!game) {
       return res.status(404).json({ message: 'Game not found' });
     }
 
     // Check if user is a player in this game
-    const isPlayer = game.players.some(p => p.userId.toString() === req.user._id.toString());
+    const isPlayer = game.players.some(p => p.userId === req.user.id);
     if (!isPlayer) {
       return res.status(403).json({ message: 'Access denied' });
     }
@@ -53,18 +61,26 @@ router.get('/history/:page?', auth, async (req, res) => {
     const limit = 10;
     const skip = (page - 1) * limit;
 
-    const games = await Game.find({
-      'players.userId': req.user._id,
-      status: 'finished'
-    })
-    .sort({ finishedAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .select('players gameState.winner status createdAt finishedAt');
+    const games = await Game.findAll({
+      where: {
+        status: 'finished',
+        players: {
+          [Op.contains]: [{ userId: req.user.id }]
+        }
+      },
+      order: [['finishedAt', 'DESC']],
+      offset: skip,
+      limit: limit,
+      attributes: ['id', 'players', 'gameState', 'status', 'createdAt', 'finishedAt']
+    });
 
-    const totalGames = await Game.countDocuments({
-      'players.userId': req.user._id,
-      status: 'finished'
+    const totalGames = await Game.count({
+      where: {
+        status: 'finished',
+        players: {
+          [Op.contains]: [{ userId: req.user.id }]
+        }
+      }
     });
 
     res.json({
@@ -89,14 +105,14 @@ router.post('/forfeit', auth, async (req, res) => {
       return res.status(400).json({ message: 'No active game found' });
     }
 
-    const game = await Game.findById(req.user.currentGameId);
+    const game = await Game.findByPk(req.user.currentGameId);
     if (!game || game.status === 'finished') {
       return res.status(400).json({ message: 'Game not found or already finished' });
     }
 
     // Determine winner (the other player)
-    const playerColor = game.players.find(p => p.userId.toString() === req.user._id.toString())?.color;
-    const winnerColor = playerColor === 'blue' ? 'red' : 'blue';
+    const playerColor = game.players.find(p => p.userId === req.user.id)?.color;
+    const winnerColor = playerColor === 'home' ? 'away' : 'home';
     const winner = game.players.find(p => p.color === winnerColor);
 
     // Update game state

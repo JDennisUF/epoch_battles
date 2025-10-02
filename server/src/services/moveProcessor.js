@@ -1,0 +1,267 @@
+const gameLogic = require('./gameLogic');
+const Game = require('../models/Game');
+const User = require('../models/User');
+
+class MoveProcessor {
+  async processMove(gameId, playerId, moveData) {
+    try {
+      const game = await Game.findByPk(gameId);
+      if (!game) {
+        return { success: false, error: 'Game not found' };
+      }
+
+      // Validate it's the player's turn
+      const playerColor = game.players.find(p => p.userId === playerId)?.color;
+      if (!playerColor) {
+        return { success: false, error: 'Player not in game' };
+      }
+
+      if (game.gameState.currentPlayer !== playerColor) {
+        return { success: false, error: 'Not your turn' };
+      }
+
+      if (game.gameState.phase !== 'playing') {
+        return { success: false, error: 'Game not in playing phase' };
+      }
+
+      const { fromX, fromY, toX, toY } = moveData;
+      const board = game.gameState.board;
+
+      // Validate the move
+      const moveValidation = gameLogic.validateMove(board, fromX, fromY, toX, toY, playerColor);
+      if (!moveValidation.valid) {
+        return { success: false, error: moveValidation.reason };
+      }
+
+      // Process the move
+      const moveResult = await this.executeMove(game, fromX, fromY, toX, toY, playerColor);
+      
+      // Save the updated game state
+      await game.save();
+
+      return {
+        success: true,
+        result: moveResult,
+        gameState: game.gameState
+      };
+
+    } catch (error) {
+      console.error('Move processing error:', error);
+      return { success: false, error: 'Internal server error' };
+    }
+  }
+
+  async executeMove(game, fromX, fromY, toX, toY, playerColor) {
+    const board = game.gameState.board;
+    const movingPiece = board[fromY][fromX];
+    const targetPiece = board[toY][toX];
+
+    let moveResult = {
+      type: 'move',
+      from: { x: fromX, y: fromY },
+      to: { x: toX, y: toY },
+      piece: movingPiece,
+      timestamp: new Date()
+    };
+
+    if (targetPiece) {
+      // Combat!
+      const combatResult = gameLogic.resolveCombat(movingPiece, targetPiece);
+      moveResult.type = 'attack';
+      moveResult.combat = combatResult;
+
+      // Reveal both pieces
+      movingPiece.revealed = true;
+      targetPiece.revealed = true;
+
+      if (combatResult.result === 'game_won') {
+        // Flag captured!
+        board[toY][toX] = movingPiece;
+        board[fromY][fromX] = null;
+        
+        game.gameState.phase = 'finished';
+        game.gameState.winner = playerColor;
+        game.status = 'finished';
+        game.finishedAt = new Date();
+
+        moveResult.gameWon = true;
+        moveResult.winner = playerColor;
+
+      } else if (combatResult.result === 'attacker_wins') {
+        // Attacker wins, moves to target square
+        board[toY][toX] = movingPiece;
+        board[fromY][fromX] = null;
+
+      } else if (combatResult.result === 'defender_wins') {
+        // Defender wins, attacker is destroyed
+        board[fromY][fromX] = null;
+
+      } else if (combatResult.result === 'both_destroyed') {
+        // Both pieces destroyed
+        board[toY][toX] = null;
+        board[fromY][fromX] = null;
+      }
+
+    } else {
+      // Simple move
+      board[toY][toX] = movingPiece;
+      board[fromY][fromX] = null;
+    }
+
+    // Update piece position
+    if (board[toY][toX] === movingPiece) {
+      movingPiece.position = { x: toX, y: toY };
+    }
+
+    // Check for win conditions (if game not already won)
+    if (game.gameState.phase === 'playing') {
+      const winCheck = gameLogic.checkWinCondition(board, playerColor);
+      if (winCheck.gameOver) {
+        game.gameState.phase = 'finished';
+        game.gameState.winner = winCheck.winner;
+        game.status = 'finished';
+        game.finishedAt = new Date();
+        
+        moveResult.gameWon = true;
+        moveResult.winner = winCheck.winner;
+        moveResult.winReason = winCheck.reason;
+      }
+    }
+
+    // Add move to history
+    game.gameState.moveHistory.push(moveResult);
+    game.gameState.lastMove = moveResult;
+
+    // Switch turns (if game not finished)
+    if (game.gameState.phase === 'playing') {
+      game.gameState.currentPlayer = playerColor === 'home' ? 'away' : 'home';
+      game.gameState.turnNumber += playerColor === 'away' ? 1 : 0;
+    }
+
+    // Update game state
+    game.gameState.board = board;
+    game.changed('gameState', true);
+
+    return moveResult;
+  }
+
+  async processSetup(gameId, playerId, setupData) {
+    console.log('🔧 ProcessSetup called:', { gameId, playerId, setupData });
+    
+    try {
+      const game = await Game.findByPk(gameId);
+      if (!game) {
+        console.log('❌ Game not found:', gameId);
+        return { success: false, error: 'Game not found' };
+      }
+
+      const playerColor = game.players.find(p => p.userId === playerId)?.color;
+      console.log('🎨 Player color:', playerColor, 'for user:', playerId);
+      
+      if (!playerColor) {
+        return { success: false, error: 'Player not in game' };
+      }
+
+      console.log('🎮 Game phase:', game.gameState.phase);
+      if (game.gameState.phase !== 'setup') {
+        return { success: false, error: 'Game not in setup phase' };
+      }
+
+      // Process piece placements
+      const { placements, isRandom } = setupData;
+      let army;
+
+      if (isRandom) {
+        army = gameLogic.generateRandomPlacement(playerColor);
+      } else {
+        army = this.validatePlacements(placements, playerColor);
+        if (!army.valid) {
+          return { success: false, error: army.error };
+        }
+        army = army.pieces;
+      }
+
+      // Place pieces on board
+      const board = game.gameState.board;
+      army.forEach(piece => {
+        board[piece.position.y][piece.position.x] = piece;
+      });
+
+      // Mark player as ready by creating a new players array
+      const updatedPlayers = game.players.map(p => 
+        p.userId === playerId ? { ...p, isReady: true } : p
+      );
+      game.players = updatedPlayers;
+
+      // Check if both players are ready
+      const allPlayersReady = updatedPlayers.every(p => p.isReady);
+      if (allPlayersReady) {
+        game.gameState.phase = 'playing';
+        game.status = 'active';
+      }
+
+      game.gameState.board = board;
+      game.changed('gameState', true);
+      game.changed('players', true);
+      await game.save();
+
+      return {
+        success: true,
+        gameState: game.gameState,
+        ready: allPlayersReady
+      };
+
+    } catch (error) {
+      console.error('Setup processing error:', error);
+      return { success: false, error: 'Internal server error' };
+    }
+  }
+
+  validatePlacements(placements, color) {
+    if (!placements || placements.length !== 40) {
+      return { valid: false, error: 'Must place exactly 40 pieces' };
+    }
+
+    const expectedCounts = {};
+    Object.entries(gameLogic.pieces).forEach(([type, info]) => {
+      expectedCounts[type] = info.count;
+    });
+
+    const actualCounts = {};
+    placements.forEach(placement => {
+      actualCounts[placement.type] = (actualCounts[placement.type] || 0) + 1;
+    });
+
+    // Validate piece counts
+    for (const [type, expectedCount] of Object.entries(expectedCounts)) {
+      if (actualCounts[type] !== expectedCount) {
+        return { 
+          valid: false, 
+          error: `Invalid count for ${type}: expected ${expectedCount}, got ${actualCounts[type] || 0}` 
+        };
+      }
+    }
+
+    // Convert placements to pieces
+    const pieces = placements.map((placement, index) => {
+      const pieceInfo = gameLogic.pieces[placement.type];
+      return {
+        id: `${color}_${placement.type}_${index}`,
+        type: placement.type,
+        color: color,
+        rank: pieceInfo.rank,
+        name: pieceInfo.name,
+        symbol: pieceInfo.symbol,
+        moveable: pieceInfo.moveable,
+        canAttack: pieceInfo.canAttack,
+        special: pieceInfo.special,
+        revealed: false,
+        position: { x: placement.x, y: placement.y }
+      };
+    });
+
+    return { valid: true, pieces };
+  }
+}
+
+module.exports = new MoveProcessor();

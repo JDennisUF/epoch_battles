@@ -88,7 +88,9 @@ const ConnectionStatus = styled.div`
   font-size: 0.9rem;
 `;
 
-const StatusDot = styled.div`
+const StatusDot = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'connected'
+})`
   width: 8px;
   height: 8px;
   border-radius: 50%;

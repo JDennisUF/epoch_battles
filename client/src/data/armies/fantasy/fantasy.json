@@ -1,0 +1,136 @@
+{
+  "pieces": {
+    "dragon_lord": {
+      "id": "dragon_lord",
+      "name": "Dragon Lord",
+      "rank": 1,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Strongest unit, defeated only by Thief when attacked",
+      "symbol": "\ud83d\udc09",
+      "description": "Ancient ruler of dragons"
+    },
+    "archmage": {
+      "id": "archmage",
+      "name": "Archmage",
+      "rank": 2,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "\ud83e\ude84",
+      "description": "Master of arcane magic"
+    },
+    "paladin": {
+      "id": "paladin",
+      "name": "Paladin",
+      "rank": 3,
+      "count": 2,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "\u2694",
+      "description": "Holy knight of justice"
+    },
+    "knight": {
+      "id": "knight",
+      "name": "Knight",
+      "rank": 4,
+      "count": 3,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "\ud83d\udee1",
+      "description": "Armored warrior"
+    },
+    "ranger": {
+      "id": "ranger",
+      "name": "Ranger",
+      "rank": 5,
+      "count": 4,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "\ud83c\udff9",
+      "description": "Archer and woodsman"
+    },
+    "apprentice": {
+      "id": "apprentice",
+      "name": "Apprentice",
+      "rank": 6,
+      "count": 4,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "\ud83d\udcdc",
+      "description": "Novice spellcaster"
+    },
+    "warrior": {
+      "id": "warrior",
+      "name": "Warrior",
+      "rank": 7,
+      "count": 4,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "\u2692",
+      "description": "Skilled fighter"
+    },
+    "dwarf_miner": {
+      "id": "dwarf_miner",
+      "name": "Dwarf Miner",
+      "rank": 8,
+      "count": 5,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Only unit that can disable cursed rune stones",
+      "symbol": "\u26cf",
+      "description": "Dwarven trap breaker"
+    },
+    "scout_hawk": {
+      "id": "scout_hawk",
+      "name": "Scout Hawk",
+      "rank": 9,
+      "count": 8,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Can move multiple spaces in a straight line",
+      "symbol": "\ud83e\udd85",
+      "description": "Fast flying reconnaissance bird"
+    },
+    "thief": {
+      "id": "thief",
+      "name": "Thief",
+      "rank": 10,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Defeats Dragon Lord when attacking, weakest otherwise",
+      "symbol": "\ud83d\udde1",
+      "description": "Stealthy rogue skilled in assassination"
+    },
+    "sacred_relic": {
+      "id": "sacred_relic",
+      "name": "Sacred Relic",
+      "rank": null,
+      "count": 1,
+      "moveable": false,
+      "canAttack": false,
+      "special": "Must be captured to win",
+      "symbol": "\ud83d\udcff",
+      "description": "Ancient artifact of immense power"
+    },
+    "cursed_rune": {
+      "id": "cursed_rune",
+      "name": "Cursed Rune",
+      "rank": null,
+      "count": 6,
+      "moveable": false,
+      "canAttack": false,
+      "special": "Destroys any attacking unit except Dwarf Miners",
+      "symbol": "\ud83d\udd2e",
+      "description": "Dark magical trap"
+    }
+  }
+}

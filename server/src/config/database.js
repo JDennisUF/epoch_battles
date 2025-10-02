@@ -1,7 +1,12 @@
 const { Sequelize } = require('sequelize');
 
-// Use Session pooler (IPv4 compatible)
-const connectionString = 'postgresql://postgres.mclklzjokfzsclzqayzq:MnJVeronLlcf6OaL@aws-1-us-east-1.pooler.supabase.com:5432/postgres';
+// Use environment variable for database connection
+const connectionString = process.env.DATABASE_URL || process.env.SUPABASE_DB_URL;
+
+if (!connectionString) {
+  console.error('❌ DATABASE_URL or SUPABASE_DB_URL environment variable is required');
+  process.exit(1);
+}
 
 const sequelize = new Sequelize(connectionString, {
   dialect: 'postgres',
