@@ -65,9 +65,11 @@ export const canMoveTo = (fromX, fromY, toX, toY, board, playerColor) => {
   return true;
 };
 
-export const generateArmy = (color) => {
+export const generateArmy = (color, armyData = null) => {
   const army = [];
-  Object.entries(PIECES).forEach(([pieceType, pieceInfo]) => {
+  const piecesData = armyData?.pieces || PIECES;
+  
+  Object.entries(piecesData).forEach(([pieceType, pieceInfo]) => {
     for (let i = 0; i < pieceInfo.count; i++) {
       army.push({
         id: `${color}_${pieceType}_${i}`,

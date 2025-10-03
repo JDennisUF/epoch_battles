@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Army Data Test</title>
+</head>
+<body>
+    <h1>Army Data Accessibility Test</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testArmyData() {
+            const results = document.getElementById('results');
+            const armies = [
+                { id: 'default', path: '/data/armies/default.json' },
+                { id: 'fantasy', path: '/data/armies/fantasy/fantasy.json' },
+                { id: 'medieval', path: '/data/armies/medieval/medieval.json' },
+                { id: 'sci_fi', path: '/data/armies/sci_fi/sci-fi.json' },
+                { id: 'post_apocalyptic', path: '/data/armies/post_apocalyptic/post-apocalyptic.json' }
+            ];
+            
+            for (const army of armies) {
+                try {
+                    console.log(`Testing ${army.id} at ${army.path}`);
+                    const response = await fetch(army.path);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        results.innerHTML += `<p style="color: green;">✅ ${army.id}: Loaded successfully (${Object.keys(data.pieces || {}).length} units)</p>`;
+                    } else {
+                        results.innerHTML += `<p style="color: red;">❌ ${army.id}: HTTP ${response.status} - ${response.statusText}</p>`;
+                    }
+                } catch (error) {
+                    results.innerHTML += `<p style="color: red;">❌ ${army.id}: ${error.message}</p>`;
+                }
+            }
+        }
+        
+        testArmyData();
+    </script>
+</body>
+</html>

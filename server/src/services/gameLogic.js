@@ -15,11 +15,46 @@ class GameLogic {
     this.gamePhases = combatData.gamePhases;
   }
 
+  // Load army data by ID
+  loadArmyData(armyId) {
+    try {
+      let armyPath;
+      switch (armyId) {
+        case 'default':
+          armyPath = path.join(__dirname, '../data/armies/default.json');
+          break;
+        case 'fantasy':
+          armyPath = path.join(__dirname, '../data/armies/fantasy.json');
+          break;
+        case 'medieval':
+          armyPath = path.join(__dirname, '../data/armies/medieval.json');
+          break;
+        case 'sci_fi':
+          armyPath = path.join(__dirname, '../data/armies/sci-fi.json');
+          break;
+        case 'post_apocalyptic':
+          armyPath = path.join(__dirname, '../data/armies/post-apocalyptic.json');
+          break;
+        default:
+          // Fallback to default army
+          armyPath = path.join(__dirname, '../data/armies/default.json');
+      }
+      
+      const armyData = JSON.parse(fs.readFileSync(armyPath, 'utf8'));
+      return armyData;
+    } catch (error) {
+      console.error(`Failed to load army data for ${armyId}:`, error);
+      // Fallback to default pieces
+      return { pieces: defaultArmy.pieces };
+    }
+  }
+
   // Generate starting army for a player
-  generateArmy(color) {
+  generateArmy(color, armyId = 'default') {
+    const armyData = this.loadArmyData(armyId);
     const army = [];
     
-    Object.entries(this.pieces).forEach(([pieceType, pieceInfo]) => {
+    Object.entries(armyData.pieces).forEach(([pieceType, pieceInfo]) => {
       for (let i = 0; i < pieceInfo.count; i++) {
         army.push({
           id: `${color}_${pieceType}_${i}`,

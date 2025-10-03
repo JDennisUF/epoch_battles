@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import GameSquare from './GameSquare';
 import PieceSelector from './PieceSelector';
 import { GAME_CONFIG, isWaterSquare, canMoveTo, generateArmy } from '../../utils/gameLogic';
+import ArmySelector from './ArmySelector';
 
 const BoardContainer = styled.div`
   display: flex;
@@ -128,12 +129,18 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
   const [validMoves, setValidMoves] = useState([]);
   const [setupPieces, setSetupPieces] = useState([]);
   const [selectedPieceType, setSelectedPieceType] = useState(null);
+  const [selectedArmy, setSelectedArmy] = useState(null);
+  const [armyData, setArmyData] = useState(null);
+  const [showArmySelector, setShowArmySelector] = useState(false);
+  const [localPlayers, setLocalPlayers] = useState(players);
   const { socket } = useSocket();
   const { user } = useAuth();
 
   const playerColor = players.find(p => p.userId === user.id)?.color;
   const isCurrentTurn = gameState?.currentPlayer === playerColor;
   const gamePhase = gameState?.phase || 'setup';
+  const player = localPlayers.find(p => p.userId === user.id);
+  const hasSelectedArmy = player?.army != null;
 
   useEffect(() => {
     if (!socket) return;
@@ -163,12 +170,52 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     };
 
     const handleRandomPlacement = (data) => {
+      console.log('Received random placement:', data.pieces);
       setSetupPieces(data.pieces);
+      
+      // Check if all pieces have positions
+      const piecesWithPositions = data.pieces.filter(p => p.position && p.position.x !== undefined && p.position.y !== undefined);
+      console.log('Pieces with positions:', piecesWithPositions.length, '/', data.pieces.length);
+      
+      // If all pieces have positions, auto-confirm after a short delay
+      if (piecesWithPositions.length === 40) {
+        console.log('All pieces positioned, auto-confirming random setup');
+        setTimeout(() => {
+          const placements = data.pieces.map(piece => ({
+            type: piece.type,
+            x: piece.position.x,
+            y: piece.position.y
+          }));
+          
+          socket.emit('setup_pieces', {
+            gameId,
+            placements,
+            isRandom: true
+          });
+        }, 500); // Small delay to let UI update
+      }
     };
 
     const handleSetupError = (data) => {
       console.error('Setup error:', data);
       alert(`Setup error: ${data.message}`);
+    };
+
+    const handleArmySelected = (data) => {
+      // Update players with army selections
+      if (data.players) {
+        console.log('Army selected, updating local players:', data);
+        setLocalPlayers(data.players);
+      }
+    };
+
+    const handleArmySelectionError = (data) => {
+      console.error('Army selection error:', data);
+      alert(`Army selection error: ${data.message}`);
+      // Reset local state and show selector again
+      setSelectedArmy(null);
+      setArmyData(null);
+      setShowArmySelector(true);
     };
 
     socket.on('setup_updated', handleSetupUpdated);
@@ -177,6 +224,8 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     socket.on('game_finished', handleGameFinished);
     socket.on('random_placement', handleRandomPlacement);
     socket.on('setup_error', handleSetupError);
+    socket.on('army_selected', handleArmySelected);
+    socket.on('army_selection_error', handleArmySelectionError);
 
     return () => {
       socket.off('setup_updated', handleSetupUpdated);
@@ -185,6 +234,8 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
       socket.off('game_finished', handleGameFinished);
       socket.off('random_placement', handleRandomPlacement);
       socket.off('setup_error', handleSetupError);
+      socket.off('army_selected', handleArmySelected);
+      socket.off('army_selection_error', handleArmySelectionError);
     };
   }, [socket]);
 
@@ -291,23 +342,53 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
   };
 
   const handleRandomConfirm = () => {
-    socket.emit('setup_pieces', {
-      gameId,
-      placements: setupPieces.map(piece => ({
+    // Filter out pieces without positions and create placements
+    const placementsWithPositions = setupPieces
+      .filter(piece => piece.position && piece.position.x !== undefined && piece.position.y !== undefined)
+      .map(piece => ({
         type: piece.type,
         x: piece.position.x,
         y: piece.position.y
-      })),
+      }));
+    
+    console.log('Random confirm - pieces with positions:', placementsWithPositions.length, '/', setupPieces.length);
+    
+    if (placementsWithPositions.length !== 40) {
+      console.error('Not all pieces have positions for random setup');
+      alert(`Random placement incomplete: ${placementsWithPositions.length}/40 pieces have positions`);
+      return;
+    }
+    
+    socket.emit('setup_pieces', {
+      gameId,
+      placements: placementsWithPositions,
       isRandom: true
     });
   };
 
-  // Initialize setup pieces if in setup phase
+  // Sync local players with props
   useEffect(() => {
-    if (gamePhase === 'setup' && setupPieces.length === 0) {
-      setSetupPieces(generateArmy(playerColor));
+    setLocalPlayers(players);
+  }, [players]);
+
+  // Show army selector when game starts and player hasn't selected army
+  useEffect(() => {
+    console.log('Army selector decision:', { gamePhase, hasSelectedArmy, showArmySelector, playerArmy: player?.army, selectedArmy });
+    if (gamePhase === 'setup' && !hasSelectedArmy && !showArmySelector && !selectedArmy) {
+      console.log('Showing army selector');
+      setShowArmySelector(true);
+    } else if (hasSelectedArmy || selectedArmy) {
+      console.log('Army selected, hiding selector');
+      setShowArmySelector(false);
     }
-  }, [gamePhase, playerColor, setupPieces.length]);
+  }, [gamePhase, hasSelectedArmy, showArmySelector, player?.army, selectedArmy]);
+
+  // Initialize setup pieces if in setup phase and army is selected
+  useEffect(() => {
+    if (gamePhase === 'setup' && hasSelectedArmy && setupPieces.length === 0 && armyData) {
+      setSetupPieces(generateArmy(playerColor, armyData));
+    }
+  }, [gamePhase, hasSelectedArmy, setupPieces.length, playerColor, armyData]);
 
   const renderBoard = () => {
     const squares = [];
@@ -347,6 +428,117 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     return squares;
   };
 
+  const handleArmySelection = (armyId, armyDataObj) => {
+    console.log('handleArmySelection called with:', { armyId, armyDataObj, gameId });
+    
+    // Set local state immediately to prevent selector from showing again
+    setSelectedArmy(armyId);
+    setArmyData(armyDataObj);
+    setShowArmySelector(false);
+    
+    // Emit army selection to server
+    if (socket && gameId) {
+      console.log('Emitting select_army event to server');
+      socket.emit('select_army', {
+        gameId,
+        armyId
+      });
+    } else {
+      console.error('Cannot emit army selection: missing socket or gameId', { socket: !!socket, gameId });
+      // If we can't emit to server, show selector again
+      setShowArmySelector(true);
+    }
+  };
+
+  const handleCancelArmySelection = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    console.log('Army selection cancelled');
+    // For now, just go back to lobby - could be enhanced
+    window.location.href = '/lobby';
+  };
+
+  // Show army selector if needed
+  if (showArmySelector) {
+    return (
+      <>
+        <ArmySelector 
+          onSelectArmy={handleArmySelection}
+          onCancel={handleCancelArmySelection}
+          playerColor={playerColor}
+        />
+        {/* Show blurred game board in background */}
+        <div style={{ filter: 'blur(5px)', pointerEvents: 'none' }}>
+          <BoardContainer>
+      <BoardWrapper>
+        <Board>{renderBoard()}</Board>
+        
+        {gamePhase === 'setup' && (
+          <div>
+            <ActionButton onClick={handleRandomSetup}>
+              Random Setup
+            </ActionButton>
+            <ActionButton 
+              onClick={setupPieces.every(p => p.position) ? handleConfirmSetup : handleRandomConfirm}
+              disabled={setupPieces.length === 0}
+            >
+              {setupPieces.every(p => p.position) ? 'Confirm Setup' : 'Confirm Random'}
+            </ActionButton>
+            <div style={{ marginTop: '10px', fontSize: '0.9rem', textAlign: 'center' }}>
+              Pieces placed: {setupPieces.filter(p => p.position).length}/40
+            </div>
+          </div>
+        )}
+      </BoardWrapper>
+
+      <GameInfo>
+        <PhaseIndicator phase={gamePhase}>
+          {gamePhase === 'setup' && 'Setup Phase - Place Your Pieces'}
+          {gamePhase === 'playing' && `Playing - ${isCurrentTurn ? 'Your Turn' : 'Opponent\'s Turn'}`}
+          {gamePhase === 'finished' && `Game Over - ${gameState.winner} Wins!`}
+        </PhaseIndicator>
+
+        <InfoSection>
+          <InfoTitle>Players</InfoTitle>
+          {localPlayers.map(player => (
+            <PlayerInfo key={player.userId} color={player.color === 'home' ? '#3b82f6' : '#ef4444'}>
+              <span>{player.username} ({player.color === 'home' ? 'Home' : 'Away'})</span>
+              <span>{player.color === playerColor ? '(You)' : ''}</span>
+            </PlayerInfo>
+          ))}
+        </InfoSection>
+
+        {gamePhase === 'setup' && (
+          <InfoSection>
+            <InfoTitle>Setup</InfoTitle>
+            <PieceSelector
+              pieces={setupPieces}
+              selectedType={selectedPieceType}
+              onSelectType={setSelectedPieceType}
+            />
+          </InfoSection>
+        )}
+
+        {gamePhase === 'playing' && (
+          <InfoSection>
+            <InfoTitle>Game Status</InfoTitle>
+            <div>Turn: {gameState.turnNumber}</div>
+            <div>Current Player: {gameState.currentPlayer}</div>
+            {gameState.lastMove && (
+              <LastMoveInfo>
+                Last Move: {gameState.lastMove.type} from ({gameState.lastMove.from.x}, {gameState.lastMove.from.y}) to ({gameState.lastMove.to.x}, {gameState.lastMove.to.y})
+              </LastMoveInfo>
+            )}
+          </InfoSection>
+        )}
+      </GameInfo>
+    </BoardContainer>
+        </div>
+      </>
+    );
+  }
+
   return (
     <BoardContainer>
       <BoardWrapper>
@@ -379,7 +571,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
 
         <InfoSection>
           <InfoTitle>Players</InfoTitle>
-          {players.map(player => (
+          {localPlayers.map(player => (
             <PlayerInfo key={player.userId} color={player.color === 'home' ? '#3b82f6' : '#ef4444'}>
               <span>{player.username} ({player.color === 'home' ? 'Home' : 'Away'})</span>
               <span>{player.color === playerColor ? '(You)' : ''}</span>

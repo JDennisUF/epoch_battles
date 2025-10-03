@@ -1,17 +1,27 @@
 # Epoch Battles
 
-A strategic online board game inspired by Stratego where players command armies with hidden unit identities.
+A strategic online board game inspired by Stratego where players command armies with hidden unit identities. Choose from multiple themed armies and engage in tactical combat on customizable battlefields.
 
-## Quick Start
+## 🎮 Game Features
+
+- **Multiple Army Themes:** Fantasy, Medieval, Sci-Fi, Post-Apocalyptic, and Classic
+- **Home vs Away System:** Inviter becomes "Home" team, responder becomes "Away" team  
+- **Real-time Multiplayer:** Live gameplay with WebSocket connections
+- **Hidden Information:** Units remain hidden until combat reveals them
+- **Strategic Depth:** Each army has unique themed units with identical gameplay mechanics
+
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 16+ 
-- MongoDB (local or cloud connection)
+- Node.js 18+ 
+- PostgreSQL (local or cloud connection)
+- Git
 
 ### Installation
 
-1. **Clone and setup:**
+1. **Clone the repository:**
 ```bash
+git clone <repository-url>
 cd epoch_battles
 ```
 
@@ -20,7 +30,7 @@ cd epoch_battles
 cd server
 npm install
 cp .env.example .env
-# Edit .env with your MongoDB URI and JWT secret
+# Edit .env with your database credentials and JWT secret
 ```
 
 3. **Client setup:**
@@ -31,7 +41,7 @@ npm install
 
 ### Running the Application
 
-1. **Start MongoDB** (if running locally)
+1. **Start PostgreSQL** (if running locally)
 
 2. **Start the server:**
 ```bash
@@ -47,43 +57,77 @@ npm start
 ```
 Client runs on http://localhost:3000
 
-## Current Status
+## 📋 Current Status
 
 ✅ **Phase 1 Complete - Core Infrastructure:**
-- User authentication (register/login)
+- User authentication (register/login with JWT)
+- PostgreSQL database with Sequelize ORM
 - WebSocket connections for real-time communication
-- MongoDB database setup
-- React frontend with routing
-- Lobby system with online user display
-- Game invitation system
+- React frontend with routing and styled-components
 
-🚧 **Next: Phase 2 - Game Logic:**
-- Board state management
-- Piece placement and movement
-- Combat resolution system
-- Turn management
+✅ **Phase 2 Complete - Game Logic:**
+- Complete game board implementation
+- Piece placement and movement validation
+- Combat resolution system with special units
+- Turn management and game state persistence
+- Multiple army themes with unique graphics
 
-## Features Implemented
+✅ **Phase 3 Complete - Frontend Development:**
+- Interactive game board with drag-and-drop
+- Real-time game updates via WebSocket
+- Lobby system with player invitations
+- Responsive design for mobile and desktop
+- Army selection and piece setup interface
 
-- **Authentication:** JWT-based user system
-- **Real-time Communication:** Socket.IO for live updates
-- **Lobby System:** See online players and send invitations
-- **Responsive UI:** Works on desktop and mobile
-- **User Profiles:** Stats and game history tracking
+🚧 **Current: Phase 4 - Advanced Features:**
+- Game statistics and analytics
+- Enhanced UI/UX improvements
+- Performance optimizations
 
-## Architecture
+## 🎯 Features Implemented
 
-- **Backend:** Node.js + Express + Socket.IO + MongoDB
+### Core Gameplay
+- **Army Themes:** 5 different themed armies (Fantasy, Medieval, Sci-Fi, Post-Apocalyptic, Classic)
+- **Game Mechanics:** Complete Stratego-inspired gameplay with hidden units
+- **Combat System:** Rank-based combat with special unit interactions
+- **Win Conditions:** Flag capture, opponent elimination, or forfeit
+
+### Multiplayer System
+- **Real-time Communication:** Socket.IO for instant game updates
+- **Invitation System:** Send/receive game invitations in lobby
+- **Home/Away Teams:** Inviter becomes Home team, responder becomes Away team
+- **Game State Management:** Server-side validation and persistence
+
+### User Interface
+- **Interactive Board:** Click-to-move gameplay with visual feedback
+- **Army Selection:** Choose from themed armies with unique graphics
+- **Setup Phase:** Manual or random piece placement
+- **Game History:** Track completed games and statistics
+
+## 🏗 Architecture
+
+- **Backend:** Node.js + Express + Socket.IO + PostgreSQL + Sequelize
 - **Frontend:** React + styled-components + Socket.IO client
-- **Database:** MongoDB with Mongoose ODM
+- **Database:** PostgreSQL with Sequelize ORM
 - **Authentication:** JWT tokens with bcrypt password hashing
+- **Real-time:** Socket.IO for bidirectional communication
 
-## Development
+## 🎨 Army Themes
+
+Each army contains 40 pieces with identical gameplay mechanics but unique theming:
+
+- **Fantasy:** Dragons, wizards, and magical creatures
+- **Medieval:** Kings, knights, and castle warfare
+- **Sci-Fi:** AI overlords, mechs, and futuristic tech
+- **Post-Apocalyptic:** Wasteland survivors and jury-rigged vehicles
+- **Classic:** Traditional military ranks (Stratego style)
+
+## 🛠 Development
 
 ### Backend Commands
 ```bash
-npm run dev     # Start development server
-npm test        # Run tests
+npm run dev     # Start development server with hot reload
+npm test        # Run test suite
 npm run lint    # Check code style
 ```
 
@@ -92,23 +136,83 @@ npm run lint    # Check code style
 npm start       # Start development server
 npm test        # Run tests
 npm run build   # Build for production
+npm run typecheck # Type checking (if using TypeScript)
 ```
 
-## Game Rules
+### Database Commands
+```bash
+npm run migrate    # Run database migrations
+npm run seed       # Seed initial data
+```
 
-Epoch Battles is inspired by Stratego with these core mechanics:
+## 📚 Game Rules
 
-- **Hidden Identity:** Opponent can't see your piece types until combat
-- **Strategic Combat:** Different units have different combat strengths
-- **Objective:** Capture the opponent's flag to win
-- **Special Units:** Scouts (move multiple spaces), Miners (defuse bombs), Spy (defeats Marshal)
+Epoch Battles follows Stratego-inspired mechanics:
 
-See CLAUDE.md for complete game rules and development plan.
+### Basic Rules
+- **Hidden Identity:** Opponent can't see your unit types until combat
+- **Turn-based:** Home team moves first, then alternating turns
+- **Movement:** Most units move one space, Scouts can move multiple spaces
+- **Combat:** Lower rank number defeats higher rank number
 
-## Contributing
+### Special Units
+- **Flag/Relic/Banner:** Must be captured to win (immobile)
+- **Scout units:** Can move multiple spaces in straight lines
+- **Miner units:** Only units that can safely attack bomb units
+- **Spy/Assassin/Thief:** Weakest unit that can defeat the strongest when attacking
+- **Bomb units:** Immobile traps that destroy attacking units (except miners)
 
-This project follows the development plan outlined in CLAUDE.md. Check the todo list and pick up tasks from the current phase.
+### Win Conditions
+1. Capture opponent's flag
+2. Opponent cannot make any legal moves
+3. Opponent disconnects or forfeits
 
-## License
+## 📁 Project Structure
+
+```
+epoch_battles/
+├── server/              # Backend Node.js application
+│   ├── src/
+│   │   ├── models/      # Database models
+│   │   ├── routes/      # API endpoints
+│   │   ├── services/    # Game logic and business rules
+│   │   ├── socket/      # WebSocket event handlers
+│   │   └── data/        # Game data (armies, maps)
+│   └── package.json
+├── client/              # Frontend React application
+│   ├── src/
+│   │   ├── components/  # React components
+│   │   ├── pages/       # Page components
+│   │   ├── hooks/       # Custom React hooks
+│   │   ├── utils/       # Utility functions
+│   │   └── data/        # Game data and assets
+│   │       ├── armies/  # Army definitions and images
+│   │       └── maps/    # Map definitions
+│   └── package.json
+├── CLAUDE.md           # Detailed project plan and specifications
+└── README.md          # This file
+```
+
+## 🤝 Contributing
+
+This project follows the development plan outlined in CLAUDE.md. 
+
+### Getting Started
+1. Check the project status in CLAUDE.md
+2. Look for open issues or todo items
+3. Follow the coding standards and patterns established
+4. Submit pull requests with clear descriptions
+
+### Code Style
+- Follow existing patterns and conventions
+- Use meaningful variable and function names
+- Add comments for complex game logic
+- Ensure all tests pass before submitting
+
+## 📄 License
 
 MIT License - see LICENSE file for details.
+
+---
+
+For detailed technical specifications, game mechanics, and development roadmap, see [CLAUDE.md](./CLAUDE.md).

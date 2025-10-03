@@ -171,11 +171,24 @@ class MoveProcessor {
       const { placements, isRandom } = setupData;
       let army;
 
+      // Get player's selected army
+      const player = game.players.find(p => p.userId === playerId);
+      const armyId = player?.army || 'default';
+      
+      console.log('🎯 Setup processing:', {
+        playerId,
+        playerColor,
+        armyId,
+        isRandom,
+        placementsCount: placements?.length
+      });
+
       if (isRandom) {
-        army = gameLogic.generateRandomPlacement(playerColor);
+        army = gameLogic.generateRandomPlacement(playerColor, armyId);
       } else {
-        army = this.validatePlacements(placements, playerColor);
+        army = this.validatePlacements(placements, playerColor, armyId);
         if (!army.valid) {
+          console.error('❌ Validation failed:', army.error);
           return { success: false, error: army.error };
         }
         army = army.pieces;
@@ -217,20 +230,25 @@ class MoveProcessor {
     }
   }
 
-  validatePlacements(placements, color) {
+  validatePlacements(placements, color, armyId = 'default') {
     if (!placements || placements.length !== 40) {
       return { valid: false, error: 'Must place exactly 40 pieces' };
     }
 
+    const armyData = gameLogic.loadArmyData(armyId);
     const expectedCounts = {};
-    Object.entries(gameLogic.pieces).forEach(([type, info]) => {
+    Object.entries(armyData.pieces).forEach(([type, info]) => {
       expectedCounts[type] = info.count;
     });
+    
+    console.log('📊 Validating army:', armyId, 'Expected pieces:', expectedCounts);
 
     const actualCounts = {};
     placements.forEach(placement => {
       actualCounts[placement.type] = (actualCounts[placement.type] || 0) + 1;
     });
+    
+    console.log('📊 Received pieces:', actualCounts);
 
     // Validate piece counts
     for (const [type, expectedCount] of Object.entries(expectedCounts)) {
@@ -244,7 +262,7 @@ class MoveProcessor {
 
     // Convert placements to pieces
     const pieces = placements.map((placement, index) => {
-      const pieceInfo = gameLogic.pieces[placement.type];
+      const pieceInfo = armyData.pieces[placement.type];
       return {
         id: `${color}_${placement.type}_${index}`,
         type: placement.type,

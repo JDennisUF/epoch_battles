@@ -53,13 +53,15 @@ const gameEvents = (socket, io) => {
               userId: fromUserId,
               username: fromUser.username,
               color: 'home',
-              isReady: false
+              isReady: false,
+              army: null
             },
             {
               userId: socket.user.id,
               username: socket.user.username,
               color: 'away',
-              isReady: false
+              isReady: false,
+              army: null
             }
           ],
           status: 'setup',
@@ -249,6 +251,57 @@ const gameEvents = (socket, io) => {
     }
   });
 
+  // Handle army selection
+  socket.on('select_army', async (data) => {
+    const { gameId, armyId } = data;
+    
+    try {
+      const game = await Game.findByPk(gameId);
+      if (!game) {
+        socket.emit('army_selection_error', { message: 'Game not found' });
+        return;
+      }
+
+      // Check if user is a player in this game
+      const playerIndex = game.players.findIndex(p => p.userId === socket.user.id);
+      if (playerIndex === -1) {
+        socket.emit('army_selection_error', { message: 'Player not in game' });
+        return;
+      }
+
+      // Validate army selection
+      const validArmies = ['default', 'fantasy', 'medieval', 'sci_fi', 'post_apocalyptic'];
+      if (!validArmies.includes(armyId)) {
+        socket.emit('army_selection_error', { message: 'Invalid army selection' });
+        return;
+      }
+
+      // Update player's army selection
+      const updatedPlayers = [...game.players];
+      updatedPlayers[playerIndex] = {
+        ...updatedPlayers[playerIndex],
+        army: armyId
+      };
+      
+      game.players = updatedPlayers;
+      game.changed('players', true);
+      await game.save();
+
+      // Notify both players of the army selection
+      io.to(`game_${gameId}`).emit('army_selected', {
+        playerId: socket.user.id,
+        armyId,
+        players: game.players
+      });
+
+      console.log(`🎨 Player ${socket.user.username} selected ${armyId} army`);
+      
+    } catch (error) {
+      console.error('Army selection error:', error);
+      socket.emit('army_selection_error', { message: 'Failed to select army' });
+    }
+  });
+
   // Handle random setup request
   socket.on('random_setup', async (data) => {
     const { gameId } = data;
@@ -262,13 +315,16 @@ const gameEvents = (socket, io) => {
         return;
       }
 
-      const playerColor = game.players.find(p => p.userId === socket.user.id)?.color;
+      const player = game.players.find(p => p.userId === socket.user.id);
+      const playerColor = player?.color;
+      const armyId = player?.army || 'default';
+      
       if (!playerColor) {
         socket.emit('setup_error', { message: 'Player not in game' });
         return;
       }
 
-      const randomArmy = gameLogic.generateRandomPlacement(playerColor);
+      const randomArmy = gameLogic.generateRandomPlacement(playerColor, armyId);
       
       socket.emit('random_placement', {
         pieces: randomArmy
