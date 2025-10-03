@@ -144,8 +144,8 @@ def process_army_directory(army_path, sizes, keep_original=True, output_format='
 
 def main():
     parser = argparse.ArgumentParser(description="Optimize Epoch Battles army images")
-    parser.add_argument("--armies-path", type=str, default="client/src/data/armies",
-                       help="Path to armies directory (default: client/src/data/armies)")
+    parser.add_argument("--armies-path", type=str, default="client/public/data/armies",
+                       help="Path to armies directory (default: client/public/data/armies)")
     parser.add_argument("--army", type=str, 
                        help="Specific army to process (e.g., 'tribal', 'sci_fi'). If not specified, processes all armies.")
     parser.add_argument("--keep-originals", action="store_true", default=True,

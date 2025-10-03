@@ -9,7 +9,8 @@
       "canAttack": true,
       "special": "Strongest unit, defeated only by Hacker when attacked",
       "symbol": "\ud83e\udd16",
-      "description": "The ruling artificial intelligence"
+      "description": "The ruling artificial intelligence",
+      "class": "marshal"
     },
     "warlord": {
       "id": "warlord",
@@ -20,7 +21,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\ud83d\udc51",
-      "description": "Commanding officer of the fleet"
+      "description": "Commanding officer of the fleet",
+      "class": "general"
     },
     "battle_commander": {
       "id": "battle_commander",
@@ -31,7 +33,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\u2694",
-      "description": "High-ranking combat strategist"
+      "description": "High-ranking combat strategist",
+      "class": "colonel"
     },
     "mech_pilot": {
       "id": "mech_pilot",
@@ -42,7 +45,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\ud83d\udee1",
-      "description": "Pilots a battle mech"
+      "description": "Pilots a battle mech",
+      "class": "major"
     },
     "star_captain": {
       "id": "star_captain",
@@ -53,7 +57,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\ud83d\ude80",
-      "description": "Commands starship crews"
+      "description": "Commands starship crews",
+      "class": "captain"
     },
     "lieutenant_droid": {
       "id": "lieutenant_droid",
@@ -64,7 +69,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\ud83e\udd16",
-      "description": "Synthetic officer"
+      "description": "Synthetic officer",
+      "class": "lieutenant"
     },
     "enforcer_bot": {
       "id": "enforcer_bot",
@@ -75,7 +81,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\ud83d\udd27",
-      "description": "Combat drone"
+      "description": "Combat drone",
+      "class": "sergeant"
     },
     "engineer": {
       "id": "engineer",
@@ -86,7 +93,8 @@
       "canAttack": true,
       "special": "Only unit that can disable energy mines",
       "symbol": "\ud83d\udee0",
-      "description": "Maintains and disables mines"
+      "description": "Maintains and disables mines",
+      "class": "miner"
     },
     "recon_drone": {
       "id": "recon_drone",
@@ -97,7 +105,8 @@
       "canAttack": true,
       "special": "Can move multiple spaces in a straight line",
       "symbol": "\ud83d\udce1",
-      "description": "Fast surveillance unit"
+      "description": "Fast surveillance unit",
+      "class": "scout"
     },
     "hacker": {
       "id": "hacker",
@@ -108,7 +117,8 @@
       "canAttack": true,
       "special": "Defeats Overlord AI when attacking, weakest otherwise",
       "symbol": "\ud83d\udcbb",
-      "description": "Cyber warrior specialized in AI disruption"
+      "description": "Cyber warrior specialized in AI disruption",
+      "class": "spy"
     },
     "data_core": {
       "id": "data_core",
@@ -119,7 +129,8 @@
       "canAttack": false,
       "special": "Must be captured to win",
       "symbol": "\ud83d\udcbe",
-      "description": "Central storage of vital information"
+      "description": "Central storage of vital information",
+      "class": "flag"
     },
     "plasma_mine": {
       "id": "plasma_mine",
@@ -130,7 +141,8 @@
       "canAttack": false,
       "special": "Destroys any attacking unit except Engineers",
       "symbol": "\ud83d\udca3",
-      "description": "Hidden explosive plasma mine"
+      "description": "Hidden explosive plasma mine",
+      "class": "bomb"
     }
   }
 }

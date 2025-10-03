@@ -9,7 +9,8 @@
       "canAttack": true,
       "special": "Strongest unit, defeated only by Assassin when attacked",
       "symbol": "\u2654",
-      "description": "The ruling monarch, highest authority"
+      "description": "The ruling monarch, highest authority",
+      "class": "marshal"
     },
     "queen": {
       "id": "queen",
@@ -20,7 +21,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\u2655",
-      "description": "Second in command, powerful leader"
+      "description": "Second in command, powerful leader",
+      "class": "general"
     },
     "knight_commander": {
       "id": "knight_commander",
@@ -31,7 +33,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\u2656",
-      "description": "Leader of knights"
+      "description": "Leader of knights",
+      "class": "colonel"
     },
     "knight": {
       "id": "knight",
@@ -42,7 +45,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\u2658",
-      "description": "Armored warrior"
+      "description": "Armored warrior",
+      "class": "major"
     },
     "captain_of_arms": {
       "id": "captain_of_arms",
@@ -53,7 +57,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\u2694",
-      "description": "Commander of soldiers"
+      "description": "Commander of soldiers",
+      "class": "captain"
     },
     "squire": {
       "id": "squire",
@@ -64,7 +69,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\ud83d\udee1",
-      "description": "Assistant to knights"
+      "description": "Assistant to knights",
+      "class": "lieutenant"
     },
     "peasant_militia": {
       "id": "peasant_militia",
@@ -75,7 +81,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\u2692",
-      "description": "Armed commoner"
+      "description": "Armed commoner",
+      "class": "sergeant"
     },
     "sapper": {
       "id": "sapper",
@@ -86,7 +93,8 @@
       "canAttack": true,
       "special": "Only unit that can disable traps",
       "symbol": "\u26cf",
-      "description": "Specialist at removing traps"
+      "description": "Specialist at removing traps",
+      "class": "miner"
     },
     "scout_rider": {
       "id": "scout_rider",
@@ -97,7 +105,8 @@
       "canAttack": true,
       "special": "Can move multiple spaces in a straight line",
       "symbol": "\ud83d\udc0e",
-      "description": "Fast mounted messenger"
+      "description": "Fast mounted messenger",
+      "class": "scout"
     },
     "assassin": {
       "id": "assassin",
@@ -108,7 +117,8 @@
       "canAttack": true,
       "special": "Defeats King when attacking, weakest otherwise",
       "symbol": "\ud83d\udde1",
-      "description": "Secret killer trained for high-profile targets"
+      "description": "Secret killer trained for high-profile targets",
+      "class": "spy"
     },
     "banner": {
       "id": "banner",
@@ -119,7 +129,8 @@
       "canAttack": false,
       "special": "Must be captured to win",
       "symbol": "\ud83c\udff3",
-      "description": "Army\u2019s battle standard"
+      "description": "Army\u2019s battle standard",
+      "class": "flag"
     },
     "trap": {
       "id": "trap",
@@ -130,7 +141,8 @@
       "canAttack": false,
       "special": "Destroys any attacking unit except Sappers",
       "symbol": "\u2720",
-      "description": "Hidden pit or spike trap"
+      "description": "Hidden pit or spike trap",
+      "class": "bomb"
     }
   }
 }

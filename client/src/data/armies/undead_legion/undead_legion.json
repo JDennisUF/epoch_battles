@@ -9,7 +9,8 @@
       "canAttack": true,
       "special": "Defeated only by Vampire Slayer when attacked",
       "symbol": "👑",
-      "description": "Immortal ruler of the undead"
+      "description": "Immortal ruler of the undead",
+      "class": "marshal"
     },
     "vampire_lord": {
       "id": "vampire_lord",
@@ -19,7 +20,8 @@
       "moveable": true,
       "canAttack": true,
       "symbol": "🧛",
-      "description": "Commander of undead forces"
+      "description": "Commander of undead forces",
+      "class": "general"
     },
     "death_knight": {
       "id": "death_knight",
@@ -29,7 +31,8 @@
       "moveable": true,
       "canAttack": true,
       "symbol": "⚔️",
-      "description": "Dark champion of necromantic power"
+      "description": "Dark champion of necromantic power",
+      "class": "colonel"
     },
     "necromancer": {
       "id": "necromancer",
@@ -40,7 +43,8 @@
       "canAttack": true,
       "special": "Can resurrect 1 captured unit once per game",
       "symbol": "📜",
-      "description": "Dark mage of the dead"
+      "description": "Dark mage of the dead",
+      "class": "major"
     },
     "bone_captain": {
       "id": "bone_captain",
@@ -51,7 +55,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "🦴",
-      "description": "Elite skeletal commander"
+      "description": "Elite skeletal commander",
+      "class": "captain"
     },
     "skeleton_warrior": {
       "id": "skeleton_warrior",
@@ -61,7 +66,8 @@
       "moveable": true,
       "canAttack": true,
       "symbol": "💀",
-      "description": "Basic rank-and-file undead"
+      "description": "Basic rank-and-file undead",
+      "class": "lieutenant"
     },
     "zombie_horde": {
       "id": "zombie_horde",
@@ -72,7 +78,8 @@
       "canAttack": true,
       "special": "Slow but overwhelm defenders",
       "symbol": "🧟",
-      "description": "Mindless shambling corpses"
+      "description": "Mindless shambling corpses",
+      "class": "sergeant"
     },
     "ghost": {
       "id": "ghost",
@@ -83,7 +90,8 @@
       "canAttack": true,
       "special": "Can move through any terrain",
       "symbol": "👻",
-      "description": "Ethereal scouts of the undead"
+      "description": "Ethereal scouts of the undead",
+      "class": "miner"
     },
     "shadow_wraith": {
       "id": "shadow_wraith",
@@ -94,7 +102,8 @@
       "canAttack": true,
       "special": "Can move multiple spaces in a straight line",
       "symbol": "🌫️",
-      "description": "Swift shadow that glides across the battlefield"
+      "description": "Swift shadow that glides across the battlefield",
+      "class": "scout"
     },
     "vampire_slayer": {
       "id": "vampire_slayer",
@@ -105,7 +114,8 @@
       "canAttack": true,
       "special": "Defeats Lich King when attacking, weakest otherwise",
       "symbol": "🗡️",
-      "description": "Holy warrior trained to kill the Lich"
+      "description": "Holy warrior trained to kill the Lich",
+      "class": "spy"
     },
     "crypt": {
       "id": "crypt_relic",
@@ -116,7 +126,8 @@
       "canAttack": false,
       "special": "Capture this to win",
       "symbol": "⛪",
-      "description": "Sacred relic buried in the crypt"
+      "description": "Sacred relic buried in the crypt",
+      "class": "flag"
     },
     "grave_trap": {
       "id": "grave_trap",
@@ -127,7 +138,8 @@
       "canAttack": false,
       "special": "Destroys any attacker except Necromancers",
       "symbol": "⚰️",
-      "description": "Cursed tomb that consumes intruders"
+      "description": "Cursed tomb that consumes intruders",
+      "class": "bomb"
     }
   }
 }

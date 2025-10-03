@@ -9,7 +9,8 @@
       "canAttack": true,
       "special": "Strongest unit, defeated only by Thief when attacked",
       "symbol": "\ud83d\udc09",
-      "description": "Ancient ruler of dragons"
+      "description": "Ancient ruler of dragons",
+      "class": "marshal"
     },
     "archmage": {
       "id": "archmage",
@@ -20,7 +21,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\ud83e\ude84",
-      "description": "Master of arcane magic"
+      "description": "Master of arcane magic",
+      "class": "general"
     },
     "paladin": {
       "id": "paladin",
@@ -31,7 +33,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\u2694",
-      "description": "Holy knight of justice"
+      "description": "Holy knight of justice",
+      "class": "colonel"
     },
     "knight": {
       "id": "knight",
@@ -42,7 +45,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\ud83d\udee1",
-      "description": "Armored warrior"
+      "description": "Armored warrior",
+      "class": "major"
     },
     "ranger": {
       "id": "ranger",
@@ -53,7 +57,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\ud83c\udff9",
-      "description": "Archer and woodsman"
+      "description": "Archer and woodsman",
+      "class": "captain"
     },
     "apprentice": {
       "id": "apprentice",
@@ -64,7 +69,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\ud83d\udcdc",
-      "description": "Novice spellcaster"
+      "description": "Novice spellcaster",
+      "class": "lieutenant"
     },
     "warrior": {
       "id": "warrior",
@@ -75,7 +81,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "\u2692",
-      "description": "Skilled fighter"
+      "description": "Skilled fighter",
+      "class": "sergeant"
     },
     "dwarf_miner": {
       "id": "dwarf_miner",
@@ -86,7 +93,8 @@
       "canAttack": true,
       "special": "Only unit that can disable cursed rune stones",
       "symbol": "\u26cf",
-      "description": "Dwarven trap breaker"
+      "description": "Dwarven trap breaker",
+      "class": "miner"
     },
     "scout_hawk": {
       "id": "scout_hawk",
@@ -97,7 +105,8 @@
       "canAttack": true,
       "special": "Can move multiple spaces in a straight line",
       "symbol": "\ud83e\udd85",
-      "description": "Fast flying reconnaissance bird"
+      "description": "Fast flying reconnaissance bird",
+      "class": "scout"
     },
     "thief": {
       "id": "thief",
@@ -108,7 +117,8 @@
       "canAttack": true,
       "special": "Defeats Dragon Lord when attacking, weakest otherwise",
       "symbol": "\ud83d\udde1",
-      "description": "Stealthy rogue skilled in assassination"
+      "description": "Stealthy rogue skilled in assassination",
+      "class": "spy"
     },
     "sacred_relic": {
       "id": "sacred_relic",
@@ -119,7 +129,8 @@
       "canAttack": false,
       "special": "Must be captured to win",
       "symbol": "\ud83d\udcff",
-      "description": "Ancient artifact of immense power"
+      "description": "Ancient artifact of immense power",
+      "class": "flag"
     },
     "cursed_rune": {
       "id": "cursed_rune",
@@ -130,7 +141,8 @@
       "canAttack": false,
       "special": "Destroys any attacking unit except Dwarf Miners",
       "symbol": "\ud83d\udd2e",
-      "description": "Dark magical trap"
+      "description": "Dark magical trap",
+      "class": "bomb"
     }
   }
 }

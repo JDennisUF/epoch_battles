@@ -9,7 +9,8 @@
       "canAttack": true,
       "special": "Supreme leader, only defeated by Gladiator Champion when attacked",
       "symbol": "🏛️",
-      "description": "Ruler of the Roman Empire"
+      "description": "Ruler of the Roman Empire",
+      "class": "marshal"
     },
     "consul": {
       "id": "consul",
@@ -19,7 +20,8 @@
       "moveable": true,
       "canAttack": true,
       "symbol": "👑",
-      "description": "High Roman official and general"
+      "description": "High Roman official and general",
+      "class": "general"
     },
     "general": {
       "id": "general",
@@ -29,7 +31,8 @@
       "moveable": true,
       "canAttack": true,
       "symbol": "⚔️",
-      "description": "Leader of legions"
+      "description": "Leader of legions",
+      "class": "colonel"
     },
     "centurion": {
       "id": "centurion",
@@ -39,17 +42,19 @@
       "moveable": true,
       "canAttack": true,
       "symbol": "🪖",
-      "description": "Commanders of 100 soldiers"
+      "description": "Commanders of 100 soldiers",
+      "class": "major"
     },
-    "legionnaire": {
-      "id": "legionnaire",
-      "name": "Legionnaire",
+    "gladiator_champion": {
+      "id": "gladiator_champion",
+      "name": "Gladiator Champion",
       "rank": 5,
       "count": 4,
       "moveable": true,
       "canAttack": true,
       "symbol": "🛡️",
-      "description": "Core infantry of Rome"
+      "description": "Soldier trained for arena combat",
+      "class": "captain"
     },
     "auxiliary": {
       "id": "auxiliary",
@@ -58,21 +63,22 @@
       "count": 5,
       "moveable": true,
       "canAttack": true,
-      "special": "Fast scout movement across the battlefield",
+      "special": "Non-Roman allied troops",
       "symbol": "🏹",
-      "description": "Light infantry and scouts"
+      "description": "Light infantry",
+      "class": "lieutenant"
     },
-    "gladiator_champion": {
-      "id": "gladiator_champion",
-      "name": "Gladiator Champion",
-      "rank": 10,
-      "count": 1,
+    "praetorian": {
+      "id": "praetorian",
+      "name": "Praetorian",
+      "rank": 7,
+      "count": 4,
       "moveable": true,
       "canAttack": true,
-      "special": "Defeats Caesar when attacking, weakest otherwise",
-      "symbol": "🤺",
-      "description": "Arena champion who can slay even Caesar"
-    },
+      "symbol": "🗡️",
+      "description": "Elite guards of Rome",
+      "class": "sergeant"
+    },    
     "siege_engineer": {
       "id": "siege_engineer",
       "name": "Siege Engineer",
@@ -82,7 +88,32 @@
       "canAttack": true,
       "special": "Can dismantle enemy caltrops",
       "symbol": "🪓",
-      "description": "Builds and destroys siege devices"
+      "description": "Builds and destroys siege devices",
+      "class": "miner"
+    },
+    "explorator": {
+      "id": "explorator",
+      "name": "Explorator",
+      "rank": 9,
+      "count": 8,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Can move multiple spaces in a straight line",
+      "symbol": "🐎",
+      "description": "Swift cavalry scouts of the legion",
+      "class": "scout"
+    },
+    "brutus": {
+      "id": "brutus",
+      "name": "Brutus",
+      "rank": 10,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Defeats Caesar when attacking, weakest otherwise",
+      "symbol": "🤺",
+      "description": "Backstabber who can slay even Caesar",
+      "class": "spy"
     },
     "eagle_standard": {
       "id": "eagle_standard",
@@ -93,7 +124,8 @@
       "canAttack": false,
       "special": "Capture this to win",
       "symbol": "🦅",
-      "description": "Sacred symbol of Rome"
+      "description": "Sacred symbol of Rome",
+      "class": "flag"
     },
     "caltrops": {
       "id": "caltrops",
@@ -104,7 +136,8 @@
       "canAttack": false,
       "special": "Destroys any attacker except Engineers",
       "symbol": "✴️",
-      "description": "Hidden spiked traps"
+      "description": "Hidden spiked traps",
+      "class": "bomb"
     }
   }
 }
