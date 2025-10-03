@@ -4,7 +4,9 @@ Image Optimization Script for Epoch Battles
 Converts 1024x1024 army images to optimized sizes for web use.
 
 Usage:
-    python optimize_images.py
+    python optimize_images.py                    # Process all armies (with confirmation)
+    python optimize_images.py --army tribal     # Process only the tribal army
+    python optimize_images.py --army sci_fi     # Process only the sci-fi army
     
 This will create optimized versions in subdirectories:
 - 64x64/ (for game board pieces)
@@ -144,6 +146,8 @@ def main():
     parser = argparse.ArgumentParser(description="Optimize Epoch Battles army images")
     parser.add_argument("--armies-path", type=str, default="client/src/data/armies",
                        help="Path to armies directory (default: client/src/data/armies)")
+    parser.add_argument("--army", type=str, 
+                       help="Specific army to process (e.g., 'tribal', 'sci_fi'). If not specified, processes all armies.")
     parser.add_argument("--keep-originals", action="store_true", default=True,
                        help="Keep original 1024x1024 images (default: True)")
     parser.add_argument("--format", choices=['png', 'jpg'], default='png',
@@ -191,22 +195,32 @@ def main():
     print(f"📏 Target sizes: {', '.join(f'{name} ({w}x{h})' for name, (w, h) in sizes.items())}")
     print(f"💾 Keep originals: {args.keep_originals}")
     
-    # Find all army directories
-    army_dirs = [d for d in armies_path.iterdir() if d.is_dir() and not d.name.startswith('.')]
-    
-    if not army_dirs:
-        print(f"❌ No army directories found in {armies_path}")
-        sys.exit(1)
-    
-    print(f"\n🔍 Found {len(army_dirs)} army directories:")
-    for army_dir in army_dirs:
-        print(f"   - {army_dir.name}")
-    
-    # Confirm before processing
-    response = input(f"\n❓ Process all armies? (y/N): ").strip().lower()
-    if response not in ['y', 'yes']:
-        print("❌ Cancelled by user")
-        sys.exit(0)
+    # Determine which armies to process
+    if args.army:
+        # Process specific army
+        army_dir = armies_path / args.army
+        if not army_dir.exists() or not army_dir.is_dir():
+            print(f"❌ Army directory not found: {army_dir}")
+            sys.exit(1)
+        army_dirs = [army_dir]
+        print(f"\n🎯 Processing specific army: {args.army}")
+    else:
+        # Find all army directories
+        army_dirs = [d for d in armies_path.iterdir() if d.is_dir() and not d.name.startswith('.')]
+        
+        if not army_dirs:
+            print(f"❌ No army directories found in {armies_path}")
+            sys.exit(1)
+        
+        print(f"\n🔍 Found {len(army_dirs)} army directories:")
+        for army_dir in army_dirs:
+            print(f"   - {army_dir.name}")
+        
+        # Confirm before processing all armies
+        response = input(f"\n❓ Process all armies? (y/N): ").strip().lower()
+        if response not in ['y', 'yes']:
+            print("❌ Cancelled by user")
+            sys.exit(0)
     
     # Process each army
     print("\n🚀 Starting optimization...")

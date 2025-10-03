@@ -63,11 +63,25 @@ const PieceRank = styled.div`
   opacity: 0.8;
 `;
 
+const PieceImage = styled.img`
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+`;
+
 function GameSquare({ 
   x, 
   y, 
   piece, 
   playerColor, 
+  playerArmy,
   isSelected, 
   isValidMove, 
   isWater, 
@@ -81,7 +95,40 @@ function GameSquare({
 
     const symbol = getPieceSymbol(piece);
     const color = piece.color === playerColor ? '#4ade80' : '#ef4444';
+    const isPlayerPiece = piece.color === playerColor;
     
+    // Show image for player's own pieces if we have army data
+    if (isPlayerPiece && playerArmy && piece.type) {
+      const imagePath = `/data/armies/${playerArmy}/64x64/${piece.type}.png`;
+      
+      return (
+        <PieceContainer color={color}>
+          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <PieceImage 
+              src={imagePath} 
+              alt={piece.name || piece.type}
+              onError={(e) => {
+                // Fallback to symbol if image fails to load
+                console.log(`Failed to load image: ${imagePath}`);
+                e.target.style.display = 'none';
+                const symbolElement = e.target.parentNode.querySelector('[data-fallback="symbol"]');
+                if (symbolElement) {
+                  symbolElement.style.display = 'block';
+                }
+              }}
+            />
+            <PieceSymbol data-fallback="symbol" style={{ display: 'none', fontSize: '2.2rem' }}>
+              {symbol}
+            </PieceSymbol>
+          </div>
+          {(piece.revealed || piece.color === playerColor) && piece.rank && (
+            <PieceRank>{piece.rank}</PieceRank>
+          )}
+        </PieceContainer>
+      );
+    }
+    
+    // Show symbol for opponent pieces or when no army data
     return (
       <PieceContainer color={color}>
         <PieceSymbol>{symbol}</PieceSymbol>

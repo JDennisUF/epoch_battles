@@ -64,22 +64,36 @@ const PieceCount = styled.span`
   font-weight: 600;
 `;
 
-function PieceSelector({ pieces, selectedType, onSelectType }) {
+function PieceSelector({ pieces, selectedType, onSelectType, armyData }) {
+  // Use army data pieces if available, otherwise fallback to default PIECES
+  const availablePieces = armyData?.pieces || PIECES;
+  
   const getPieceCount = (type) => {
-    const totalCount = PIECES[type].count;
+    const pieceInfo = availablePieces[type];
+    if (!pieceInfo) {
+      console.warn(`Missing piece info for getPieceCount: ${type}`);
+      return { placed: 0, total: 0, remaining: 0 };
+    }
+    const totalCount = pieceInfo.count;
     const placedCount = pieces.filter(p => p.type === type && p.position).length;
     return { placed: placedCount, total: totalCount, remaining: totalCount - placedCount };
   };
 
-  const pieceTypes = Object.keys(PIECES);
+  const pieceTypes = Object.keys(availablePieces);
 
   return (
     <SelectorContainer>
       {pieceTypes.map(type => {
-        const pieceInfo = PIECES[type];
+        const pieceInfo = availablePieces[type];
         const counts = getPieceCount(type);
         const isSelected = selectedType === type;
         const canSelect = counts.remaining > 0;
+
+        // Safety check to ensure pieceInfo exists
+        if (!pieceInfo) {
+          console.warn(`Missing piece info for type: ${type}`);
+          return null;
+        }
 
         return (
           <PieceButton
@@ -87,11 +101,11 @@ function PieceSelector({ pieces, selectedType, onSelectType }) {
             selected={isSelected}
             disabled={!canSelect}
             onClick={() => canSelect ? onSelectType(isSelected ? null : type) : null}
-            title={pieceInfo.description + (pieceInfo.special ? ` - ${pieceInfo.special}` : '')}
+            title={(pieceInfo.description || 'No description') + (pieceInfo.special ? ` - ${pieceInfo.special}` : '')}
           >
             <PieceInfo>
-              <PieceSymbol>{pieceInfo.symbol}</PieceSymbol>
-              <PieceName>{pieceInfo.name}</PieceName>
+              <PieceSymbol>{pieceInfo.symbol || '?'}</PieceSymbol>
+              <PieceName>{pieceInfo.name || type}</PieceName>
               {pieceInfo.rank && <PieceRank>#{pieceInfo.rank}</PieceRank>}
             </PieceInfo>
             <PieceCount>

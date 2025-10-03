@@ -1,0 +1,110 @@
+{
+  "pieces": {
+    "caesar": {
+      "id": "caesar",
+      "name": "Caesar",
+      "rank": 1,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Supreme leader, only defeated by Gladiator Champion when attacked",
+      "symbol": "🏛️",
+      "description": "Ruler of the Roman Empire"
+    },
+    "consul": {
+      "id": "consul",
+      "name": "Consul",
+      "rank": 2,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "symbol": "👑",
+      "description": "High Roman official and general"
+    },
+    "general": {
+      "id": "general",
+      "name": "General",
+      "rank": 3,
+      "count": 2,
+      "moveable": true,
+      "canAttack": true,
+      "symbol": "⚔️",
+      "description": "Leader of legions"
+    },
+    "centurion": {
+      "id": "centurion",
+      "name": "Centurion",
+      "rank": 4,
+      "count": 3,
+      "moveable": true,
+      "canAttack": true,
+      "symbol": "🪖",
+      "description": "Commanders of 100 soldiers"
+    },
+    "legionnaire": {
+      "id": "legionnaire",
+      "name": "Legionnaire",
+      "rank": 5,
+      "count": 4,
+      "moveable": true,
+      "canAttack": true,
+      "symbol": "🛡️",
+      "description": "Core infantry of Rome"
+    },
+    "auxiliary": {
+      "id": "auxiliary",
+      "name": "Auxiliary",
+      "rank": 6,
+      "count": 5,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Fast scout movement across the battlefield",
+      "symbol": "🏹",
+      "description": "Light infantry and scouts"
+    },
+    "gladiator_champion": {
+      "id": "gladiator_champion",
+      "name": "Gladiator Champion",
+      "rank": 10,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Defeats Caesar when attacking, weakest otherwise",
+      "symbol": "🤺",
+      "description": "Arena champion who can slay even Caesar"
+    },
+    "siege_engineer": {
+      "id": "siege_engineer",
+      "name": "Siege Engineer",
+      "rank": 8,
+      "count": 5,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Can dismantle enemy caltrops",
+      "symbol": "🪓",
+      "description": "Builds and destroys siege devices"
+    },
+    "eagle_standard": {
+      "id": "eagle_standard",
+      "name": "Eagle Standard",
+      "rank": null,
+      "count": 1,
+      "moveable": false,
+      "canAttack": false,
+      "special": "Capture this to win",
+      "symbol": "🦅",
+      "description": "Sacred symbol of Rome"
+    },
+    "caltrops": {
+      "id": "caltrops",
+      "name": "Caltrops",
+      "rank": null,
+      "count": 6,
+      "moveable": false,
+      "canAttack": false,
+      "special": "Destroys any attacker except Engineers",
+      "symbol": "✴️",
+      "description": "Hidden spiked traps"
+    }
+  }
+}

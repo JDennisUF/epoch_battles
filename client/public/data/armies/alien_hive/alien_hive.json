@@ -1,0 +1,90 @@
+{
+  "pieces": {
+    "hive_queen": {
+      "id": "hive_queen",
+      "name": "Hive Queen",
+      "rank": 1,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Supreme alien, defeated only by Brain Leech when attacked",
+      "symbol": "👑",
+      "description": "Mother of the hive"
+    },
+    "broodlord": {
+      "id": "broodlord",
+      "name": "Broodlord",
+      "rank": 2,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "symbol": "🧬",
+      "description": "Hive war leader"
+    },
+    "drone_warrior": {
+      "id": "drone_warrior",
+      "name": "Drone Warrior",
+      "rank": 5,
+      "count": 6,
+      "moveable": true,
+      "canAttack": true,
+      "symbol": "🐜",
+      "description": "Core soldiers of the hive"
+    },
+    "spitter_beast": {
+      "id": "spitter_beast",
+      "name": "Spitter Beast",
+      "rank": 7,
+      "count": 3,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Destroys both itself and target when attacking",
+      "symbol": "🦠",
+      "description": "Acidic ranged beast"
+    },
+    "creeper": {
+      "id": "creeper",
+      "name": "Creeper",
+      "rank": 9,
+      "count": 8,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Moves multiple spaces in straight line",
+      "symbol": "👣",
+      "description": "Fast-moving swarm units"
+    },
+    "brain_leech": {
+      "id": "brain_leech",
+      "name": "Brain Leech",
+      "rank": 10,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Defeats Hive Queen when attacking, weakest otherwise",
+      "symbol": "🧠",
+      "description": "Parasitic psychic assassin"
+    },
+    "egg_cluster": {
+      "id": "egg_cluster",
+      "name": "Egg Cluster",
+      "rank": null,
+      "count": 1,
+      "moveable": false,
+      "canAttack": false,
+      "special": "Must be captured to win",
+      "symbol": "🥚",
+      "description": "Nest core of the alien hive"
+    },
+    "acid_pod": {
+      "id": "acid_pod",
+      "name": "Acid Pod",
+      "rank": null,
+      "count": 6,
+      "moveable": false,
+      "canAttack": false,
+      "special": "Destroys any attacker except Drone Engineers",
+      "symbol": "☢️",
+      "description": "Corrosive pods hidden underground"
+    }
+  }
+}

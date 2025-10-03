@@ -143,7 +143,11 @@ class GameLogic {
     }
 
     // Get movement rules for this piece type
-    const moveRules = this.movementRules[piece.type] || this.movementRules.default;
+    // Check if piece can move multiple spaces based on type or special ability
+    const canMoveMultipleSpaces = piece.type === 'scout' || 
+                                  (piece.special && piece.special.includes('move multiple spaces'));
+    const moveRules = canMoveMultipleSpaces ? this.movementRules.scout : 
+                      (this.movementRules[piece.type] || this.movementRules.default);
     
     // Check movement distance and direction
     const dx = Math.abs(toX - fromX);
@@ -160,8 +164,8 @@ class GameLogic {
       return { valid: false, reason: 'Move too far' };
     }
 
-    // For scouts moving multiple spaces, check path is clear
-    if (piece.type === 'scout' && distance > 1) {
+    // For pieces moving multiple spaces, check path is clear
+    if (canMoveMultipleSpaces && distance > 1) {
       const pathClear = this.isPathClear(board, fromX, fromY, toX, toY);
       if (!pathClear) {
         return { valid: false, reason: 'Path blocked' };
@@ -228,10 +232,34 @@ class GameLogic {
   // Check if a special combat case applies
   matchesSpecialCase(attacker, defender, specialCase) {
     const attackerMatch = specialCase.attacker === '*' || specialCase.attacker === attacker.type;
-    const defenderMatch = specialCase.defender === '*' || specialCase.defender === defender.type;
     
-    if (specialCase.exception && attacker.type === specialCase.exception) {
-      return false;
+    // Handle special piece types dynamically based on their properties
+    let defenderMatch;
+    if (specialCase.defender === 'flag') {
+      defenderMatch = defender.type === 'flag' || defender.special === 'Must be captured to win';
+    } else if (specialCase.defender === 'bomb') {
+      // Match pieces that destroy attackers (bombs/mines)
+      defenderMatch = defender.type === 'bomb' || 
+                     (defender.special && defender.special.includes('Destroys any attacking unit'));
+    } else {
+      defenderMatch = specialCase.defender === '*' || specialCase.defender === defender.type;
+    }
+    
+    // Handle exceptions dynamically - check if attacker has the ability to handle this defender
+    if (specialCase.exception) {
+      // For bombs/mines, check if attacker can defuse/disable them
+      if (specialCase.defender === 'bomb' && defender.special && defender.special.includes('Destroys any attacking unit')) {
+        const canDefuse = attacker.type === specialCase.exception || 
+                         (attacker.special && (
+                           attacker.special.includes('can disable') || 
+                           attacker.special.includes('can defuse')
+                         ));
+        if (canDefuse) {
+          return false; // Exception applies, this special case doesn't match
+        }
+      } else if (attacker.type === specialCase.exception) {
+        return false;
+      }
     }
 
     return attackerMatch && defenderMatch;
@@ -288,7 +316,8 @@ class GameLogic {
       for (let x = 0; x < board[y].length; x++) {
         const piece = board[y][x];
         if (piece && piece.color === color) {
-          if (piece.type === 'flag') {
+          // Check if this is a flag piece (piece that must be captured to win)
+          if (piece.special === 'Must be captured to win' || piece.type === 'flag') {
             hasFlag = true;
           }
           if (piece.moveable) {
@@ -310,8 +339,8 @@ class GameLogic {
   }
 
   // Generate random piece placement for quick setup
-  generateRandomPlacement(color) {
-    const army = this.generateArmy(color);
+  generateRandomPlacement(color, armyId = 'default') {
+    const army = this.generateArmy(color, armyId);
     const setupRows = this.mapData.setupRows[color];
     const positions = [];
 

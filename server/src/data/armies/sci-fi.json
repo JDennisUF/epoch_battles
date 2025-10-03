@@ -121,7 +121,7 @@
       "symbol": "\ud83d\udcbe",
       "description": "Central storage of vital information"
     },
-    "mine": {
+    "plasma_mine": {
       "id": "plasma_mine",
       "name": "Plasma Mine",
       "rank": null,

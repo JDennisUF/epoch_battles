@@ -1,0 +1,133 @@
+{
+  "pieces": {
+    "lich_king": {
+      "id": "lich_king",
+      "name": "Lich King",
+      "rank": 1,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Defeated only by Vampire Slayer when attacked",
+      "symbol": "👑",
+      "description": "Immortal ruler of the undead"
+    },
+    "vampire_lord": {
+      "id": "vampire_lord",
+      "name": "Vampire Lord",
+      "rank": 2,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "symbol": "🧛",
+      "description": "Commander of undead forces"
+    },
+    "death_knight": {
+      "id": "death_knight",
+      "name": "Death Knight",
+      "rank": 3,
+      "count": 2,
+      "moveable": true,
+      "canAttack": true,
+      "symbol": "⚔️",
+      "description": "Dark champion of necromantic power"
+    },
+    "necromancer": {
+      "id": "necromancer",
+      "name": "Necromancer",
+      "rank": 4,
+      "count": 2,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Can resurrect 1 captured unit once per game",
+      "symbol": "📜",
+      "description": "Dark mage of the dead"
+    },
+    "bone_captain": {
+      "id": "bone_captain",
+      "name": "Bone Captain",
+      "rank": 5,
+      "count": 4,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "🦴",
+      "description": "Elite skeletal commander"
+    },
+    "skeleton_warrior": {
+      "id": "skeleton_warrior",
+      "name": "Skeleton Warrior",
+      "rank": 6,
+      "count": 6,
+      "moveable": true,
+      "canAttack": true,
+      "symbol": "💀",
+      "description": "Basic rank-and-file undead"
+    },
+    "zombie_horde": {
+      "id": "zombie_horde",
+      "name": "Zombie Horde",
+      "rank": 7,
+      "count": 3,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Slow but overwhelm defenders",
+      "symbol": "🧟",
+      "description": "Mindless shambling corpses"
+    },
+    "ghost": {
+      "id": "ghost",
+      "name": "Ghost",
+      "rank": 8,
+      "count": 4,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Can move through any terrain",
+      "symbol": "👻",
+      "description": "Ethereal scouts of the undead"
+    },
+    "shadow_wraith": {
+      "id": "shadow_wraith",
+      "name": "Shadow Wraith",
+      "rank": 9,
+      "count": 8,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Can move multiple spaces in a straight line",
+      "symbol": "🌫️",
+      "description": "Swift shadow that glides across the battlefield"
+    },
+    "vampire_slayer": {
+      "id": "vampire_slayer",
+      "name": "Vampire Slayer",
+      "rank": 10,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Defeats Lich King when attacking, weakest otherwise",
+      "symbol": "🗡️",
+      "description": "Holy warrior trained to kill the Lich"
+    },
+    "crypt": {
+      "id": "crypt_relic",
+      "name": "Crypt Relic",
+      "rank": null,
+      "count": 1,
+      "moveable": false,
+      "canAttack": false,
+      "special": "Capture this to win",
+      "symbol": "⛪",
+      "description": "Sacred relic buried in the crypt"
+    },
+    "grave_trap": {
+      "id": "grave_trap",
+      "name": "Grave Trap",
+      "rank": null,
+      "count": 6,
+      "moveable": false,
+      "canAttack": false,
+      "special": "Destroys any attacker except Necromancers",
+      "symbol": "⚰️",
+      "description": "Cursed tomb that consumes intruders"
+    }
+  }
+}

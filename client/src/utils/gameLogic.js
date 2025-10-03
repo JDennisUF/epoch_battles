@@ -47,11 +47,13 @@ export const canMoveTo = (fromX, fromY, toX, toY, board, playerColor) => {
 
   // Distance check
   const distance = Math.max(dx, dy);
-  const maxDistance = piece.type === 'scout' ? 9 : 1;
+  const canMoveMultipleSpaces = piece.type === 'scout' || 
+                                (piece.special && piece.special.includes('move multiple spaces'));
+  const maxDistance = canMoveMultipleSpaces ? 9 : 1;
   if (distance > maxDistance) return false;
 
-  // For scouts, check path is clear
-  if (piece.type === 'scout' && distance > 1) {
+  // For multi-space movers, check path is clear
+  if (canMoveMultipleSpaces && distance > 1) {
     const stepX = toX > fromX ? 1 : toX < fromX ? -1 : 0;
     const stepY = toY > fromY ? 1 : toY < fromY ? -1 : 0;
     

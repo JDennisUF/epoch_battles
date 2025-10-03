@@ -35,12 +35,12 @@ const Board = styled.div`
   background: rgba(255, 255, 255, 0.1);
   padding: 15px;
   border-radius: 10px;
-  width: 700px;
-  height: 700px;
+  width: 900px;
+  height: 900px;
 
   @media (max-width: 768px) {
-    width: 500px;
-    height: 500px;
+    width: 640px;
+    height: 640px;
   }
 `;
 
@@ -416,6 +416,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
             y={y}
             piece={piece}
             playerColor={playerColor}
+            playerArmy={player?.army || selectedArmy}
             isSelected={isSelected}
             isValidMove={isValidMove}
             isWater={isWater}
@@ -586,6 +587,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
               pieces={setupPieces}
               selectedType={selectedPieceType}
               onSelectType={setSelectedPieceType}
+              armyData={armyData}
             />
           </InfoSection>
         )}
