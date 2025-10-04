@@ -130,7 +130,7 @@ Special: Bomb (6) - Immobile, destroys attacking units except Miners
 │   │   │   │   │   ├── medieval.json
 │   │   │   │   │   └── *.png (unit images)
 │   │   │   │   ├── sci_fi/
-│   │   │   │   │   ├── sci-fi.json
+│   │   │   │   │   ├── sci_fi.json
 │   │   │   │   │   └── *.png (unit images)
 │   │   │   │   └── post_apocalyptic/
 │   │   │   │       ├── post-apocalyptic.json

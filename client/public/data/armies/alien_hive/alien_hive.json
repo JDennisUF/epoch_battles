@@ -98,7 +98,7 @@
       "id": "creeper",
       "name": "Creeper",
       "rank": 9,
-      "count": 8,
+      "count": 7,
       "moveable": true,
       "canAttack": true,
       "special": "Moves multiple spaces in straight line",

@@ -2,13 +2,13 @@ const fs = require('fs');
 const path = require('path');
 
 // Load game data from JSON files
-const defaultArmy = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../client/public/data/armies/default.json'), 'utf8'));
+const fantasyArmy = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../client/public/data/armies/fantasy/fantasy.json'), 'utf8'));
 const classicMap = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../client/src/data/maps/classic.json'), 'utf8'));
 const combatData = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/combat.json'), 'utf8'));
 
 class GameLogic {
   constructor() {
-    this.pieces = defaultArmy.pieces;
+    this.pieces = fantasyArmy.pieces;
     this.mapData = classicMap;
     this.combatRules = combatData.combatRules;
     this.movementRules = combatData.movementRules;
@@ -17,54 +17,23 @@ class GameLogic {
 
   // Load army data by ID
   loadArmyData(armyId) {
+    const baseArmyPath = path.join(__dirname, '../../../client/public/data/armies');
+    const armyPath = path.join(baseArmyPath, `${armyId}/${armyId}.json`);
+    
     try {
-      let armyPath;
-      const baseArmyPath = path.join(__dirname, '../../../client/public/data/armies');
-      
-      switch (armyId) {
-        case 'default':
-          armyPath = path.join(baseArmyPath, 'default.json');
-          break;
-        case 'fantasy':
-          armyPath = path.join(baseArmyPath, 'fantasy/fantasy.json');
-          break;
-        case 'medieval':
-          armyPath = path.join(baseArmyPath, 'medieval/medieval.json');
-          break;
-        case 'sci_fi':
-          armyPath = path.join(baseArmyPath, 'sci_fi/sci-fi.json');
-          break;
-        case 'post_apocalyptic':
-          armyPath = path.join(baseArmyPath, 'post_apocalyptic/post-apocalyptic.json');
-          break;
-        case 'tribal':
-          armyPath = path.join(baseArmyPath, 'tribal/tribal.json');
-          break;
-        case 'undead_legion':
-          armyPath = path.join(baseArmyPath, 'undead_legion/undead_legion.json');
-          break;
-        case 'alien_hive':
-          armyPath = path.join(baseArmyPath, 'alien_hive/alien_hive.json');
-          break;
-        case 'roman_legion':
-          armyPath = path.join(baseArmyPath, 'roman_legion/roman_legion.json');
-          break;
-        default:
-          // Fallback to default army
-          armyPath = path.join(baseArmyPath, 'default.json');
-      }
-      
       const armyData = JSON.parse(fs.readFileSync(armyPath, 'utf8'));
       return armyData;
     } catch (error) {
-      console.error(`Failed to load army data for ${armyId}:`, error);
-      // Fallback to default pieces
-      return { pieces: defaultArmy.pieces };
+      throw new Error(`Failed to load army data for '${armyId}': ${error.message}. Expected file: ${armyPath}`);
     }
   }
 
   // Generate starting army for a player
-  generateArmy(color, armyId = 'default') {
+  generateArmy(color, armyId = 'fantasy') {
+    if (!armyId) {
+      throw new Error('Army ID is required');
+    }
+    
     const armyData = this.loadArmyData(armyId);
     const army = [];
     
@@ -321,7 +290,7 @@ class GameLogic {
     }
   }
 
-  // Check if game is won
+  // Check if the specified player has lost (no flag or no movable pieces)
   checkWinCondition(board, color) {
     let hasFlag = false;
     let hasMovablePieces = false;
@@ -341,19 +310,20 @@ class GameLogic {
       }
     }
 
+    // Return true if this player has lost (no flag or no moves)
     if (!hasFlag) {
-      return { gameOver: true, reason: 'flag_captured', winner: color === 'home' ? 'away' : 'home' };
+      return { gameOver: true, reason: 'flag_captured' };
     }
 
     if (!hasMovablePieces) {
-      return { gameOver: true, reason: 'no_moves', winner: color === 'home' ? 'away' : 'home' };
+      return { gameOver: true, reason: 'no_moves' };
     }
 
     return { gameOver: false };
   }
 
   // Generate random piece placement for quick setup
-  generateRandomPlacement(color, armyId = 'default') {
+  generateRandomPlacement(color, armyId = 'fantasy') {
     const army = this.generateArmy(color, armyId);
     const setupRows = this.mapData.setupRows[color];
     const positions = [];
@@ -368,12 +338,33 @@ class GameLogic {
     // Shuffle positions
     const shuffledPositions = positions.sort(() => Math.random() - 0.5);
 
-    // Assign positions to pieces
-    army.forEach((piece, index) => {
-      piece.position = shuffledPositions[index];
+    console.log(`🎲 Generating random placement for ${armyId}:`, {
+      armyPieces: army.length,
+      availablePositions: shuffledPositions.length,
+      color
     });
 
-    return army;
+    // Verify we have enough positions
+    if (army.length > shuffledPositions.length) {
+      console.error(`❌ Not enough positions! Army has ${army.length} pieces but only ${shuffledPositions.length} positions available`);
+      throw new Error(`Not enough positions for army placement. Army: ${army.length}, Positions: ${shuffledPositions.length}`);
+    }
+
+    // Assign positions to pieces
+    army.forEach((piece, index) => {
+      if (index < shuffledPositions.length) {
+        piece.position = shuffledPositions[index];
+      } else {
+        console.error(`❌ No position available for piece ${index}:`, piece);
+        piece.position = null;
+      }
+    });
+
+    // Filter out any pieces without positions
+    const validPieces = army.filter(piece => piece.position !== null);
+    console.log(`✅ Random placement complete: ${validPieces.length}/${army.length} pieces positioned`);
+
+    return validPieces;
   }
 }
 

@@ -62,7 +62,7 @@
       "id": "skeleton_warrior",
       "name": "Skeleton Warrior",
       "rank": 6,
-      "count": 6,
+      "count": 7,
       "moveable": true,
       "canAttack": true,
       "symbol": "💀",
@@ -117,7 +117,7 @@
       "description": "Holy warrior trained to kill the Lich",
       "class": "spy"
     },
-    "crypt": {
+    "crypt_relic": {
       "id": "crypt_relic",
       "name": "Crypt Relic",
       "rank": null,

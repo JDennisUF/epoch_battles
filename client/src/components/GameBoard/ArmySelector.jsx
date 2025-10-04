@@ -160,12 +160,6 @@ const CancelButton = styled(ActionButton)`
 // Army configurations
 const ARMIES = [
   {
-    id: 'default',
-    name: 'Classic Army',
-    description: 'Traditional military units inspired by Stratego',
-    theme: 'military'
-  },
-  {
     id: 'fantasy',
     name: 'Fantasy Realm',
     description: 'Dragons, wizards, and magical creatures',
@@ -234,22 +228,10 @@ function ArmySelector({ onSelectArmy, onCancel, playerColor }) {
       const data = {};
       
       try {
-        // Load default army
-        console.log('Loading default army from:', '/data/armies/default.json');
-        const defaultResponse = await fetch('/data/armies/default.json');
-        
-        if (!defaultResponse.ok) {
-          throw new Error(`HTTP ${defaultResponse.status}: ${defaultResponse.statusText}`);
-        }
-        
-        data.default = await defaultResponse.json();
-        console.log('Default army loaded successfully:', data.default);
-
-        // Load themed armies
-        for (const army of ARMIES.slice(1)) { // Skip default since we already loaded it
+        // Load all themed armies
+        for (const army of ARMIES) {
           try {
-            const filename = army.id === 'sci_fi' ? 'sci-fi' : army.id === 'post_apocalyptic' ? 'post-apocalyptic' : army.id;
-            const url = `/data/armies/${army.id}/${filename}.json`;
+            const url = `/data/armies/${army.id}/${army.id}.json`;
             console.log(`Loading ${army.id} army from:`, url);
             
             const response = await fetch(url);
@@ -305,21 +287,32 @@ function ArmySelector({ onSelectArmy, onCancel, playerColor }) {
 
     // Get a representative sample of units for preview
     const units = Object.values(army.pieces || {});
+    
+    // Try to find key unit types with more flexible matching
     const highestRank = units.find(u => u.rank === 1);
-    const flag = units.find(u => !u.rank && u.special?.includes('win'));
-    const bomb = units.find(u => !u.rank && u.special?.includes('attacking'));
-    const scout = units.find(u => u.special?.includes('multiple spaces'));
-    const spy = units.find(u => u.rank === 10);
+    const flag = units.find(u => u.class === 'flag' || (!u.rank && (u.special?.includes('win') || u.special?.includes('captured'))));
+    const bomb = units.find(u => u.class === 'bomb' || (!u.rank && (u.special?.includes('attacking') || u.special?.includes('Destroys'))));
+    const scout = units.find(u => u.class === 'scout' || u.special?.includes('multiple spaces') || u.special?.includes('straight line'));
+    const spy = units.find(u => u.class === 'spy' || u.rank === 10);
 
-    return [highestRank, flag, bomb, scout, spy].filter(Boolean).slice(0, 5);
+    // Get any additional interesting units to fill out preview
+    const previewUnits = [highestRank, flag, bomb, scout, spy].filter(Boolean);
+    
+    // If we don't have 5 units yet, add more high-value or interesting units
+    if (previewUnits.length < 5) {
+      const additionalUnits = units
+        .filter(u => !previewUnits.includes(u))
+        .filter(u => u.rank && u.rank <= 5) // High-ranking units
+        .sort((a, b) => a.rank - b.rank); // Sort by rank
+      
+      previewUnits.push(...additionalUnits.slice(0, 5 - previewUnits.length));
+    }
+
+    return previewUnits.slice(0, 5);
   };
 
   const getImagePath = (armyId, unitId) => {
     // Use 128x128 images for the preview
-    if (armyId === 'default') {
-      // Default army doesn't have images, use emoji fallback
-      return null;
-    }
     return `/data/armies/${armyId}/128x128/${unitId}.png`;
   };
 
@@ -357,19 +350,15 @@ function ArmySelector({ onSelectArmy, onCancel, playerColor }) {
                 <UnitsPreview>
                   {previewUnits.map((unit, index) => (
                     <UnitPreview key={unit.id || index}>
-                      {army.id === 'default' ? (
-                        <UnitEmoji>{unit.symbol}</UnitEmoji>
-                      ) : (
-                        <UnitImage 
-                          src={getImagePath(army.id, unit.id)}
-                          alt={unit.name}
-                          onError={(e) => {
-                            // Fallback to emoji if image fails to load
-                            e.target.style.display = 'none';
-                            e.target.parentNode.innerHTML = `<div style="font-size: 1.2rem;">${unit.symbol}</div>`;
-                          }}
-                        />
-                      )}
+                      <UnitImage 
+                        src={getImagePath(army.id, unit.id)}
+                        alt={unit.name}
+                        onError={(e) => {
+                          // Fallback to emoji if image fails to load
+                          e.target.style.display = 'none';
+                          e.target.parentNode.innerHTML = `<div style="font-size: 1.2rem;">${unit.symbol}</div>`;
+                        }}
+                      />
                       {unit.count > 1 && <UnitCount>{unit.count}</UnitCount>}
                     </UnitPreview>
                   ))}

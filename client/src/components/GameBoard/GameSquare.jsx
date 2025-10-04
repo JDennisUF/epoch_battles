@@ -82,6 +82,7 @@ function GameSquare({
   piece, 
   playerColor, 
   playerArmy,
+  opponentArmy,
   isSelected, 
   isValidMove, 
   isWater, 
@@ -128,7 +129,41 @@ function GameSquare({
       );
     }
     
-    // Show symbol for opponent pieces or when no army data
+    // Show army icon for hidden opponent pieces, or symbol if revealed/no army data
+    if (!isPlayerPiece && !piece.revealed && opponentArmy && piece.type === 'hidden') {
+      console.log('🎭 Rendering army icon for opponent piece:', { 
+        piece, 
+        opponentArmy, 
+        isPlayerPiece, 
+        revealed: piece.revealed 
+      });
+      const armyIconPath = `/data/armies/${opponentArmy}/${opponentArmy}.png`;
+      
+      return (
+        <PieceContainer color={color}>
+          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <PieceImage 
+              src={armyIconPath} 
+              alt={`${opponentArmy} army piece`}
+              onError={(e) => {
+                // Fallback to symbol if army icon fails to load
+                console.log(`Failed to load army icon: ${armyIconPath}`);
+                e.target.style.display = 'none';
+                const symbolElement = e.target.parentNode.querySelector('[data-fallback="symbol"]');
+                if (symbolElement) {
+                  symbolElement.style.display = 'block';
+                }
+              }}
+            />
+            <PieceSymbol data-fallback="symbol" style={{ display: 'none', fontSize: '2.2rem' }}>
+              {symbol}
+            </PieceSymbol>
+          </div>
+        </PieceContainer>
+      );
+    }
+    
+    // Show symbol for revealed pieces or when no army data
     return (
       <PieceContainer color={color}>
         <PieceSymbol>{symbol}</PieceSymbol>

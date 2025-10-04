@@ -54,6 +54,7 @@ const gameEvents = (socket, io) => {
               username: fromUser.username,
               color: 'home',
               isReady: false,
+              piecesPlaced: false,
               army: null
             },
             {
@@ -61,6 +62,7 @@ const gameEvents = (socket, io) => {
               username: socket.user.username,
               color: 'away',
               isReady: false,
+              piecesPlaced: false,
               army: null
             }
           ],
@@ -137,7 +139,7 @@ const gameEvents = (socket, io) => {
       socket.emit('game_joined', {
         id: game.id,
         players: game.players,
-        gameState: game.gameState,
+        gameState: game.getGameStateForPlayer(socket.user.id),
         status: game.status,
         timeControl: game.timeControl,
         chatMessages: game.chatMessages,
@@ -158,11 +160,11 @@ const gameEvents = (socket, io) => {
     socket.emit('game_left');
   });
 
-  // Handle piece setup during game setup phase
-  socket.on('setup_pieces', async (data) => {
+  // Handle piece placement during game setup phase
+  socket.on('place_pieces', async (data) => {
     const { gameId, placements, isRandom } = data;
     
-    console.log('📦 Received setup_pieces event:', {
+    console.log('📦 Received place_pieces event:', {
       gameId,
       playerId: socket.user.id,
       playerUsername: socket.user.username,
@@ -172,16 +174,56 @@ const gameEvents = (socket, io) => {
     
     try {
       const moveProcessor = require('../services/moveProcessor');
-      const result = await moveProcessor.processSetup(gameId, socket.user.id, { placements, isRandom });
+      const result = await moveProcessor.placePieces(gameId, socket.user.id, { placements, isRandom });
       
-      console.log('📦 Setup processing result:', result);
+      console.log('📦 Piece placement result:', result);
       
       if (result.success) {
-        // Notify both players of the setup
-        io.to(`game_${gameId}`).emit('setup_updated', {
+        // Notify both players of the piece placement
+        const game = await Game.findByPk(gameId);
+        game.players.forEach(player => {
+          const playerSockets = [...io.sockets.sockets.values()].filter(s => s.user?.id === player.userId);
+          playerSockets.forEach(playerSocket => {
+            playerSocket.emit('pieces_placed', {
+              playerId: socket.user.id,
+              gameState: game.getGameStateForPlayer(player.userId)
+            });
+          });
+        });
+      } else {
+        console.error('❌ Piece placement failed:', result.error);
+        socket.emit('setup_error', { message: result.error });
+      }
+      
+    } catch (error) {
+      console.error('💥 Piece placement error:', error);
+      socket.emit('setup_error', { message: 'Failed to place pieces' });
+    }
+  });
+
+  // Handle setup confirmation
+  socket.on('confirm_setup', async (data) => {
+    const { gameId } = data;
+    
+    console.log('✅ Received confirm_setup event:', {
+      gameId,
+      playerId: socket.user.id,
+      playerUsername: socket.user.username
+    });
+    
+    try {
+      const moveProcessor = require('../services/moveProcessor');
+      const result = await moveProcessor.confirmSetup(gameId, socket.user.id);
+      
+      console.log('✅ Setup confirmation result:', result);
+      
+      if (result.success) {
+        // Notify both players of the setup confirmation
+        const game = await Game.findByPk(gameId);
+        io.to(`game_${gameId}`).emit('setup_confirmed', {
           playerId: socket.user.id,
-          ready: result.ready,
-          gameState: result.gameState
+          players: game.players,
+          gameState: game.gameState
         });
 
         if (result.ready) {
@@ -192,28 +234,24 @@ const gameEvents = (socket, io) => {
             currentPlayer: result.gameState.currentPlayer
           });
           
-          // Debug: Check who's in the room
-          const room = io.sockets.adapter.rooms.get(`game_${gameId}`);
-          console.log('🏠 Sockets in game room:', room ? room.size : 0);
-          if (room) {
-            room.forEach(socketId => {
-              const socket = io.sockets.sockets.get(socketId);
-              console.log('👤 Socket in room:', socket?.user?.username || 'unknown');
+          // Send personalized game state to each player
+          game.players.forEach(player => {
+            const playerSockets = [...io.sockets.sockets.values()].filter(s => s.user?.id === player.userId);
+            playerSockets.forEach(playerSocket => {
+              playerSocket.emit('game_started', {
+                gameState: game.getGameStateForPlayer(player.userId)
+              });
             });
-          }
-          
-          io.to(`game_${gameId}`).emit('game_started', {
-            gameState: result.gameState
           });
         }
       } else {
-        console.error('❌ Setup processing failed:', result.error);
+        console.error('❌ Setup confirmation failed:', result.error);
         socket.emit('setup_error', { message: result.error });
       }
       
     } catch (error) {
-      console.error('💥 Setup error:', error);
-      socket.emit('setup_error', { message: 'Failed to process setup' });
+      console.error('💥 Setup confirmation error:', error);
+      socket.emit('setup_error', { message: 'Failed to confirm setup' });
     }
   });
 
@@ -226,11 +264,17 @@ const gameEvents = (socket, io) => {
       const result = await moveProcessor.processMove(gameId, socket.user.id, { fromX, fromY, toX, toY });
       
       if (result.success) {
-        // Notify both players of the move
-        io.to(`game_${gameId}`).emit('move_made', {
-          playerId: socket.user.id,
-          moveResult: result.result,
-          gameState: result.gameState
+        // Notify both players of the move with personalized game state
+        const game = await Game.findByPk(gameId);
+        game.players.forEach(player => {
+          const playerSockets = [...io.sockets.sockets.values()].filter(s => s.user?.id === player.userId);
+          playerSockets.forEach(playerSocket => {
+            playerSocket.emit('move_made', {
+              playerId: socket.user.id,
+              moveResult: result.result,
+              gameState: game.getGameStateForPlayer(player.userId)
+            });
+          });
         });
 
         if (result.result.gameWon) {
@@ -270,7 +314,7 @@ const gameEvents = (socket, io) => {
       }
 
       // Validate army selection
-      const validArmies = ['default', 'fantasy', 'medieval', 'sci_fi', 'post_apocalyptic', 'tribal', 'undead_legion', 'alien_hive', 'roman_legion'];
+      const validArmies = ['fantasy', 'medieval', 'sci_fi', 'post_apocalyptic', 'tribal', 'undead_legion', 'alien_hive', 'roman_legion'];
       if (!validArmies.includes(armyId)) {
         socket.emit('army_selection_error', { message: 'Invalid army selection' });
         return;
@@ -317,7 +361,7 @@ const gameEvents = (socket, io) => {
 
       const player = game.players.find(p => p.userId === socket.user.id);
       const playerColor = player?.color;
-      const armyId = player?.army || 'default';
+      const armyId = player?.army || 'fantasy';
       
       if (!playerColor) {
         socket.emit('setup_error', { message: 'Player not in game' });

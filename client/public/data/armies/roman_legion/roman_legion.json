@@ -95,7 +95,7 @@
       "id": "explorator",
       "name": "Explorator",
       "rank": 9,
-      "count": 8,
+      "count": 7,
       "moveable": true,
       "canAttack": true,
       "special": "Can move multiple spaces in a straight line",

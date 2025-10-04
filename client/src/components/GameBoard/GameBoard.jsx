@@ -133,6 +133,9 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
   const [armyData, setArmyData] = useState(null);
   const [showArmySelector, setShowArmySelector] = useState(false);
   const [localPlayers, setLocalPlayers] = useState(players);
+  const [piecesPlaced, setPiecesPlaced] = useState(false);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const { socket } = useSocket();
   const { user } = useAuth();
 
@@ -145,7 +148,18 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
   useEffect(() => {
     if (!socket) return;
 
-    const handleSetupUpdated = (data) => {
+    const handlePiecesPlaced = (data) => {
+      console.log('Pieces placed event received:', data);
+      setGameState(data.gameState);
+    };
+
+    const handleSetupConfirmed = (data) => {
+      console.log('Setup confirmed event received:', data);
+      if (data.playerId === user.id) {
+        setIsPlayerReady(true);
+        setShowConfirmDialog(false);
+      }
+      setLocalPlayers(data.players);
       setGameState(data.gameState);
     };
 
@@ -157,6 +171,9 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
       setGameState(data.gameState);
       setSetupPieces([]);
       setSelectedPieceType(null);
+      setPiecesPlaced(false);
+      setIsPlayerReady(false);
+      setShowConfirmDialog(false);
     };
 
     const handleMoveMade = (data) => {
@@ -181,11 +198,13 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
       if (piecesWithPositions.length === 40) {
         console.log('All pieces positioned, auto-confirming random setup');
         setTimeout(() => {
-          const placements = data.pieces.map(piece => ({
-            type: piece.type,
-            x: piece.position.x,
-            y: piece.position.y
-          }));
+          const placements = data.pieces
+            .filter(piece => piece.position && piece.position.x !== undefined && piece.position.y !== undefined)
+            .map(piece => ({
+              type: piece.type,
+              x: piece.position.x,
+              y: piece.position.y
+            }));
           
           socket.emit('setup_pieces', {
             gameId,
@@ -218,7 +237,8 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
       setShowArmySelector(true);
     };
 
-    socket.on('setup_updated', handleSetupUpdated);
+    socket.on('pieces_placed', handlePiecesPlaced);
+    socket.on('setup_confirmed', handleSetupConfirmed);
     socket.on('game_started', handleGameStarted);
     socket.on('move_made', handleMoveMade);
     socket.on('game_finished', handleGameFinished);
@@ -228,7 +248,8 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     socket.on('army_selection_error', handleArmySelectionError);
 
     return () => {
-      socket.off('setup_updated', handleSetupUpdated);
+      socket.off('pieces_placed', handlePiecesPlaced);
+      socket.off('setup_confirmed', handleSetupConfirmed);
       socket.off('game_started', handleGameStarted);
       socket.off('move_made', handleMoveMade);
       socket.off('game_finished', handleGameFinished);
@@ -313,58 +334,73 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
   };
 
   const handleRandomSetup = () => {
+    // Clear any manually placed pieces
+    setSetupPieces(prev => prev.map(piece => ({ ...piece, position: null })));
+    // Generate random setup
     socket.emit('random_setup', { gameId });
   };
 
   const handleConfirmSetup = () => {
-    const placements = setupPieces
-      .filter(piece => piece.position)
-      .map(piece => ({
-        type: piece.type,
-        x: piece.position.x,
-        y: piece.position.y
-      }));
-
-    console.log('Setup pieces:', setupPieces.length, 'Placed:', placements.length);
-    console.log('Placements:', placements);
-
-    if (placements.length !== 40) {
-      alert(`Please place all 40 pieces before confirming setup! You have placed ${placements.length}/40 pieces.`);
-      return;
-    }
-
-    console.log('Emitting setup_pieces event with gameId:', gameId);
-    socket.emit('setup_pieces', {
-      gameId,
-      placements,
-      isRandom: false
-    });
-  };
-
-  const handleRandomConfirm = () => {
-    // Filter out pieces without positions and create placements
-    const placementsWithPositions = setupPieces
-      .filter(piece => piece.position && piece.position.x !== undefined && piece.position.y !== undefined)
-      .map(piece => ({
-        type: piece.type,
-        x: piece.position.x,
-        y: piece.position.y
-      }));
+    // Check if pieces are placed manually
+    const placedPieces = setupPieces.filter(piece => piece.position);
     
-    console.log('Random confirm - pieces with positions:', placementsWithPositions.length, '/', setupPieces.length);
-    
-    if (placementsWithPositions.length !== 40) {
-      console.error('Not all pieces have positions for random setup');
-      alert(`Random placement incomplete: ${placementsWithPositions.length}/40 pieces have positions`);
+    if (placedPieces.length > 0 && placedPieces.length < 40) {
+      alert(`Please place all 40 pieces before confirming setup! You have placed ${placedPieces.length}/40 pieces.`);
       return;
     }
     
-    socket.emit('setup_pieces', {
-      gameId,
-      placements: placementsWithPositions,
-      isRandom: true
-    });
+    // If no pieces are placed, we need to show the confirmation dialog
+    // If pieces are already placed, we can confirm directly
+    if (placedPieces.length === 40) {
+      // Pieces already placed manually, just confirm
+      finalizeSetup(false);
+    } else {
+      // No pieces placed, show confirmation dialog
+      setShowConfirmDialog(true);
+    }
   };
+
+  const handleConfirmOK = () => {
+    finalizeSetup(true); // true = use random placement
+  };
+
+  const handleConfirmCancel = () => {
+    setShowConfirmDialog(false);
+  };
+
+  const finalizeSetup = (useRandom) => {
+    if (useRandom) {
+      // Use random placement and confirm
+      socket.emit('place_pieces', {
+        gameId,
+        placements: [], // Empty placements will trigger random in server
+        isRandom: true
+      });
+    } else {
+      // Use manually placed pieces
+      const placements = setupPieces
+        .filter(piece => piece.position)
+        .map(piece => ({
+          type: piece.type,
+          x: piece.position.x,
+          y: piece.position.y
+        }));
+
+      socket.emit('place_pieces', {
+        gameId,
+        placements,
+        isRandom: false
+      });
+    }
+
+    // Then confirm setup
+    setTimeout(() => {
+      socket.emit('confirm_setup', { gameId });
+      setShowConfirmDialog(false);
+    }, 100);
+  };
+
+
 
   // Sync local players with props
   useEffect(() => {
@@ -392,6 +428,12 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
 
   const renderBoard = () => {
     const squares = [];
+    console.log('🎮 Rendering board with gameState:', { 
+      opponentArmy: gameState?.opponentArmy, 
+      phase: gamePhase, 
+      playerColor 
+    });
+    
     for (let y = 0; y < 10; y++) {
       for (let x = 0; x < 10; x++) {
         let piece = null;
@@ -417,6 +459,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
             piece={piece}
             playerColor={playerColor}
             playerArmy={player?.army || selectedArmy}
+            opponentArmy={gameState?.opponentArmy}
             isSelected={isSelected}
             isValidMove={isValidMove}
             isWater={isWater}
@@ -504,7 +547,10 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
           <InfoTitle>Players</InfoTitle>
           {localPlayers.map(player => (
             <PlayerInfo key={player.userId} color={player.color === 'home' ? '#3b82f6' : '#ef4444'}>
-              <span>{player.username} ({player.color === 'home' ? 'Home' : 'Away'})</span>
+              <span>
+                {player.username} ({player.color === 'home' ? 'Home' : 'Away'})
+                {gamePhase === 'setup' && player.isReady && ' ✓'}
+              </span>
               <span>{player.color === playerColor ? '(You)' : ''}</span>
             </PlayerInfo>
           ))}
@@ -547,18 +593,37 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
         
         {gamePhase === 'setup' && (
           <div>
-            <ActionButton onClick={handleRandomSetup}>
-              Random Setup
-            </ActionButton>
-            <ActionButton 
-              onClick={setupPieces.every(p => p.position) ? handleConfirmSetup : handleRandomConfirm}
-              disabled={setupPieces.length === 0}
-            >
-              {setupPieces.every(p => p.position) ? 'Confirm Setup' : 'Confirm Random'}
-            </ActionButton>
-            <div style={{ marginTop: '10px', fontSize: '0.9rem', textAlign: 'center' }}>
-              Pieces placed: {setupPieces.filter(p => p.position).length}/40
-            </div>
+            {!isPlayerReady && !showConfirmDialog && (
+              <>
+                <ActionButton onClick={handleRandomSetup}>
+                  Random Setup
+                </ActionButton>
+                <ActionButton onClick={handleConfirmSetup}>
+                  Confirm Setup
+                </ActionButton>
+                <div style={{ marginTop: '10px', fontSize: '0.9rem', textAlign: 'center' }}>
+                  Pieces placed: {setupPieces.filter(p => p.position).length}/40
+                </div>
+              </>
+            )}
+            {showConfirmDialog && (
+              <>
+                <ActionButton onClick={handleConfirmOK}>
+                  OK (Use Random Setup)
+                </ActionButton>
+                <CancelButton onClick={handleConfirmCancel}>
+                  Cancel
+                </CancelButton>
+                <div style={{ marginTop: '10px', fontSize: '0.9rem', textAlign: 'center', color: '#fbbf24' }}>
+                  No pieces placed manually. Confirm to use random setup?
+                </div>
+              </>
+            )}
+            {isPlayerReady && (
+              <div style={{ marginTop: '10px', fontSize: '0.9rem', textAlign: 'center', color: '#4ade80' }}>
+                ✓ Setup confirmed! Waiting for opponent...
+              </div>
+            )}
           </div>
         )}
       </BoardWrapper>
@@ -574,7 +639,10 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
           <InfoTitle>Players</InfoTitle>
           {localPlayers.map(player => (
             <PlayerInfo key={player.userId} color={player.color === 'home' ? '#3b82f6' : '#ef4444'}>
-              <span>{player.username} ({player.color === 'home' ? 'Home' : 'Away'})</span>
+              <span>
+                {player.username} ({player.color === 'home' ? 'Home' : 'Away'})
+                {gamePhase === 'setup' && player.isReady && ' ✓'}
+              </span>
               <span>{player.color === playerColor ? '(You)' : ''}</span>
             </PlayerInfo>
           ))}

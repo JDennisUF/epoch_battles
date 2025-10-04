@@ -74,20 +74,7 @@ class MoveProcessor {
       movingPiece.revealed = true;
       targetPiece.revealed = true;
 
-      if (combatResult.result === 'game_won') {
-        // Flag captured!
-        board[toY][toX] = movingPiece;
-        board[fromY][fromX] = null;
-        
-        game.gameState.phase = 'finished';
-        game.gameState.winner = playerColor;
-        game.status = 'finished';
-        game.finishedAt = new Date();
-
-        moveResult.gameWon = true;
-        moveResult.winner = playerColor;
-
-      } else if (combatResult.result === 'attacker_wins') {
+      if (combatResult.result === 'attacker_wins') {
         // Attacker wins, moves to target square
         board[toY][toX] = movingPiece;
         board[fromY][fromX] = null;
@@ -113,17 +100,35 @@ class MoveProcessor {
       movingPiece.position = { x: toX, y: toY };
     }
 
-    // Check for win conditions (if game not already won)
-    if (game.gameState.phase === 'playing') {
-      const winCheck = gameLogic.checkWinCondition(board, playerColor);
-      if (winCheck.gameOver) {
+    // Check for flag capture first
+    if (game.gameState.phase === 'playing' && targetPiece) {
+      // Check if a flag was captured in this move
+      const flagCaptured = this.isFlagPiece(targetPiece) && combatResult.result === 'attacker_wins';
+      if (flagCaptured) {
         game.gameState.phase = 'finished';
-        game.gameState.winner = winCheck.winner;
+        game.gameState.winner = playerColor;
         game.status = 'finished';
         game.finishedAt = new Date();
         
         moveResult.gameWon = true;
-        moveResult.winner = winCheck.winner;
+        moveResult.winner = playerColor;
+        moveResult.winReason = 'flag_captured';
+      }
+    }
+
+    // Check for other win conditions (if game not already won)
+    if (game.gameState.phase === 'playing') {
+      // Check if the opponent has lost (no flag or no movable pieces)
+      const opponentColor = playerColor === 'home' ? 'away' : 'home';
+      const winCheck = gameLogic.checkWinCondition(board, opponentColor);
+      if (winCheck.gameOver) {
+        game.gameState.phase = 'finished';
+        game.gameState.winner = playerColor; // The player who made the move wins
+        game.status = 'finished';
+        game.finishedAt = new Date();
+        
+        moveResult.gameWon = true;
+        moveResult.winner = playerColor;
         moveResult.winReason = winCheck.reason;
       }
     }
@@ -230,6 +235,143 @@ class MoveProcessor {
     }
   }
 
+  async placePieces(gameId, playerId, setupData) {
+    console.log('🔧 PlacePieces called:', { gameId, playerId, setupData });
+    
+    try {
+      const game = await Game.findByPk(gameId);
+      if (!game) {
+        console.log('❌ Game not found:', gameId);
+        return { success: false, error: 'Game not found' };
+      }
+
+      const playerColor = game.players.find(p => p.userId === playerId)?.color;
+      console.log('🎨 Player color:', playerColor, 'for user:', playerId);
+      
+      if (!playerColor) {
+        return { success: false, error: 'Player not in game' };
+      }
+
+      console.log('🎮 Game phase:', game.gameState.phase);
+      if (game.gameState.phase !== 'setup') {
+        return { success: false, error: 'Game not in setup phase' };
+      }
+
+      // Process piece placements
+      const { placements, isRandom } = setupData;
+      let army;
+
+      // Get player's selected army
+      const player = game.players.find(p => p.userId === playerId);
+      const armyId = player?.army || 'default';
+      
+      console.log('🎯 Piece placement processing:', {
+        playerId,
+        playerColor,
+        armyId,
+        isRandom,
+        placementsCount: placements?.length
+      });
+
+      // If isRandom is true OR placements is empty, use random placement
+      if (isRandom || !placements || placements.length === 0) {
+        army = gameLogic.generateRandomPlacement(playerColor, armyId);
+      } else {
+        army = this.validatePlacements(placements, playerColor, armyId);
+        if (!army.valid) {
+          console.error('❌ Validation failed:', army.error);
+          return { success: false, error: army.error };
+        }
+        army = army.pieces;
+      }
+
+      // Place pieces on board
+      const board = game.gameState.board;
+      army.forEach(piece => {
+        board[piece.position.y][piece.position.x] = piece;
+      });
+
+      // Mark player as having placed pieces by creating a new players array
+      const updatedPlayers = game.players.map(p => 
+        p.userId === playerId ? { ...p, piecesPlaced: true } : p
+      );
+      game.players = updatedPlayers;
+
+      game.gameState.board = board;
+      game.changed('gameState', true);
+      game.changed('players', true);
+      await game.save();
+
+      return {
+        success: true,
+        gameState: game.gameState
+      };
+
+    } catch (error) {
+      console.error('Piece placement error:', error);
+      return { success: false, error: 'Internal server error' };
+    }
+  }
+
+  async confirmSetup(gameId, playerId) {
+    console.log('✅ ConfirmSetup called:', { gameId, playerId });
+    
+    try {
+      const game = await Game.findByPk(gameId);
+      if (!game) {
+        console.log('❌ Game not found:', gameId);
+        return { success: false, error: 'Game not found' };
+      }
+
+      const playerColor = game.players.find(p => p.userId === playerId)?.color;
+      console.log('🎨 Player color:', playerColor, 'for user:', playerId);
+      
+      if (!playerColor) {
+        return { success: false, error: 'Player not in game' };
+      }
+
+      console.log('🎮 Game phase:', game.gameState.phase);
+      if (game.gameState.phase !== 'setup') {
+        return { success: false, error: 'Game not in setup phase' };
+      }
+
+      // Check if player has placed pieces
+      const player = game.players.find(p => p.userId === playerId);
+      if (!player.piecesPlaced) {
+        return { success: false, error: 'Must place pieces before confirming setup' };
+      }
+
+      // Mark player as ready by creating a new players array
+      const updatedPlayers = game.players.map(p => 
+        p.userId === playerId ? { ...p, isReady: true } : p
+      );
+      game.players = updatedPlayers;
+
+      // Check if both players are ready
+      const allPlayersReady = updatedPlayers.every(p => p.isReady);
+      if (allPlayersReady) {
+        game.gameState.phase = 'playing';
+        game.status = 'active';
+      }
+
+      game.changed('players', true);
+      if (allPlayersReady) {
+        game.changed('gameState', true);
+      }
+      await game.save();
+
+      return {
+        success: true,
+        gameState: game.gameState,
+        ready: allPlayersReady
+      };
+
+    } catch (error) {
+      console.error('Setup confirmation error:', error);
+      return { success: false, error: 'Internal server error' };
+    }
+  }
+
   validatePlacements(placements, color, armyId = 'default') {
     if (!placements || placements.length !== 40) {
       return { valid: false, error: 'Must place exactly 40 pieces' };
@@ -279,6 +421,12 @@ class MoveProcessor {
     });
 
     return { valid: true, pieces };
+  }
+
+  // Helper method to check if a piece is a flag
+  isFlagPiece(piece) {
+    return piece.type === 'flag' || 
+           (piece.special && piece.special.includes('Must be captured to win'));
   }
 }
 

@@ -47,8 +47,8 @@
       {
         "attacker": "*",
         "defender": "flag",
-        "result": "game_won",
-        "description": "Capturing the flag wins the game"
+        "result": "attacker_wins",
+        "description": "Flag is captured (game will end after this move)"
       }
     ]
   },

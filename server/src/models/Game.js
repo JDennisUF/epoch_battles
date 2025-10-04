@@ -75,6 +75,10 @@ Game.prototype.getGameStateForPlayer = function(playerId) {
     opponentColor: playerColor === 'home' ? 'away' : 'home'
   };
 
+  // Add army information for both players
+  const opponent = this.players.find(p => p.userId !== playerId);
+  gameState.opponentArmy = opponent?.army || null;
+
   // Hide opponent pieces if game is in playing phase
   if (this.gameState.phase === 'playing') {
     gameState.board = this.gameState.board.map((row, y) =>
