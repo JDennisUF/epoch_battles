@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 
 // Load game data from JSON files
-const defaultArmy = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/armies/default.json'), 'utf8'));
-const classicMap = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/maps/classic.json'), 'utf8'));
+const defaultArmy = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../client/public/data/armies/default.json'), 'utf8'));
+const classicMap = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../client/src/data/maps/classic.json'), 'utf8'));
 const combatData = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/combat.json'), 'utf8'));
 
 class GameLogic {
@@ -19,25 +19,39 @@ class GameLogic {
   loadArmyData(armyId) {
     try {
       let armyPath;
+      const baseArmyPath = path.join(__dirname, '../../../client/public/data/armies');
+      
       switch (armyId) {
         case 'default':
-          armyPath = path.join(__dirname, '../data/armies/default.json');
+          armyPath = path.join(baseArmyPath, 'default.json');
           break;
         case 'fantasy':
-          armyPath = path.join(__dirname, '../data/armies/fantasy.json');
+          armyPath = path.join(baseArmyPath, 'fantasy/fantasy.json');
           break;
         case 'medieval':
-          armyPath = path.join(__dirname, '../data/armies/medieval.json');
+          armyPath = path.join(baseArmyPath, 'medieval/medieval.json');
           break;
         case 'sci_fi':
-          armyPath = path.join(__dirname, '../data/armies/sci-fi.json');
+          armyPath = path.join(baseArmyPath, 'sci_fi/sci-fi.json');
           break;
         case 'post_apocalyptic':
-          armyPath = path.join(__dirname, '../data/armies/post-apocalyptic.json');
+          armyPath = path.join(baseArmyPath, 'post_apocalyptic/post-apocalyptic.json');
+          break;
+        case 'tribal':
+          armyPath = path.join(baseArmyPath, 'tribal/tribal.json');
+          break;
+        case 'undead_legion':
+          armyPath = path.join(baseArmyPath, 'undead_legion/undead_legion.json');
+          break;
+        case 'alien_hive':
+          armyPath = path.join(baseArmyPath, 'alien_hive/alien_hive.json');
+          break;
+        case 'roman_legion':
+          armyPath = path.join(baseArmyPath, 'roman_legion/roman_legion.json');
           break;
         default:
           // Fallback to default army
-          armyPath = path.join(__dirname, '../data/armies/default.json');
+          armyPath = path.join(baseArmyPath, 'default.json');
       }
       
       const armyData = JSON.parse(fs.readFileSync(armyPath, 'utf8'));

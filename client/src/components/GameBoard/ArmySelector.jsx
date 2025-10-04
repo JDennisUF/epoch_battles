@@ -188,6 +188,30 @@ const ARMIES = [
     name: 'Post-Apocalyptic',
     description: 'Wasteland survivors and jury-rigged vehicles',
     theme: 'post-apocalyptic'
+  },
+  {
+    id: 'undead_legion',
+    name: 'Undead Legion',
+    description: 'Lich kings, vampires, and creatures of the night',
+    theme: 'undead'
+  },
+  {
+    id: 'roman_legion',
+    name: 'Roman Legion',
+    description: 'Caesars, centurions, and the might of Rome',
+    theme: 'roman'
+  },
+  {
+    id: 'tribal',
+    name: 'Tribal Warriors',
+    description: 'Shamans, totems, and ancient tribal power',
+    theme: 'tribal'
+  },
+  {
+    id: 'alien_hive',
+    name: 'Alien Hive',
+    description: 'Hive queens, bio-forms, and extraterrestrial swarms',
+    theme: 'alien'
   }
 ];
 

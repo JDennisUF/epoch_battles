@@ -121,8 +121,8 @@ function GameSquare({
               {symbol}
             </PieceSymbol>
           </div>
-          {(piece.revealed || piece.color === playerColor) && piece.rank && (
-            <PieceRank>{piece.rank}</PieceRank>
+          {(piece.revealed || piece.color === playerColor) && (
+            <PieceRank>{piece.rank || "-"}</PieceRank>
           )}
         </PieceContainer>
       );
@@ -132,8 +132,8 @@ function GameSquare({
     return (
       <PieceContainer color={color}>
         <PieceSymbol>{symbol}</PieceSymbol>
-        {(piece.revealed || piece.color === playerColor) && piece.rank && (
-          <PieceRank>{piece.rank}</PieceRank>
+        {(piece.revealed || piece.color === playerColor) && (
+          <PieceRank>{piece.rank || "-"}</PieceRank>
         )}
       </PieceContainer>
     );

@@ -1,7 +1,139 @@
-import defaultArmy from '../data/armies/default.json';
 import classicMap from '../data/maps/classic.json';
 
-export const PIECES = defaultArmy.pieces;
+export const PIECES = {
+  marshal: {
+    id: "marshal",
+    name: "Marshal",
+    rank: 1,
+    count: 1,
+    moveable: true,
+    canAttack: true,
+    special: "Strongest unit, defeated only by Spy when attacked",
+    symbol: "♔",
+    description: "The highest ranking officer"
+  },
+  general: {
+    id: "general", 
+    name: "General",
+    rank: 2,
+    count: 1,
+    moveable: true,
+    canAttack: true,
+    special: null,
+    symbol: "♕",
+    description: "Second highest ranking officer"
+  },
+  colonel: {
+    id: "colonel",
+    name: "Colonel", 
+    rank: 3,
+    count: 2,
+    moveable: true,
+    canAttack: true,
+    special: null,
+    symbol: "♖",
+    description: "High ranking field officer"
+  },
+  major: {
+    id: "major",
+    name: "Major",
+    rank: 4, 
+    count: 3,
+    moveable: true,
+    canAttack: true,
+    special: null,
+    symbol: "♗",
+    description: "Field officer"
+  },
+  captain: {
+    id: "captain",
+    name: "Captain",
+    rank: 5,
+    count: 4,
+    moveable: true,
+    canAttack: true,
+    special: null,
+    symbol: "♘",
+    description: "Company commander"
+  },
+  lieutenant: {
+    id: "lieutenant",
+    name: "Lieutenant", 
+    rank: 6,
+    count: 4,
+    moveable: true,
+    canAttack: true,
+    special: null,
+    symbol: "♙",
+    description: "Junior officer"
+  },
+  sergeant: {
+    id: "sergeant",
+    name: "Sergeant",
+    rank: 7,
+    count: 4,
+    moveable: true,
+    canAttack: true,
+    special: null,
+    symbol: "♟",
+    description: "Non-commissioned officer"
+  },
+  miner: {
+    id: "miner",
+    name: "Miner",
+    rank: 8,
+    count: 5,
+    moveable: true,
+    canAttack: true,
+    special: "Only unit that can defuse bombs",
+    symbol: "⛏",
+    description: "Can defuse bombs safely"
+  },
+  scout: {
+    id: "scout",
+    name: "Scout",
+    rank: 9,
+    count: 8,
+    moveable: true,
+    canAttack: true,
+    special: "Can move multiple spaces in a straight line",
+    symbol: "👁",
+    description: "Fast moving reconnaissance unit"
+  },
+  spy: {
+    id: "spy",
+    name: "Spy",
+    rank: 10,
+    count: 1,
+    moveable: true,
+    canAttack: true,
+    special: "Defeats Marshal when attacking, weakest otherwise",
+    symbol: "🕵",
+    description: "Can defeat the Marshal when attacking"
+  },
+  flag: {
+    id: "flag",
+    name: "Flag",
+    rank: null,
+    count: 1,
+    moveable: false,
+    canAttack: false,
+    special: "Must be captured to win",
+    symbol: "🏴",
+    description: "Capture this to win the game"
+  },
+  bomb: {
+    id: "bomb",
+    name: "Bomb",
+    rank: null,
+    count: 6,
+    moveable: false,
+    canAttack: false,
+    special: "Destroys any attacking unit except Miners",
+    symbol: "💣",
+    description: "Immobile explosive device"
+  }
+};
 export const GAME_CONFIG = classicMap;
 
 export const isWaterSquare = (x, y) => {

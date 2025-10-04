@@ -270,7 +270,7 @@ const gameEvents = (socket, io) => {
       }
 
       // Validate army selection
-      const validArmies = ['default', 'fantasy', 'medieval', 'sci_fi', 'post_apocalyptic'];
+      const validArmies = ['default', 'fantasy', 'medieval', 'sci_fi', 'post_apocalyptic', 'tribal', 'undead_legion', 'alien_hive', 'roman_legion'];
       if (!validArmies.includes(armyId)) {
         socket.emit('army_selection_error', { message: 'Invalid army selection' });
         return;
