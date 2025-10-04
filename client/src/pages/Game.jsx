@@ -56,6 +56,13 @@ function Game() {
   useEffect(() => {
     // If we already have game data from navigation state, skip the API call
     if (gameData) {
+      console.log('🎮 Using game data from navigation state:', {
+        hasMapData: !!gameData?.gameState?.mapData,
+        mapDataId: gameData?.gameState?.mapData?.id,
+        mapDataName: gameData?.gameState?.mapData?.name,
+        hasTerrainOverrides: !!gameData?.gameState?.mapData?.terrainOverrides,
+        terrainOverrideKeys: gameData?.gameState?.mapData?.terrainOverrides ? Object.keys(gameData.gameState.mapData.terrainOverrides) : null
+      });
       setLoading(false);
       return;
     }
@@ -65,11 +72,25 @@ function Game() {
         if (gameId) {
           // Load specific game
           const response = await axios.get(`/games/${gameId}`);
+          console.log('🎮 Loaded game from API:', {
+            hasMapData: !!response.data.game?.gameState?.mapData,
+            mapDataId: response.data.game?.gameState?.mapData?.id,
+            mapDataName: response.data.game?.gameState?.mapData?.name,
+            hasTerrainOverrides: !!response.data.game?.gameState?.mapData?.terrainOverrides,
+            terrainOverrideKeys: response.data.game?.gameState?.mapData?.terrainOverrides ? Object.keys(response.data.game.gameState.mapData.terrainOverrides) : null
+          });
           setGameData(response.data.game);
         } else {
           // Load current game
           const response = await axios.get('/games/current');
           if (response.data.game) {
+            console.log('🎮 Loaded current game from API:', {
+              hasMapData: !!response.data.game?.gameState?.mapData,
+              mapDataId: response.data.game?.gameState?.mapData?.id,
+              mapDataName: response.data.game?.gameState?.mapData?.name,
+              hasTerrainOverrides: !!response.data.game?.gameState?.mapData?.terrainOverrides,
+              terrainOverrideKeys: response.data.game?.gameState?.mapData?.terrainOverrides ? Object.keys(response.data.game.gameState.mapData.terrainOverrides) : null
+            });
             setGameData(response.data.game);
           } else {
             setError('No active game found');
@@ -94,6 +115,14 @@ function Game() {
     hasJoinedRoom.current = true;
 
     const handleGameJoined = (data) => {
+      console.log('🎮 Game joined, received data:', {
+        hasMapData: !!data.gameState?.mapData,
+        mapDataId: data.gameState?.mapData?.id,
+        mapDataName: data.gameState?.mapData?.name,
+        hasTerrainOverrides: !!data.gameState?.mapData?.terrainOverrides,
+        terrainOverrideKeys: data.gameState?.mapData?.terrainOverrides ? Object.keys(data.gameState.mapData.terrainOverrides) : null
+      });
+      
       // Only update if the game state has actually changed
       setGameData(prevData => {
         if (prevData?.gameState?.phase !== data.gameState?.phase ||

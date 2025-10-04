@@ -330,9 +330,6 @@ function ArmySelector({ onSelectArmy, onCancel, playerColor }) {
     <SelectorContainer>
       <SelectorModal>
         <Title>Choose Your Army</Title>
-        <p style={{ textAlign: 'center', marginBottom: '30px', opacity: 0.8 }}>
-          Select an army theme for your {playerColor === 'home' ? 'Home' : 'Away'} forces
-        </p>
         
         <ArmyGrid>
           {ARMIES.map(army => {

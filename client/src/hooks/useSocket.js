@@ -94,15 +94,15 @@ export const SocketProvider = ({ children }) => {
     }
   };
 
-  const invitePlayer = (targetUserId) => {
+  const invitePlayer = (targetUserId, mapData) => {
     if (socket && connected) {
-      socket.emit('invite_player', { targetUserId });
+      socket.emit('invite_player', { targetUserId, mapData });
     }
   };
 
-  const respondToInvitation = (fromUserId, accepted) => {
+  const respondToInvitation = (fromUserId, accepted, mapData) => {
     if (socket && connected) {
-      socket.emit('invitation_response', { fromUserId, accepted });
+      socket.emit('invitation_response', { fromUserId, accepted, mapData });
     }
   };
 

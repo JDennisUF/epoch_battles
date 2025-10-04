@@ -1,0 +1,32 @@
+{
+  "id": "labyrinth",
+  "name": "Ancient Labyrinth",
+  "description": "A complex maze of walls and corridors that limits movement and creates ambush opportunities",
+  "boardSize": {
+    "width": 10,
+    "height": 10
+  },
+  "setupRows": {
+    "home": [0, 1, 2, 3],
+    "away": [6, 7, 8, 9]
+  },
+  "defaultTerrain": "dirt",
+  "terrainOverrides": {
+    "water": [
+      {"x": 1, "y": 3}, {"x": 2, "y": 3}, {"x": 3, "y": 3}, {"x": 4, "y": 3},
+      {"x": 6, "y": 3}, {"x": 7, "y": 3}, {"x": 8, "y": 3},
+      {"x": 1, "y": 4}, {"x": 3, "y": 4}, {"x": 6, "y": 4}, {"x": 8, "y": 4},
+      {"x": 1, "y": 5}, {"x": 3, "y": 5}, {"x": 6, "y": 5}, {"x": 8, "y": 5},
+      {"x": 1, "y": 6}, {"x": 2, "y": 6}, {"x": 3, "y": 6}, 
+      {"x": 5, "y": 6}, {"x": 6, "y": 6}, {"x": 7, "y": 6}, {"x": 8, "y": 6}
+    ],
+    "grassland": [
+      {"x": 0, "y": 3}, {"x": 5, "y": 3}, {"x": 9, "y": 3},
+      {"x": 0, "y": 4}, {"x": 2, "y": 4}, {"x": 4, "y": 4}, {"x": 5, "y": 4}, {"x": 7, "y": 4}, {"x": 9, "y": 4},
+      {"x": 0, "y": 5}, {"x": 2, "y": 5}, {"x": 4, "y": 5}, {"x": 5, "y": 5}, {"x": 7, "y": 5}, {"x": 9, "y": 5},
+      {"x": 0, "y": 6}, {"x": 4, "y": 6}, {"x": 9, "y": 6}
+    ]
+  },
+  "theme": "ancient",
+  "difficulty": "hard"
+}

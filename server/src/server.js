@@ -11,6 +11,7 @@ const models = require('./models'); // Load models and associations
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/games');
 const userRoutes = require('./routes/users');
+const placementRoutes = require('./routes/placements');
 const socketHandler = require('./socket/socketHandler');
 
 const app = express();
@@ -96,6 +97,7 @@ connectDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/placements', placementRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

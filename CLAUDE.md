@@ -11,7 +11,15 @@ Epoch Battles is a 2-player online strategy board game inspired by Stratego. Pla
 - The player who sends the invite becomes the "Home" army (plays first)
 - The player who accepts the invite becomes the "Away" army
 - Players place pieces on their side of the board (4 rows each)
-- Unit identities remain hidden from opponent until combat
+- Unit identities remain hidden from opponent until combat or reconnaissance
+
+### Reconnaissance Rules
+Enemy units are revealed (identity becomes known) in these situations:
+- **Combat:** Any unit involved in combat is revealed to both players
+- **Multi-space movement:** A unit that moves more than 1 space in a turn is revealed (identifies it as a Scout-type unit)
+- **Scout detection:** Any enemy unit that is beside a Scout at the end of any turn is revealed
+  - "Beside" means their squares share a side (orthogonally adjacent), not diagonally
+  - This represents the Scout's reconnaissance ability to identify nearby units
 
 ### Army Themes & Unit Types
 The game supports multiple army themes, each with unique units but identical gameplay mechanics. Available themes:

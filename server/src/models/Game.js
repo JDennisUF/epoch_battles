@@ -39,6 +39,11 @@ const Game = sequelize.define('Game', {
       lastMoveTime: null
     }
   },
+  mapData: {
+    type: DataTypes.JSONB,
+    allowNull: true,
+    defaultValue: null
+  },
   chatMessages: {
     type: DataTypes.JSONB,
     defaultValue: []
@@ -68,22 +73,42 @@ Game.prototype.getGameStateForPlayer = function(playerId) {
     throw new Error('Player not found in game');
   }
 
+  // Use the game's stored map data, fallback to default if not set
+  const gameLogic = require('../services/gameLogic');
+  let mapData = this.mapData || gameLogic.mapData;
+  
+  // Handle case where mapData is stored as string (SQLite JSONB issue)
+  if (typeof mapData === 'string') {
+    try {
+      mapData = JSON.parse(mapData);
+    } catch (error) {
+      console.error('Failed to parse mapData JSON string:', error);
+      mapData = gameLogic.mapData;
+    }
+  }
+  
   // Create a copy of the game state
   const gameState = {
     ...this.gameState,
     playerColor,
-    opponentColor: playerColor === 'home' ? 'away' : 'home'
+    opponentColor: playerColor === 'home' ? 'away' : 'home',
+    mapData: mapData
   };
 
   // Add army information for both players
   const opponent = this.players.find(p => p.userId !== playerId);
   gameState.opponentArmy = opponent?.army || null;
 
-  // Hide opponent pieces if game is in playing phase
+  // Filter board state based on game phase
   if (this.gameState.phase === 'playing') {
     gameState.board = this.gameState.board.map((row, y) =>
       row.map((piece, x) => {
         if (!piece) return null;
+        
+        // Filter out water terrain pieces - they should be handled as terrain on client
+        if (piece.type === 'water' && piece.passable === false) {
+          return null;
+        }
         
         // Show own pieces completely
         if (piece.color === playerColor) {
@@ -91,11 +116,31 @@ Game.prototype.getGameStateForPlayer = function(playerId) {
         }
         
         // Hide opponent piece types (only show color and position)
-        return {
-          color: piece.color,
-          revealed: piece.revealed || false,
-          type: piece.revealed ? piece.type : 'hidden'
-        };
+        if (piece.revealed) {
+          // If revealed, show all piece information
+          return piece;
+        } else {
+          // If hidden, only show basic info
+          return {
+            color: piece.color,
+            revealed: false,
+            type: 'hidden'
+          };
+        }
+      })
+    );
+  } else {
+    // For setup and other phases, just filter out water pieces
+    gameState.board = this.gameState.board.map((row, y) =>
+      row.map((piece, x) => {
+        if (!piece) return null;
+        
+        // Filter out water terrain pieces - they should be handled as terrain on client
+        if (piece.type === 'water' && piece.passable === false) {
+          return null;
+        }
+        
+        return piece;
       })
     );
   }

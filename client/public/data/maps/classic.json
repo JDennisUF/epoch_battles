@@ -10,12 +10,15 @@
     "home": [0, 1, 2, 3],
     "away": [6, 7, 8, 9]
   },
-  "waterSquares": [
-    {"x": 2, "y": 4}, {"x": 3, "y": 4},
-    {"x": 6, "y": 4}, {"x": 7, "y": 4},
-    {"x": 2, "y": 5}, {"x": 3, "y": 5},
-    {"x": 6, "y": 5}, {"x": 7, "y": 5}
-  ],
+  "defaultTerrain": "grassland",
+  "terrainOverrides": {
+    "water": [
+      {"x": 2, "y": 4}, {"x": 3, "y": 4},
+      {"x": 6, "y": 4}, {"x": 7, "y": 4},
+      {"x": 2, "y": 5}, {"x": 3, "y": 5},
+      {"x": 6, "y": 5}, {"x": 7, "y": 5}
+    ]
+  },
   "theme": "military",
   "difficulty": "standard"
 }

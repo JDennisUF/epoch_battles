@@ -4,7 +4,7 @@ const User = require('../models/User');
 const gameEvents = (socket, io) => {
   // Handle game invitation
   socket.on('invite_player', async (data) => {
-    const { targetUserId } = data;
+    const { targetUserId, mapData } = data;
     
     try {
       const targetUser = await User.findByPk(targetUserId);
@@ -18,6 +18,7 @@ const gameEvents = (socket, io) => {
           id: socket.user.id,
           username: socket.user.username
         },
+        mapData,
         timestamp: new Date()
       };
 
@@ -33,7 +34,7 @@ const gameEvents = (socket, io) => {
 
   // Handle invitation response
   socket.on('invitation_response', async (data) => {
-    const { accepted, fromUserId } = data;
+    const { accepted, fromUserId, mapData } = data;
     
     try {
       const fromUser = await User.findByPk(fromUserId);
@@ -43,9 +44,9 @@ const gameEvents = (socket, io) => {
       }
 
       if (accepted) {
-        // Create new game with proper board
+        // Create new game with proper board using the selected map
         const gameLogic = require('../services/gameLogic');
-        const initialBoard = gameLogic.createBoard();
+        const initialBoard = gameLogic.createBoard(mapData);
         
         const game = await Game.create({
           players: [
@@ -75,27 +76,28 @@ const gameEvents = (socket, io) => {
             winner: null,
             lastMove: null,
             moveHistory: []
-          }
+          },
+          mapData: mapData
         });
 
         // Update users' current game
         await User.update({ currentGameId: game.id }, { where: { id: fromUserId } });
         await User.update({ currentGameId: game.id }, { where: { id: socket.user.id } });
 
-        // Notify both players
-        const gameData = {
+        // Notify both players with personalized game state
+        const createGameDataForPlayer = (playerId) => ({
           id: game.id,
           players: game.players,
-          gameState: game.gameState,
+          gameState: game.getGameStateForPlayer(playerId),
           status: game.status,
           timeControl: game.timeControl,
           chatMessages: game.chatMessages,
           createdAt: game.createdAt,
           updatedAt: game.updatedAt
-        };
+        });
 
-        io.to(`user_${fromUserId}`).emit('game_created', gameData);
-        socket.emit('game_created', gameData);
+        io.to(`user_${fromUserId}`).emit('game_created', createGameDataForPlayer(fromUserId));
+        socket.emit('game_created', createGameDataForPlayer(socket.user.id));
 
         // Join both players to game room
         io.sockets.sockets.forEach((s) => {
@@ -220,10 +222,17 @@ const gameEvents = (socket, io) => {
       if (result.success) {
         // Notify both players of the setup confirmation
         const game = await Game.findByPk(gameId);
-        io.to(`game_${gameId}`).emit('setup_confirmed', {
-          playerId: socket.user.id,
-          players: game.players,
-          gameState: game.gameState
+        
+        // Send personalized game state to each player
+        game.players.forEach(player => {
+          const playerSockets = [...io.sockets.sockets.values()].filter(s => s.user?.id === player.userId);
+          playerSockets.forEach(playerSocket => {
+            playerSocket.emit('setup_confirmed', {
+              playerId: socket.user.id,
+              players: game.players,
+              gameState: game.getGameStateForPlayer(player.userId)
+            });
+          });
         });
 
         if (result.ready) {
@@ -272,6 +281,7 @@ const gameEvents = (socket, io) => {
             playerSocket.emit('move_made', {
               playerId: socket.user.id,
               moveResult: result.result,
+              combatResult: result.result.combatResult,
               gameState: game.getGameStateForPlayer(player.userId)
             });
           });
@@ -368,7 +378,9 @@ const gameEvents = (socket, io) => {
         return;
       }
 
-      const randomArmy = gameLogic.generateRandomPlacement(playerColor, armyId);
+      // Ensure we have valid map data, fallback to default if needed
+      const mapDataToUse = game.mapData || null; // Let generateRandomPlacement handle the fallback
+      const randomArmy = gameLogic.generateRandomPlacement(playerColor, armyId, mapDataToUse);
       
       socket.emit('random_placement', {
         pieces: randomArmy

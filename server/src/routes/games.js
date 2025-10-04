@@ -24,7 +24,26 @@ router.get('/current', auth, async (req, res) => {
     }
 
     console.log('Found game:', game.id, 'status:', game.status);
-    res.json({ game });
+    
+    // Return the game with personalized game state
+    const gameResponse = {
+      id: game.id,
+      players: game.players,
+      gameState: game.getGameStateForPlayer(req.user.id),
+      status: game.status,
+      timeControl: game.timeControl,
+      chatMessages: game.chatMessages,
+      createdAt: game.createdAt,
+      updatedAt: game.updatedAt
+    };
+    
+    console.log('🗺️ Returning game with mapData:', {
+      hasMapData: !!gameResponse.gameState.mapData,
+      mapDataId: gameResponse.gameState.mapData?.id,
+      mapDataName: gameResponse.gameState.mapData?.name
+    });
+    
+    res.json({ game: gameResponse });
   } catch (error) {
     console.error('Get current game error:', error);
     res.status(500).json({ message: 'Server error fetching current game' });
@@ -47,7 +66,25 @@ router.get('/:gameId', auth, async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    res.json({ game });
+    // Return the game with personalized game state
+    const gameResponse = {
+      id: game.id,
+      players: game.players,
+      gameState: game.getGameStateForPlayer(req.user.id),
+      status: game.status,
+      timeControl: game.timeControl,
+      chatMessages: game.chatMessages,
+      createdAt: game.createdAt,
+      updatedAt: game.updatedAt
+    };
+    
+    console.log('🗺️ Returning game by ID with mapData:', {
+      hasMapData: !!gameResponse.gameState.mapData,
+      mapDataId: gameResponse.gameState.mapData?.id,
+      mapDataName: gameResponse.gameState.mapData?.name
+    });
+
+    res.json({ game: gameResponse });
   } catch (error) {
     console.error('Get game error:', error);
     res.status(500).json({ message: 'Server error fetching game' });

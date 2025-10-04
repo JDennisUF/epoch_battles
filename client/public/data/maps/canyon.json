@@ -1,0 +1,30 @@
+{
+  "id": "canyon",
+  "name": "Canyon Pass",
+  "description": "A narrow canyon with limited crossing points, forcing strategic bottlenecks",
+  "boardSize": {
+    "width": 10,
+    "height": 10
+  },
+  "setupRows": {
+    "home": [0, 1, 2, 3],
+    "away": [6, 7, 8, 9]
+  },
+  "defaultTerrain": "dirt",
+  "terrainOverrides": {
+    "water": [
+      {"x": 3, "y": 3}, {"x": 4, "y": 3}, {"x": 5, "y": 3}, {"x": 6, "y": 3},
+      {"x": 3, "y": 4}, {"x": 4, "y": 4}, {"x": 5, "y": 4}, {"x": 6, "y": 4},
+      {"x": 3, "y": 5}, {"x": 4, "y": 5}, {"x": 5, "y": 5}, {"x": 6, "y": 5},
+      {"x": 3, "y": 6}, {"x": 4, "y": 6}, {"x": 5, "y": 6}, {"x": 6, "y": 6}
+    ],
+    "grassland": [
+      {"x": 1, "y": 4}, {"x": 2, "y": 4},
+      {"x": 7, "y": 5}, {"x": 8, "y": 5},
+      {"x": 0, "y": 0}, {"x": 1, "y": 0}, {"x": 2, "y": 0},
+      {"x": 7, "y": 9}, {"x": 8, "y": 9}, {"x": 9, "y": 9}
+    ]
+  },
+  "theme": "desert",
+  "difficulty": "hard"
+}

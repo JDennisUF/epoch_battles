@@ -4,6 +4,8 @@ import styled from 'styled-components';
 import axios from 'axios';
 import { useSocket } from '../hooks/useSocket';
 import { useAuth } from '../hooks/useAuth';
+import MapSelector from '../components/MapSelector';
+import { playNotificationSound, playSuccessSound, initSounds } from '../utils/sounds';
 
 const LobbyContainer = styled.div`
   max-width: 1200px;
@@ -211,6 +213,7 @@ function Lobby() {
   const [notifications, setNotifications] = useState([]);
   const [gameInvitations, setGameInvitations] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [selectedMap, setSelectedMap] = useState(null);
 
   // Fetch online users from API
   useEffect(() => {
@@ -237,11 +240,30 @@ function Lobby() {
     }
   }, [connected, joinLobby]);
 
+  // Initialize sounds on first user interaction
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      initSounds();
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+    };
+
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('keydown', handleUserInteraction);
+
+    return () => {
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('keydown', handleUserInteraction);
+    };
+  }, []);
+
   useEffect(() => {
     if (!socket) return;
 
     const handleGameInvitation = (invitation) => {
       setGameInvitations(prev => [...prev, { ...invitation, id: Date.now() }]);
+      // Play notification sound
+      playNotificationSound();
     };
 
     const handleInvitationSent = (data) => {
@@ -254,6 +276,8 @@ function Lobby() {
 
     const handleGameCreated = (gameData) => {
       addNotification('Game created! Redirecting...', 'success');
+      // Play success sound
+      playSuccessSound();
       // Navigate to game page with game data passed in state to avoid race condition
       setTimeout(() => {
         navigate('/game', { state: { gameData } });
@@ -308,11 +332,15 @@ function Lobby() {
   };
 
   const handleInvitePlayer = (userId) => {
-    invitePlayer(userId);
+    if (!selectedMap) {
+      addNotification('Please select a map first', 'error');
+      return;
+    }
+    invitePlayer(userId, selectedMap);
   };
 
   const handleInvitationResponse = (invitation, accepted) => {
-    respondToInvitation(invitation.from.id, accepted);
+    respondToInvitation(invitation.from.id, accepted, invitation.mapData);
     setGameInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
   };
 
@@ -358,6 +386,14 @@ function Lobby() {
 
         <Sidebar>
           <SidebarCard>
+            <MapSelector
+              selectedMap={selectedMap}
+              onMapSelect={setSelectedMap}
+              disabled={!connected}
+            />
+          </SidebarCard>
+          
+          <SidebarCard>
             <SectionTitle>Online Players ({onlineUsers.length})</SectionTitle>
             {onlineUsers.length === 0 ? (
               <EmptyState>No other players online</EmptyState>
@@ -391,6 +427,11 @@ function Lobby() {
                   <div>
                     <strong>{invitation.from.username}</strong> invited you to a game
                   </div>
+                  {invitation.mapData?.name && (
+                    <div style={{ fontSize: '0.9rem', opacity: 0.8, marginTop: '8px' }}>
+                      Map: <strong>{invitation.mapData.name}</strong>
+                    </div>
+                  )}
                   <InvitationActions>
                     <AcceptButton 
                       onClick={() => handleInvitationResponse(invitation, true)}

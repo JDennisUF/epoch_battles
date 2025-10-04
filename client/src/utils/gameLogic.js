@@ -1,4 +1,4 @@
-import classicMap from '../data/maps/classic.json';
+// Map data will be loaded dynamically from public/data/maps/
 
 export const PIECES = {
   marshal: {
@@ -134,10 +134,35 @@ export const PIECES = {
     description: "Immobile explosive device"
   }
 };
-export const GAME_CONFIG = classicMap;
+// Default GAME_CONFIG - will be overridden when map is loaded
+export const GAME_CONFIG = {
+  boardSize: { width: 10, height: 10 },
+  setupRows: { home: [0, 1, 2, 3], away: [6, 7, 8, 9] },
+  defaultTerrain: 'grassland',
+  terrainOverrides: {}
+};
 
-export const isWaterSquare = (x, y) => {
-  return GAME_CONFIG.waterSquares.some(square => square.x === x && square.y === y);
+
+export const getTerrainType = (x, y, mapData) => {
+  console.log('🗺️ getTerrainType called:', { x, y, mapData: mapData ? { id: mapData.id, hasTerrainOverrides: !!mapData.terrainOverrides } : null });
+  
+  if (!mapData) {
+    console.error('❌ getTerrainType called with no mapData');
+    return 'error_no_mapdata';
+  }
+  
+  // Use new terrain structure with defaultTerrain and terrainOverrides
+  if (mapData.terrainOverrides) {
+    for (const [terrainType, coordinates] of Object.entries(mapData.terrainOverrides)) {
+      if (coordinates.some(coord => coord.x === x && coord.y === y)) {
+        return terrainType;
+      }
+    }
+    return mapData.defaultTerrain;
+  }
+  
+  console.error('❌ mapData has no terrainOverrides:', mapData);
+  return 'error_no_terrain_overrides';
 };
 
 export const isSetupRow = (y, color) => {
@@ -166,7 +191,7 @@ export const canMoveTo = (fromX, fromY, toX, toY, board, playerColor) => {
   if (toX < 0 || toX >= 10 || toY < 0 || toY >= 10) return false;
 
   // Can't move to water
-  if (isWaterSquare(toX, toY)) return false;
+  if (getTerrainType(toX, toY, GAME_CONFIG) === 'water') return false;
 
   // Can't attack own pieces
   const target = board[toY]?.[toX];
@@ -180,7 +205,9 @@ export const canMoveTo = (fromX, fromY, toX, toY, board, playerColor) => {
   // Distance check
   const distance = Math.max(dx, dy);
   const canMoveMultipleSpaces = piece.type === 'scout' || 
-                                (piece.special && piece.special.includes('move multiple spaces'));
+                                piece.class === 'scout' ||
+                                (piece.special && (piece.special.includes('move multiple spaces') || 
+                                                 piece.special.includes('Moves multiple spaces')));
   const maxDistance = canMoveMultipleSpaces ? 9 : 1;
   if (distance > maxDistance) return false;
 
@@ -199,12 +226,45 @@ export const canMoveTo = (fromX, fromY, toX, toY, board, playerColor) => {
   return true;
 };
 
-export const generateArmy = (color, armyData = null) => {
+// Count water tiles in player's setup area
+export const countWaterTilesInSetupArea = (mapData, color) => {
+  if (!mapData || !mapData.setupRows || !mapData.terrainOverrides) {
+    return 0;
+  }
+  
+  const setupRows = mapData.setupRows[color];
+  if (!setupRows) return 0;
+  
+  const waterTiles = mapData.terrainOverrides.water || [];
+  let waterCount = 0;
+  
+  for (const waterTile of waterTiles) {
+    if (setupRows.includes(waterTile.y)) {
+      waterCount++;
+    }
+  }
+  
+  return waterCount;
+};
+
+export const generateArmy = (color, armyData = null, mapData = null) => {
   const army = [];
   const piecesData = armyData?.pieces || PIECES;
   
+  // Count water tiles in setup area to reduce scouts
+  const waterTilesInSetup = countWaterTilesInSetupArea(mapData, color);
+  console.log(`🗺️ Water tiles in ${color} setup area:`, waterTilesInSetup);
+  
   Object.entries(piecesData).forEach(([pieceType, pieceInfo]) => {
-    for (let i = 0; i < pieceInfo.count; i++) {
+    let count = pieceInfo.count;
+    
+    // Reduce scout count by number of water tiles in setup area
+    if (pieceType === 'scout' || (pieceInfo.class === 'scout')) {
+      count = Math.max(0, count - waterTilesInSetup);
+      console.log(`🔍 Reducing ${pieceType} count from ${pieceInfo.count} to ${count} due to ${waterTilesInSetup} water tiles`);
+    }
+    
+    for (let i = 0; i < count; i++) {
       army.push({
         id: `${color}_${pieceType}_${i}`,
         type: pieceType,
@@ -219,5 +279,7 @@ export const generateArmy = (color, armyData = null) => {
       });
     }
   });
+  
+  console.log(`⚔️ Generated army for ${color}:`, army.length, 'pieces');
   return army;
 };

@@ -4,8 +4,11 @@ import { useSocket } from '../../hooks/useSocket';
 import { useAuth } from '../../hooks/useAuth';
 import GameSquare from './GameSquare';
 import PieceSelector from './PieceSelector';
-import { GAME_CONFIG, isWaterSquare, canMoveTo, generateArmy } from '../../utils/gameLogic';
+import PlacementSelector from './PlacementSelector';
+import { GAME_CONFIG, getTerrainType, canMoveTo, generateArmy } from '../../utils/gameLogic';
 import ArmySelector from './ArmySelector';
+import CombatModal from './CombatModal';
+import GameResultModal from './GameResultModal';
 
 const BoardContainer = styled.div`
   display: flex;
@@ -115,6 +118,29 @@ const ActionButton = styled.button`
   }
 `;
 
+const CancelButton = styled.button`
+  background: linear-gradient(45deg, #ef4444, #dc2626);
+  border: none;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  margin: 5px;
+  transition: all 0.3s ease;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
 const LastMoveInfo = styled.div`
   background: rgba(255, 255, 255, 0.05);
   padding: 10px;
@@ -136,14 +162,34 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
   const [piecesPlaced, setPiecesPlaced] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [combatData, setCombatData] = useState(null);
+  const [gameResult, setGameResult] = useState(null);
+  const [draggedPiece, setDraggedPiece] = useState(null);
+  const [draggedFromPosition, setDraggedFromPosition] = useState(null);
   const { socket } = useSocket();
   const { user } = useAuth();
 
   const playerColor = players.find(p => p.userId === user.id)?.color;
   const isCurrentTurn = gameState?.currentPlayer === playerColor;
   const gamePhase = gameState?.phase || 'setup';
+  const mapData = gameState?.mapData;
   const player = localPlayers.find(p => p.userId === user.id);
   const hasSelectedArmy = player?.army != null;
+  
+  console.log('🗺️ GameBoard mapData:', { 
+    hasMapData: !!mapData, 
+    mapDataId: mapData?.id, 
+    hasTerrainOverrides: !!mapData?.terrainOverrides,
+    gamePhase,
+    fullGameState: gameState
+  });
+
+  // Check if map data is invalid - but don't early return, just log the error
+  const hasValidMapData = mapData && mapData.setupRows && mapData.boardSize;
+  if (!hasValidMapData) {
+    console.error('❌ Invalid mapData structure:', mapData);
+    console.error('❌ Full gameState:', gameState);
+  }
 
   useEffect(() => {
     if (!socket) return;
@@ -180,10 +226,24 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
       setGameState(data.gameState);
       setSelectedSquare(null);
       setValidMoves([]);
+      
+      // Show combat modal if this was a combat move
+      if (data.combatResult) {
+        setCombatData(data.combatResult);
+      }
     };
 
     const handleGameFinished = (data) => {
-      alert(`Game Over! ${data.winner} wins! Reason: ${data.reason}`);
+      console.log('Game finished:', data);
+      // Store the game result but don't show it immediately if there's combat happening
+      if (!combatData) {
+        setGameResult({ winner: data.winner, reason: data.reason });
+      } else {
+        // If combat is happening, delay showing the result
+        setTimeout(() => {
+          setGameResult({ winner: data.winner, reason: data.reason });
+        }, 100);
+      }
     };
 
     const handleRandomPlacement = (data) => {
@@ -268,13 +328,78 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     }
   };
 
+  const handleDragStart = (piece, x, y) => {
+    if (gamePhase !== 'setup') return;
+    
+    setDraggedPiece(piece);
+    setDraggedFromPosition({ x, y });
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault(); // Allow drop
+  };
+
+  const handleDrop = (targetX, targetY) => {
+    if (!draggedPiece || !draggedFromPosition || gamePhase !== 'setup') return;
+
+    const { x: fromX, y: fromY } = draggedFromPosition;
+    
+    // Don't allow dropping on the same position
+    if (fromX === targetX && fromY === targetY) {
+      setDraggedPiece(null);
+      setDraggedFromPosition(null);
+      return;
+    }
+
+    // Check if target is in valid setup area
+    if (!mapData.setupRows?.[playerColor]?.includes(targetY)) {
+      setDraggedPiece(null);
+      setDraggedFromPosition(null);
+      return;
+    }
+
+    // Check if target is water
+    if (getTerrainType(targetX, targetY, mapData) === 'water') {
+      setDraggedPiece(null);
+      setDraggedFromPosition(null);
+      return;
+    }
+
+    // Find pieces at source and target positions
+    const sourcePiece = setupPieces.find(p => p.position?.x === fromX && p.position?.y === fromY);
+    const targetPiece = setupPieces.find(p => p.position?.x === targetX && p.position?.y === targetY);
+
+    if (sourcePiece) {
+      const updatedPieces = setupPieces.map(piece => {
+        if (piece.id === sourcePiece.id) {
+          // Move source piece to target position
+          return { ...piece, position: { x: targetX, y: targetY } };
+        } else if (targetPiece && piece.id === targetPiece.id) {
+          // Move target piece to source position (swap)
+          return { ...piece, position: { x: fromX, y: fromY } };
+        }
+        return piece;
+      });
+
+      setSetupPieces(updatedPieces);
+    }
+
+    setDraggedPiece(null);
+    setDraggedFromPosition(null);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedPiece(null);
+    setDraggedFromPosition(null);
+  };
+
   const handleSetupClick = (x, y) => {
     if (!selectedPieceType) return;
     
     // Check if it's a valid setup position
-    if (!GAME_CONFIG.setupRows[playerColor].includes(y)) return;
+    if (!mapData.setupRows?.[playerColor]?.includes(y)) return;
     if (gameState.board[y][x]) return; // Square occupied
-    if (isWaterSquare(x, y)) return;
+    if (getTerrainType(x, y, mapData) === 'water') return;
 
     // Add piece to setup
     const piece = setupPieces.find(p => p.type === selectedPieceType && !p.position);
@@ -295,7 +420,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
         // Deselect
         setSelectedSquare(null);
         setValidMoves([]);
-      } else if (validMoves.some(move => move.x === x && move.y === y)) {
+      } else if (validMoves.some(move => move && move.x === x && move.y === y)) {
         // Make move
         socket.emit('game_move', {
           gameId,
@@ -323,13 +448,16 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     
     // Calculate valid moves
     const moves = [];
-    for (let toY = 0; toY < 10; toY++) {
-      for (let toX = 0; toX < 10; toX++) {
-        if (canMoveTo(x, y, toX, toY, gameState.board, playerColor)) {
-          moves.push({ x: toX, y: toY });
+    if (gameState?.board) {
+      for (let toY = 0; toY < 10; toY++) {
+        for (let toX = 0; toX < 10; toX++) {
+          if (canMoveTo(x, y, toX, toY, gameState.board, playerColor)) {
+            moves.push({ x: toX, y: toY });
+          }
         }
       }
     }
+    console.log('Setting valid moves:', moves);
     setValidMoves(moves);
   };
 
@@ -366,6 +494,40 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
 
   const handleConfirmCancel = () => {
     setShowConfirmDialog(false);
+  };
+
+  const handleLoadPlacement = (placementData) => {
+    if (gamePhase !== 'setup' || !armyData) return;
+
+    // Clear current setup pieces
+    setSetupPieces([]);
+    
+    // Generate army pieces with positions from placement
+    const army = generateArmy(playerColor, armyData, mapData);
+    const placedArmy = army.map((piece, index) => {
+      const placement = placementData[index];
+      return {
+        ...piece,
+        position: placement ? { x: placement.x, y: placement.y } : null
+      };
+    });
+    
+    setSetupPieces(placedArmy);
+  };
+
+  const handleSavePlacement = (savedPlacement) => {
+    console.log('Placement saved:', savedPlacement);
+    // Could show a success message here
+  };
+
+  const getCurrentPlacementData = () => {
+    return setupPieces
+      .filter(piece => piece.position)
+      .map(piece => ({
+        type: piece.type,
+        x: piece.position.x,
+        y: piece.position.y
+      }));
   };
 
   const finalizeSetup = (useRandom) => {
@@ -422,9 +584,9 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
   // Initialize setup pieces if in setup phase and army is selected
   useEffect(() => {
     if (gamePhase === 'setup' && hasSelectedArmy && setupPieces.length === 0 && armyData) {
-      setSetupPieces(generateArmy(playerColor, armyData));
+      setSetupPieces(generateArmy(playerColor, armyData, mapData));
     }
-  }, [gamePhase, hasSelectedArmy, setupPieces.length, playerColor, armyData]);
+  }, [gamePhase, hasSelectedArmy, setupPieces.length, playerColor, armyData, mapData]);
 
   const renderBoard = () => {
     const squares = [];
@@ -447,9 +609,14 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
         }
 
         const isSelected = selectedSquare?.x === x && selectedSquare?.y === y;
-        const isValidMove = validMoves.some(move => move.x === x && move.y === y);
-        const isWater = isWaterSquare(x, y);
-        const isSetupArea = gamePhase === 'setup' && GAME_CONFIG.setupRows[playerColor]?.includes(y);
+        const isValidMove = validMoves.some(move => {
+          if (!move || typeof move.x === 'undefined' || typeof move.y === 'undefined') {
+            console.error('Invalid move in validMoves array:', move, 'at index:', validMoves.indexOf(move));
+            return false;
+          }
+          return move.x === x && move.y === y;
+        });
+        const isSetupArea = gamePhase === 'setup' && mapData.setupRows?.[playerColor]?.includes(y);
 
         squares.push(
           <GameSquare
@@ -460,11 +627,17 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
             playerColor={playerColor}
             playerArmy={player?.army || selectedArmy}
             opponentArmy={gameState?.opponentArmy}
+            gamePhase={gamePhase}
+            mapData={mapData}
             isSelected={isSelected}
             isValidMove={isValidMove}
-            isWater={isWater}
             isSetupArea={isSetupArea}
+            isDragTarget={draggedPiece && isSetupArea && getTerrainType(x, y, mapData) !== 'water'}
             onClick={() => handleSquareClick(x, y)}
+            onDragStart={() => piece && handleDragStart(piece, x, y)}
+            onDragOver={handleDragOver}
+            onDrop={() => handleDrop(x, y)}
+            onDragEnd={handleDragEnd}
           />
         );
       }
@@ -516,7 +689,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
         <div style={{ filter: 'blur(5px)', pointerEvents: 'none' }}>
           <BoardContainer>
       <BoardWrapper>
-        <Board>{renderBoard()}</Board>
+        <Board>{hasValidMapData ? renderBoard() : <div>Loading map...</div>}</Board>
         
         {gamePhase === 'setup' && (
           <div>
@@ -586,10 +759,57 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     );
   }
 
+  // Show error message if mapData is invalid
+  if (!hasValidMapData) {
+    return (
+      <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>
+        <h2>Error: Invalid map data</h2>
+        <p>mapData: {JSON.stringify(mapData, null, 2)}</p>
+        <p>Please refresh the page or contact support.</p>
+      </div>
+    );
+  }
+
   return (
-    <BoardContainer>
-      <BoardWrapper>
-        <Board>{renderBoard()}</Board>
+    <>
+      {combatData && (
+        <CombatModal 
+          combatData={combatData} 
+          onClose={() => {
+            setCombatData(null);
+            // Check if there's a pending game result to show after combat
+            if (gamePhase === 'finished' && !gameResult) {
+              setTimeout(() => {
+                setGameResult({ 
+                  winner: gameState.winner, 
+                  reason: gameState.lastMove?.winReason || 'game_over' 
+                });
+              }, 500);
+            }
+          }}
+        />
+      )}
+      
+      {gameResult && (
+        <GameResultModal 
+          gameResult={gameResult}
+          playerColor={playerColor}
+          players={localPlayers}
+          onRematch={() => {
+            // TODO: Implement rematch functionality
+            setGameResult(null);
+          }}
+          onExit={() => {
+            setGameResult(null);
+            // TODO: Navigate back to lobby/home
+            window.location.href = '/';
+          }}
+        />
+      )}
+      
+      <BoardContainer>
+        <BoardWrapper>
+          <Board>{renderBoard()}</Board>
         
         {gamePhase === 'setup' && (
           <div>
@@ -651,6 +871,13 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
         {gamePhase === 'setup' && (
           <InfoSection>
             <InfoTitle>Setup</InfoTitle>
+            <PlacementSelector
+              mapId={mapData?.id}
+              currentPlacements={getCurrentPlacementData()}
+              onLoadPlacement={handleLoadPlacement}
+              onSavePlacement={handleSavePlacement}
+              disabled={!hasSelectedArmy || !armyData}
+            />
             <PieceSelector
               pieces={setupPieces}
               selectedType={selectedPieceType}
@@ -674,6 +901,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
         )}
       </GameInfo>
     </BoardContainer>
+    </>
   );
 }
 

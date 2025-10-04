@@ -1,0 +1,133 @@
+{
+  "name": "WWII Army",
+  "theme": "World War II",
+  "description": "World War II military forces.",
+  "units": {
+    "supreme_commander": {
+      "id": "supreme_commander",
+      "name": "Supreme Commander",
+      "class": "marshal",
+      "rank": 1,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Strongest unit, defeated only by Spy when attacked.",
+      "description": "The overall commander of the war effort, directing all forces."
+    },
+    "general": {
+      "id": "general",
+      "name": "General",
+      "class": "general",
+      "rank": 2,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "description": "Commands entire divisions and coordinates large-scale operations."
+    },
+    "colonel": {
+      "id": "colonel",
+      "name": "Colonel",
+      "class": "colonel",
+      "rank": 3,
+      "count": 2,
+      "moveable": true,
+      "canAttack": true,
+      "description": "A seasoned battlefield officer in charge of regiments."
+    },
+    "major": {
+      "id": "major",
+      "name": "Major",
+      "class": "major",
+      "rank": 4,
+      "count": 3,
+      "moveable": true,
+      "canAttack": true,
+      "description": "Leads battalions and coordinates tactical maneuvers."
+    },
+    "captain": {
+      "id": "captain",
+      "name": "Captain",
+      "class": "captain",
+      "rank": 5,
+      "count": 4,
+      "moveable": true,
+      "canAttack": true,
+      "description": "Company commander skilled at leading infantry units into combat."
+    },
+    "lieutenant": {
+      "id": "lieutenant",
+      "name": "Lieutenant",
+      "class": "lieutenant",
+      "rank": 6,
+      "count": 4,
+      "moveable": true,
+      "canAttack": true,
+      "description": "Junior officer responsible for leading platoons."
+    },
+    "sergeant": {
+      "id": "sergeant",
+      "name": "Sergeant",
+      "class": "sergeant",
+      "rank": 7,
+      "count": 4,
+      "moveable": true,
+      "canAttack": true,
+      "description": "Veteran non-commissioned officer keeping troops in line under fire."
+    },
+    "combat_engineer": {
+      "id": "combat_engineer",
+      "name": "Combat Engineer",
+      "class": "miner",
+      "rank": 8,
+      "count": 5,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Can defuse mines safely.",
+      "description": "Carries specialized tools for clearing explosives and fortifications."
+    },
+    "recon_scout": {
+      "id": "recon_scout",
+      "name": "Recon Scout",
+      "class": "scout",
+      "rank": 9,
+      "count": 8,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Can move multiple spaces in a straight line.",
+      "description": "Fast-moving reconnaissance unit skilled at spotting enemy positions."
+    },
+    "field_spy": {
+      "id": "field_spy",
+      "name": "Field Spy",
+      "class": "spy",
+      "rank": 10,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Defeats the Supreme Commander when attacking.",
+      "description": "A covert agent capable of taking down the top brass when striking first."
+    },
+    "command_flag": {
+      "id": "command_flag",
+      "name": "Command Flag",
+      "class": "flag",
+      "rank": null,
+      "count": 1,
+      "moveable": false,
+      "canAttack": false,
+      "special": "Must be captured to win.",
+      "description": "Represents the army’s command structure — capture to secure victory."
+    },
+    "land_mine": {
+      "id": "land_mine",
+      "name": "Land Mine",
+      "class": "bomb",
+      "rank": null,
+      "count": 6,
+      "moveable": false,
+      "canAttack": false,
+      "special": "Destroys any attacking unit except Combat Engineers.",
+      "description": "Hidden explosive trap that annihilates unsuspecting attackers."
+    }
+  }
+}

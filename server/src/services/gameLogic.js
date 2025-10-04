@@ -3,7 +3,7 @@ const path = require('path');
 
 // Load game data from JSON files
 const fantasyArmy = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../client/public/data/armies/fantasy/fantasy.json'), 'utf8'));
-const classicMap = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../client/src/data/maps/classic.json'), 'utf8'));
+const classicMap = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../client/public/data/maps/classic.json'), 'utf8'));
 const combatData = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/combat.json'), 'utf8'));
 
 class GameLogic {
@@ -14,6 +14,7 @@ class GameLogic {
     this.movementRules = combatData.movementRules;
     this.gamePhases = combatData.gamePhases;
   }
+
 
   // Load army data by ID
   loadArmyData(armyId) {
@@ -28,8 +29,31 @@ class GameLogic {
     }
   }
 
+  // Count water tiles in player's setup area
+  countWaterTilesInSetupArea(color, mapData = null) {
+    const currentMapData = this.isValidMapData(mapData) ? mapData : this.mapData;
+    
+    if (!currentMapData || !currentMapData.setupRows || !currentMapData.terrainOverrides) {
+      return 0;
+    }
+    
+    const setupRows = currentMapData.setupRows[color];
+    if (!setupRows) return 0;
+    
+    const waterTiles = currentMapData.terrainOverrides.water || [];
+    let waterCount = 0;
+    
+    for (const waterTile of waterTiles) {
+      if (setupRows.includes(waterTile.y)) {
+        waterCount++;
+      }
+    }
+    
+    return waterCount;
+  }
+
   // Generate starting army for a player
-  generateArmy(color, armyId = 'fantasy') {
+  generateArmy(color, armyId = 'fantasy', mapData = null) {
     if (!armyId) {
       throw new Error('Army ID is required');
     }
@@ -37,8 +61,20 @@ class GameLogic {
     const armyData = this.loadArmyData(armyId);
     const army = [];
     
+    // Count water tiles in setup area to reduce scouts
+    const waterTilesInSetup = this.countWaterTilesInSetupArea(color, mapData);
+    console.log(`🗺️ Water tiles in ${color} setup area:`, waterTilesInSetup);
+    
     Object.entries(armyData.pieces).forEach(([pieceType, pieceInfo]) => {
-      for (let i = 0; i < pieceInfo.count; i++) {
+      let count = pieceInfo.count;
+      
+      // Reduce scout count by number of water tiles in setup area
+      if (pieceType === 'scout' || (pieceInfo.class === 'scout')) {
+        count = Math.max(0, count - waterTilesInSetup);
+        console.log(`🔍 Reducing ${pieceType} count from ${pieceInfo.count} to ${count} due to ${waterTilesInSetup} water tiles`);
+      }
+      
+      for (let i = 0; i < count; i++) {
         army.push({
           id: `${color}_${pieceType}_${i}`,
           type: pieceType,
@@ -49,34 +85,49 @@ class GameLogic {
           moveable: pieceInfo.moveable,
           canAttack: pieceInfo.canAttack,
           special: pieceInfo.special,
+          class: pieceInfo.class,
           revealed: false,
           position: null // Will be set during setup
         });
       }
     });
 
+    console.log(`⚔️ Generated army for ${color}:`, army.length, 'pieces');
     return army;
   }
 
   // Create empty board with water squares
-  createBoard() {
-    const board = Array(this.mapData.boardSize.height)
+  createBoard(mapData = null) {
+    const currentMapData = this.isValidMapData(mapData) ? mapData : this.mapData;
+    const board = Array(currentMapData.boardSize.height)
       .fill(null)
-      .map(() => Array(this.mapData.boardSize.width).fill(null));
+      .map(() => Array(currentMapData.boardSize.width).fill(null));
 
-    // Mark water squares as impassable
-    this.mapData.waterSquares.forEach(({ x, y }) => {
-      board[y][x] = { type: 'water', passable: false };
-    });
+    // Don't put anything on water squares - they should be handled as terrain on client side
+    // Water squares remain null on the board, terrain is handled by the client
+    // The water validation is done in validateMove method instead
 
     return board;
   }
 
   // Validate piece placement during setup
-  validatePlacement(board, piece, x, y, color) {
+  validatePlacement(board, piece, x, y, color, mapData = null) {
+    // Use provided map data if valid, otherwise fall back to default
+    let currentMapData;
+    
+    if (this.isValidMapData(mapData)) {
+      currentMapData = mapData;
+    } else {
+      currentMapData = this.mapData;
+    }
+    
+    // Final safety check
+    if (!this.isValidMapData(currentMapData)) {
+      throw new Error('No valid map data available for validatePlacement');
+    }
     // Check bounds
-    if (x < 0 || x >= this.mapData.boardSize.width || 
-        y < 0 || y >= this.mapData.boardSize.height) {
+    if (x < 0 || x >= currentMapData.boardSize.width || 
+        y < 0 || y >= currentMapData.boardSize.height) {
       return { valid: false, reason: 'Out of bounds' };
     }
 
@@ -85,8 +136,13 @@ class GameLogic {
       return { valid: false, reason: 'Square occupied' };
     }
 
+    // Check if placement is on water
+    if (this.getTerrainType(x, y, currentMapData) === 'water') {
+      return { valid: false, reason: 'Cannot place on water' };
+    }
+
     // Check if placement is in correct setup area
-    const setupRows = this.mapData.setupRows[color];
+    const setupRows = currentMapData.setupRows[color];
     if (!setupRows.includes(y)) {
       return { valid: false, reason: 'Invalid setup area' };
     }
@@ -95,10 +151,11 @@ class GameLogic {
   }
 
   // Validate move during gameplay
-  validateMove(board, fromX, fromY, toX, toY, color) {
+  validateMove(board, fromX, fromY, toX, toY, color, mapData = null) {
+    const currentMapData = this.isValidMapData(mapData) ? mapData : this.mapData;
     // Check bounds
-    if (toX < 0 || toX >= this.mapData.boardSize.width || 
-        toY < 0 || toY >= this.mapData.boardSize.height) {
+    if (toX < 0 || toX >= currentMapData.boardSize.width || 
+        toY < 0 || toY >= currentMapData.boardSize.height) {
       return { valid: false, reason: 'Out of bounds' };
     }
 
@@ -117,7 +174,9 @@ class GameLogic {
 
     // Check destination
     const targetSquare = board[toY][toX];
-    if (targetSquare && targetSquare.type === 'water') {
+    
+    // Check if destination is water
+    if (this.getTerrainType(toX, toY, currentMapData) === 'water') {
       return { valid: false, reason: 'Cannot move to water' };
     }
 
@@ -126,9 +185,11 @@ class GameLogic {
     }
 
     // Get movement rules for this piece type
-    // Check if piece can move multiple spaces based on type or special ability
+    // Check if piece can move multiple spaces based on type, class, or special ability
     const canMoveMultipleSpaces = piece.type === 'scout' || 
-                                  (piece.special && piece.special.includes('move multiple spaces'));
+                                  piece.class === 'scout' ||
+                                  (piece.special && (piece.special.includes('move multiple spaces') || 
+                                                   piece.special.includes('Moves multiple spaces')));
     const moveRules = canMoveMultipleSpaces ? this.movementRules.scout : 
                       (this.movementRules[piece.type] || this.movementRules.default);
     
@@ -214,16 +275,29 @@ class GameLogic {
 
   // Check if a special combat case applies
   matchesSpecialCase(attacker, defender, specialCase) {
-    const attackerMatch = specialCase.attacker === '*' || specialCase.attacker === attacker.type;
+    let attackerMatch;
+    if (specialCase.attacker === 'miner') {
+      // Match units that can defuse bombs/traps
+      attackerMatch = attacker.type === 'miner' || 
+                     attacker.class === 'miner' ||
+                     (attacker.special && (attacker.special.includes('can disable') || 
+                                         attacker.special.includes('can defuse') ||
+                                         attacker.special.includes('disable traps')));
+    } else {
+      attackerMatch = specialCase.attacker === '*' || specialCase.attacker === attacker.type;
+    }
     
     // Handle special piece types dynamically based on their properties
     let defenderMatch;
     if (specialCase.defender === 'flag') {
-      defenderMatch = defender.type === 'flag' || defender.special === 'Must be captured to win';
+      defenderMatch = defender.class === 'flag' || defender.special === 'Must be captured to win';
     } else if (specialCase.defender === 'bomb') {
-      // Match pieces that destroy attackers (bombs/mines)
+      // Match pieces that destroy attackers (bombs/mines/traps)
       defenderMatch = defender.type === 'bomb' || 
-                     (defender.special && defender.special.includes('Destroys any attacking unit'));
+                     defender.type === 'trap' ||
+                     defender.class === 'bomb' ||
+                     (defender.special && (defender.special.includes('Destroys any attacking unit') || 
+                                         defender.special.includes('Destroys any attacker')));
     } else {
       defenderMatch = specialCase.defender === '*' || specialCase.defender === defender.type;
     }
@@ -231,11 +305,13 @@ class GameLogic {
     // Handle exceptions dynamically - check if attacker has the ability to handle this defender
     if (specialCase.exception) {
       // For bombs/mines, check if attacker can defuse/disable them
-      if (specialCase.defender === 'bomb' && defender.special && defender.special.includes('Destroys any attacking unit')) {
+      if (specialCase.defender === 'bomb' && (defender.class === 'bomb' || (defender.special && (defender.special.includes('Destroys any attacking unit') || defender.special.includes('Destroys any attacker'))))) {
         const canDefuse = attacker.type === specialCase.exception || 
+                         attacker.class === specialCase.exception ||
                          (attacker.special && (
                            attacker.special.includes('can disable') || 
-                           attacker.special.includes('can defuse')
+                           attacker.special.includes('can defuse') ||
+                           attacker.special.includes('disable acid pods')
                          ));
         if (canDefuse) {
           return false; // Exception applies, this special case doesn't match
@@ -279,6 +355,12 @@ class GameLogic {
           loser: defender,
           description: specialCase.description
         };
+      case 'both_destroyed_bomb':
+        return {
+          result: 'both_destroyed',
+          winner: null,
+          description: specialCase.description
+        };
       case 'game_won':
         return {
           result: 'game_won',
@@ -295,12 +377,15 @@ class GameLogic {
     let hasFlag = false;
     let hasMovablePieces = false;
 
+    console.log(`Checking win condition for color: ${color}`);
+    
     for (let y = 0; y < board.length; y++) {
       for (let x = 0; x < board[y].length; x++) {
         const piece = board[y][x];
         if (piece && piece.color === color) {
           // Check if this is a flag piece (piece that must be captured to win)
-          if (piece.special === 'Must be captured to win' || piece.type === 'flag') {
+          console.log('Checking piece:', piece);
+          if (piece.class === 'flag') {
             hasFlag = true;
           }
           if (piece.moveable) {
@@ -322,15 +407,72 @@ class GameLogic {
     return { gameOver: false };
   }
 
+  // Get terrain type for a coordinate
+  getTerrainType(x, y, mapData = null) {
+    const currentMapData = this.isValidMapData(mapData) ? mapData : this.mapData;
+    // Use new terrain structure with defaultTerrain and terrainOverrides
+    if (currentMapData.terrainOverrides) {
+      for (const [terrainType, coordinates] of Object.entries(currentMapData.terrainOverrides)) {
+        if (coordinates.some(coord => coord.x === x && coord.y === y)) {
+          return terrainType;
+        }
+      }
+      return currentMapData.defaultTerrain || 'grassland';
+    }
+    
+    // Fallback to old terrain structure for backwards compatibility
+    const waterSquares = currentMapData.terrain?.waterSquares || currentMapData.waterSquares || [];
+    const isWaterSquare = waterSquares.some(square => square.x === x && square.y === y);
+    if (isWaterSquare) return 'water';
+    
+    const dirtSquares = currentMapData.terrain?.dirtSquares || [];
+    const isDirtSquare = dirtSquares.some(square => square.x === x && square.y === y);
+    if (isDirtSquare) return 'dirt';
+    
+    const grasslandSquares = currentMapData.terrain?.grasslandSquares || [];
+    const isGrasslandSquare = grasslandSquares.some(square => square.x === x && square.y === y);
+    if (isGrasslandSquare) return 'grassland';
+    
+    return 'default';
+  }
+
+  // Validate that map data has the required structure
+  isValidMapData(mapData) {
+    if (!mapData || typeof mapData !== 'object') return false;
+    if (!mapData.setupRows || typeof mapData.setupRows !== 'object') return false;
+    if (!mapData.boardSize || typeof mapData.boardSize !== 'object') return false;
+    if (typeof mapData.boardSize.width !== 'number' || typeof mapData.boardSize.height !== 'number') return false;
+    return true;
+  }
+
   // Generate random piece placement for quick setup
-  generateRandomPlacement(color, armyId = 'fantasy') {
-    const army = this.generateArmy(color, armyId);
-    const setupRows = this.mapData.setupRows[color];
+  generateRandomPlacement(color, armyId = 'fantasy', mapData = null) {
+    // Use provided map data if valid, otherwise fall back to default
+    let currentMapData;
+    
+    if (this.isValidMapData(mapData)) {
+      currentMapData = mapData;
+    } else {
+      console.log(`🎲 Using fallback map data (provided mapData was ${mapData ? 'invalid' : 'null'})`);
+      currentMapData = this.mapData;
+    }
+    
+    // Final safety check
+    if (!this.isValidMapData(currentMapData)) {
+      throw new Error('No valid map data available (both provided and default are invalid)');
+    }
+    
+    if (!currentMapData.setupRows[color]) {
+      throw new Error(`No setup rows for color '${color}'. Available colors: ${Object.keys(currentMapData.setupRows).join(', ')}`);
+    }
+    
+    const army = this.generateArmy(color, armyId, currentMapData);
+    const setupRows = currentMapData.setupRows[color];
     const positions = [];
 
     // Generate all valid positions
     for (const row of setupRows) {
-      for (let col = 0; col < this.mapData.boardSize.width; col++) {
+      for (let col = 0; col < currentMapData.boardSize.width; col++) {
         positions.push({ x: col, y: row });
       }
     }

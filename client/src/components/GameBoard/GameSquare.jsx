@@ -1,9 +1,9 @@
 import React from 'react';
 import styled from 'styled-components';
-import { getPieceSymbol, getPieceColor } from '../../utils/gameLogic';
+import { getPieceSymbol, getPieceColor, getTerrainType } from '../../utils/gameLogic';
 
 const Square = styled.div.withConfig({
-  shouldForwardProp: (prop) => !['clickable', 'isWater', 'isSetupArea', 'isSelected', 'isValidMove'].includes(prop)
+  shouldForwardProp: (prop) => !['clickable', 'terrainType', 'isSetupArea', 'isSelected', 'isValidMove', 'isDragTarget'].includes(prop)
 })`
   width: 100%;
   height: 100%;
@@ -15,16 +15,52 @@ const Square = styled.div.withConfig({
   font-weight: bold;
   border: 2px solid transparent;
   transition: all 0.2s ease;
+  position: relative;
   
-  background: ${props => {
-    if (props.isWater) return '#1e40af';
-    if (props.isSetupArea) return 'rgba(34, 197, 94, 0.1)';
-    if (props.isSelected) return 'rgba(255, 255, 0, 0.3)';
-    if (props.isValidMove) return 'rgba(34, 197, 94, 0.3)';
-    return 'rgba(255, 255, 255, 0.05)';
+  // Terrain background
+  background-image: ${props => {
+    switch (props.terrainType) {
+      case 'water': return 'url(/data/maps/terrain/water.png)';
+      case 'dirt': return 'url(/data/maps/terrain/dirt.png)';
+      case 'grassland': return 'url(/data/maps/terrain/grassland.png)';
+      default: return 'none';
+    }
   }};
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  
+  // Fallback background colors for when images don't load
+  background-color: ${props => {
+    switch (props.terrainType) {
+      case 'water': return '#3b82f6';
+      case 'dirt': return '#a3a3a3';  
+      case 'grassland': return '#22c55e';
+      default: return '#f3f4f6';
+    }
+  }};
+  
+  // Overlay colors for game states
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: ${props => {
+      if (props.isDragTarget) return 'rgba(59, 130, 246, 0.4)';
+      if (props.isSetupArea) return 'rgba(34, 197, 94, 0.2)';
+      if (props.isSelected) return 'rgba(255, 255, 0, 0.4)';
+      if (props.isValidMove) return 'rgba(34, 197, 94, 0.4)';
+      return 'transparent';
+    }};
+    pointer-events: none;
+    z-index: 1;
+  }
 
   border-color: ${props => {
+    if (props.isDragTarget) return '#3b82f6';
     if (props.isSelected) return '#fbbf24';
     if (props.isValidMove) return '#22c55e';
     return 'transparent';
@@ -32,14 +68,16 @@ const Square = styled.div.withConfig({
 
   &:hover {
     ${props => props.clickable && `
-      background: rgba(255, 255, 255, 0.1);
-      transform: scale(1.05);
+      &::before {
+        background: rgba(255, 255, 255, 0.2);
+      }
+      transform: scale(1.02);
     `}
   }
 `;
 
 const PieceContainer = styled.div.withConfig({
-  shouldForwardProp: (prop) => prop !== 'color'
+  shouldForwardProp: (prop) => !['color', 'isDraggable'].includes(prop)
 })`
   display: flex;
   flex-direction: column;
@@ -49,6 +87,13 @@ const PieceContainer = styled.div.withConfig({
   height: 100%;
   color: ${props => props.color};
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  position: relative;
+  z-index: 2;
+  cursor: ${props => props.isDraggable ? 'grab' : 'default'};
+  
+  &:active {
+    cursor: ${props => props.isDraggable ? 'grabbing' : 'default'};
+  }
 `;
 
 const PieceSymbol = styled.div`
@@ -83,13 +128,31 @@ function GameSquare({
   playerColor, 
   playerArmy,
   opponentArmy,
+  gamePhase,
+  mapData,
   isSelected, 
   isValidMove, 
-  isWater, 
   isSetupArea,
-  onClick 
+  isDragTarget,
+  onClick,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd
 }) {
+  const terrainType = getTerrainType(x, y, mapData);
+  const isWater = terrainType === 'water';
   const clickable = !isWater && (isSetupArea || isValidMove || (piece && piece.color === playerColor));
+  
+  // Debug actual terrain calculation
+  if (x === 2 && y === 4) {
+    console.log('🗺️ Terrain debug for water square (2,4):', {
+      terrainType,
+      mapData: mapData,
+      hasTerrainOverrides: !!mapData?.terrainOverrides,
+      waterOverrides: mapData?.terrainOverrides?.water
+    });
+  }
   
   const renderPiece = () => {
     if (!piece) return null;
@@ -97,13 +160,20 @@ function GameSquare({
     const symbol = getPieceSymbol(piece);
     const color = piece.color === playerColor ? '#4ade80' : '#ef4444';
     const isPlayerPiece = piece.color === playerColor;
+    const isDraggable = gamePhase === 'setup' && isPlayerPiece && piece.position;
     
     // Show image for player's own pieces if we have army data
     if (isPlayerPiece && playerArmy && piece.type) {
       const imagePath = `/data/armies/${playerArmy}/64x64/${piece.type}.png`;
       
       return (
-        <PieceContainer color={color}>
+        <PieceContainer 
+          color={color} 
+          isDraggable={isDraggable}
+          draggable={isDraggable}
+          onDragStart={isDraggable ? onDragStart : undefined}
+          onDragEnd={isDraggable ? onDragEnd : undefined}
+        >
           <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <PieceImage 
               src={imagePath} 
@@ -129,18 +199,61 @@ function GameSquare({
       );
     }
     
-    // Show army icon for hidden opponent pieces, or symbol if revealed/no army data
-    if (!isPlayerPiece && !piece.revealed && opponentArmy && piece.type === 'hidden') {
+    // Show revealed opponent pieces with their actual unit image
+    if (!isPlayerPiece && piece.revealed && opponentArmy && piece.type !== 'hidden') {
+      const imagePath = `/data/armies/${opponentArmy}/64x64/${piece.type}.png`;
+      
+      return (
+        <PieceContainer 
+          color={color} 
+          isDraggable={isDraggable}
+          draggable={isDraggable}
+          onDragStart={isDraggable ? onDragStart : undefined}
+          onDragEnd={isDraggable ? onDragEnd : undefined}
+        >
+          <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <PieceImage 
+              src={imagePath} 
+              alt={piece.name || piece.type}
+              onError={(e) => {
+                // Fallback to symbol if image fails to load
+                console.log(`Failed to load revealed opponent image: ${imagePath}`);
+                e.target.style.display = 'none';
+                const symbolElement = e.target.parentNode.querySelector('[data-fallback="symbol"]');
+                if (symbolElement) {
+                  symbolElement.style.display = 'block';
+                }
+              }}
+            />
+            <PieceSymbol data-fallback="symbol" style={{ display: 'none', fontSize: '2.2rem' }}>
+              {symbol}
+            </PieceSymbol>
+          </div>
+          <PieceRank>{piece.rank || "-"}</PieceRank>
+        </PieceContainer>
+      );
+    }
+    
+    // Show army icon for hidden opponent pieces (including at game end)
+    if (!isPlayerPiece && !piece.revealed && opponentArmy && (piece.type === 'hidden' || gamePhase === 'finished')) {
       console.log('🎭 Rendering army icon for opponent piece:', { 
         piece, 
         opponentArmy, 
         isPlayerPiece, 
-        revealed: piece.revealed 
+        revealed: piece.revealed,
+        gamePhase,
+        type: piece.type
       });
       const armyIconPath = `/data/armies/${opponentArmy}/${opponentArmy}.png`;
       
       return (
-        <PieceContainer color={color}>
+        <PieceContainer 
+          color={color} 
+          isDraggable={isDraggable}
+          draggable={isDraggable}
+          onDragStart={isDraggable ? onDragStart : undefined}
+          onDragEnd={isDraggable ? onDragEnd : undefined}
+        >
           <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <PieceImage 
               src={armyIconPath} 
@@ -165,7 +278,13 @@ function GameSquare({
     
     // Show symbol for revealed pieces or when no army data
     return (
-      <PieceContainer color={color}>
+      <PieceContainer 
+        color={color} 
+        isDraggable={isDraggable}
+        draggable={isDraggable}
+        onDragStart={isDraggable ? onDragStart : undefined}
+        onDragEnd={isDraggable ? onDragEnd : undefined}
+      >
         <PieceSymbol>{symbol}</PieceSymbol>
         {(piece.revealed || piece.color === playerColor) && (
           <PieceRank>{piece.rank || "-"}</PieceRank>
@@ -174,26 +293,20 @@ function GameSquare({
     );
   };
 
-  const renderWater = () => {
-    if (!isWater) return null;
-    return (
-      <PieceContainer color="#60a5fa">
-        <PieceSymbol>🌊</PieceSymbol>
-      </PieceContainer>
-    );
-  };
-
   return (
     <Square
       clickable={clickable}
+      terrainType={terrainType}
       isSelected={isSelected}
       isValidMove={isValidMove}
-      isWater={isWater}
       isSetupArea={isSetupArea}
+      isDragTarget={isDragTarget}
       onClick={clickable ? onClick : undefined}
-      title={isWater ? 'Water' : piece ? `${piece.name} (${piece.color})` : `(${x}, ${y})`}
+      onDragOver={onDragOver}
+      onDrop={onDrop}
+      title={isWater ? 'Water' : piece ? `${piece.name} (${piece.color})` : `${terrainType} terrain (${x}, ${y})`}
     >
-      {isWater ? renderWater() : renderPiece()}
+      {renderPiece()}
     </Square>
   );
 }

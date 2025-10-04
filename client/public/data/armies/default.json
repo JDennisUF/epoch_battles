@@ -12,7 +12,8 @@
       "canAttack": true,
       "special": "Strongest unit, defeated only by Spy when attacked",
       "symbol": "♔",
-      "description": "The highest ranking officer"
+      "description": "The highest ranking officer",
+      "class": "marshal"
     },
     "general": {
       "id": "general", 
@@ -23,7 +24,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "♕",
-      "description": "Second highest ranking officer"
+      "description": "Second highest ranking officer",
+      "class": "general"
     },
     "colonel": {
       "id": "colonel",
@@ -34,7 +36,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "♖",
-      "description": "High ranking field officer"
+      "description": "High ranking field officer",
+      "class": "colonel"
     },
     "major": {
       "id": "major",
@@ -45,7 +48,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "♗",
-      "description": "Field officer"
+      "description": "Field officer",
+      "class": "major"
     },
     "captain": {
       "id": "captain",
@@ -56,7 +60,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "♘",
-      "description": "Company commander"
+      "description": "Company commander",
+      "class": "captain"
     },
     "lieutenant": {
       "id": "lieutenant",
@@ -67,7 +72,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "♙",
-      "description": "Junior officer"
+      "description": "Junior officer",
+      "class": "lieutenant"
     },
     "sergeant": {
       "id": "sergeant",
@@ -78,7 +84,8 @@
       "canAttack": true,
       "special": null,
       "symbol": "♟",
-      "description": "Non-commissioned officer"
+      "description": "Non-commissioned officer",
+      "class": "sergeant"
     },
     "miner": {
       "id": "miner",
@@ -89,7 +96,8 @@
       "canAttack": true,
       "special": "Only unit that can defuse bombs",
       "symbol": "⛏",
-      "description": "Can defuse bombs safely"
+      "description": "Can defuse bombs safely",
+      "class": "miner"
     },
     "scout": {
       "id": "scout",
@@ -100,7 +108,8 @@
       "canAttack": true,
       "special": "Can move multiple spaces in a straight line",
       "symbol": "👁",
-      "description": "Fast moving reconnaissance unit"
+      "description": "Fast moving reconnaissance unit",
+      "class": "scout"
     },
     "spy": {
       "id": "spy",
@@ -111,7 +120,8 @@
       "canAttack": true,
       "special": "Defeats Marshal when attacking, weakest otherwise",
       "symbol": "🕵",
-      "description": "Can defeat the Marshal when attacking"
+      "description": "Can defeat the Marshal when attacking",
+      "class": "spy"
     },
     "flag": {
       "id": "flag",
@@ -122,7 +132,8 @@
       "canAttack": false,
       "special": "Must be captured to win",
       "symbol": "🏴",
-      "description": "Capture this to win the game"
+      "description": "Capture this to win the game",
+      "class": "flag"
     },
     "bomb": {
       "id": "bomb",
@@ -133,7 +144,8 @@
       "canAttack": false,
       "special": "Destroys any attacking unit except Miners",
       "symbol": "💣",
-      "description": "Immobile explosive device"
+      "description": "Immobile explosive device",
+      "class": "bomb"
     }
   },
   "totalPieces": 40

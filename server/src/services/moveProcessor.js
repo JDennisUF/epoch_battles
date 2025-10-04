@@ -28,7 +28,7 @@ class MoveProcessor {
       const board = game.gameState.board;
 
       // Validate the move
-      const moveValidation = gameLogic.validateMove(board, fromX, fromY, toX, toY, playerColor);
+      const moveValidation = gameLogic.validateMove(board, fromX, fromY, toX, toY, playerColor, game.mapData);
       if (!moveValidation.valid) {
         return { success: false, error: moveValidation.reason };
       }
@@ -69,6 +69,29 @@ class MoveProcessor {
       const combatResult = gameLogic.resolveCombat(movingPiece, targetPiece);
       moveResult.type = 'attack';
       moveResult.combat = combatResult;
+      
+      // Add combat data for frontend modal
+      moveResult.combatResult = {
+        attacker: {
+          unit: {
+            id: movingPiece.type,
+            name: movingPiece.name,
+            rank: movingPiece.rank
+          },
+          army: game.players.find(p => p.color === movingPiece.color)?.army || 'default'
+        },
+        defender: {
+          unit: {
+            id: targetPiece.type,
+            name: targetPiece.name,
+            rank: targetPiece.rank
+          },
+          army: game.players.find(p => p.color === targetPiece.color)?.army || 'default'
+        },
+        result: combatResult.result,
+        winner: combatResult.result === 'attacker_wins' ? 'attacker' : 
+                combatResult.result === 'defender_wins' ? 'defender' : 'none'
+      };
 
       // Reveal both pieces
       movingPiece.revealed = true;
@@ -100,10 +123,13 @@ class MoveProcessor {
       movingPiece.position = { x: toX, y: toY };
     }
 
-    // Check for flag capture first
-    if (game.gameState.phase === 'playing' && targetPiece) {
-      // Check if a flag was captured in this move
-      const flagCaptured = this.isFlagPiece(targetPiece) && combatResult.result === 'attacker_wins';
+    // Apply visibility rules for reconnaissance
+    this.applyReconnaissanceRules(game, fromX, fromY, toX, toY, movingPiece);
+
+    // Check for flag capture first (only if there was combat and attacker won the flag)
+    if (game.gameState.phase === 'playing' && targetPiece && moveResult.combat) {
+      // Check if a flag was captured in this move - attacker must win AND the target must be a flag
+      const flagCaptured = this.isFlagPiece(targetPiece) && moveResult.combat.result === 'attacker_wins';
       if (flagCaptured) {
         game.gameState.phase = 'finished';
         game.gameState.winner = playerColor;
@@ -189,9 +215,9 @@ class MoveProcessor {
       });
 
       if (isRandom) {
-        army = gameLogic.generateRandomPlacement(playerColor, armyId);
+        army = gameLogic.generateRandomPlacement(playerColor, armyId, game.mapData);
       } else {
-        army = this.validatePlacements(placements, playerColor, armyId);
+        army = this.validatePlacements(placements, playerColor, armyId, game.mapData);
         if (!army.valid) {
           console.error('❌ Validation failed:', army.error);
           return { success: false, error: army.error };
@@ -275,9 +301,9 @@ class MoveProcessor {
 
       // If isRandom is true OR placements is empty, use random placement
       if (isRandom || !placements || placements.length === 0) {
-        army = gameLogic.generateRandomPlacement(playerColor, armyId);
+        army = gameLogic.generateRandomPlacement(playerColor, armyId, game.mapData);
       } else {
-        army = this.validatePlacements(placements, playerColor, armyId);
+        army = this.validatePlacements(placements, playerColor, armyId, game.mapData);
         if (!army.valid) {
           console.error('❌ Validation failed:', army.error);
           return { success: false, error: army.error };
@@ -372,7 +398,7 @@ class MoveProcessor {
     }
   }
 
-  validatePlacements(placements, color, armyId = 'default') {
+  validatePlacements(placements, color, armyId = 'default', mapData = null) {
     if (!placements || placements.length !== 40) {
       return { valid: false, error: 'Must place exactly 40 pieces' };
     }
@@ -402,6 +428,31 @@ class MoveProcessor {
       }
     }
 
+    // Validate placement positions
+    for (const placement of placements) {
+      if (mapData) {
+        // Create a temporary empty board for validation (we'll check for duplicate positions separately)
+        const tempBoard = Array(mapData.boardSize?.height || 10)
+          .fill(null)
+          .map(() => Array(mapData.boardSize?.width || 10).fill(null));
+        
+        const validation = gameLogic.validatePlacement(tempBoard, null, placement.x, placement.y, color, mapData);
+        if (!validation.valid) {
+          return { valid: false, error: `Invalid placement at (${placement.x}, ${placement.y}): ${validation.reason}` };
+        }
+      }
+    }
+    
+    // Check for duplicate positions in the placements
+    const positions = new Set();
+    for (const placement of placements) {
+      const posKey = `${placement.x},${placement.y}`;
+      if (positions.has(posKey)) {
+        return { valid: false, error: `Duplicate placement at position (${placement.x}, ${placement.y})` };
+      }
+      positions.add(posKey);
+    }
+
     // Convert placements to pieces
     const pieces = placements.map((placement, index) => {
       const pieceInfo = armyData.pieces[placement.type];
@@ -415,6 +466,7 @@ class MoveProcessor {
         moveable: pieceInfo.moveable,
         canAttack: pieceInfo.canAttack,
         special: pieceInfo.special,
+        class: pieceInfo.class,
         revealed: false,
         position: { x: placement.x, y: placement.y }
       };
@@ -425,8 +477,76 @@ class MoveProcessor {
 
   // Helper method to check if a piece is a flag
   isFlagPiece(piece) {
-    return piece.type === 'flag' || 
+    return piece.class === 'flag' || 
            (piece.special && piece.special.includes('Must be captured to win'));
+  }
+
+  // Apply reconnaissance rules for visibility
+  applyReconnaissanceRules(game, fromX, fromY, toX, toY, movingPiece) {
+    const board = game.gameState.board;
+    
+    // Rule #2: Multi-space movement detection
+    // If a piece moves more than 1 space, it's revealed as a scout-type unit
+    const distance = Math.max(Math.abs(toX - fromX), Math.abs(toY - fromY));
+    if (distance > 1 && !movingPiece.revealed) {
+      movingPiece.revealed = true;
+      console.log(`🔍 Unit revealed due to multi-space movement: ${movingPiece.name} at (${toX},${toY})`);
+    }
+
+    // Rule #3: Scout adjacency detection
+    // Any enemy unit beside a scout at the end of a turn is revealed
+    this.revealUnitsAdjacentToScouts(board);
+  }
+
+  // Check for units adjacent to scouts and reveal them
+  revealUnitsAdjacentToScouts(board) {
+    const adjacentOffsets = [
+      { dx: 0, dy: -1 }, // North
+      { dx: 1, dy: 0 },  // East
+      { dx: 0, dy: 1 },  // South
+      { dx: -1, dy: 0 }  // West
+    ];
+
+    for (let y = 0; y < board.length; y++) {
+      for (let x = 0; x < board[y].length; x++) {
+        const piece = board[y][x];
+        
+        // Skip if no piece or piece is not a scout-type
+        if (!piece || !this.isScoutType(piece)) continue;
+
+        // Check all adjacent squares for enemy units
+        for (const offset of adjacentOffsets) {
+          const adjX = x + offset.dx;
+          const adjY = y + offset.dy;
+          
+          // Check bounds
+          if (adjX < 0 || adjX >= board[0].length || adjY < 0 || adjY >= board.length) continue;
+          
+          const adjacentPiece = board[adjY][adjX];
+          
+          // If there's an enemy piece adjacent to this scout, reveal it
+          if (adjacentPiece && 
+              adjacentPiece.color !== piece.color && 
+              !adjacentPiece.revealed) {
+            adjacentPiece.revealed = true;
+            console.log(`🔍 Unit revealed by scout detection: ${adjacentPiece.name} at (${adjX},${adjY}) detected by ${piece.name} at (${x},${y})`);
+          }
+        }
+      }
+    }
+  }
+
+  // Helper method to check if a piece is a scout-type (can move multiple spaces)
+  isScoutType(piece) {
+    return piece.type === 'scout' || 
+           piece.class === 'scout' ||
+           piece.type === 'scout_hawk' || 
+           piece.type === 'scout_rider' || 
+           piece.type === 'recon_drone' || 
+           piece.type === 'motor_scout' ||
+           piece.type === 'creeper' ||
+           (piece.special && (piece.special.includes('move multiple spaces') || 
+                            piece.special.includes('Moves multiple spaces')));
   }
 }
 

@@ -34,9 +34,9 @@
       {
         "attacker": "*",
         "defender": "bomb",
-        "result": "attacker_destroyed",
+        "result": "both_destroyed_bomb",
         "exception": "miner",
-        "description": "Bombs destroy attacking units except Miners"
+        "description": "Bombs destroy attacking units and are destroyed in the process (except when defused by Miners)"
       },
       {
         "attacker": "miner",
@@ -59,7 +59,7 @@
       "canJump": false
     },
     "scout": {
-      "maxDistance": 99,
+      "maxDistance": 4,
       "directions": ["up", "down", "left", "right"],
       "canJump": false,
       "mustStop": "when_blocked_or_attacking"
