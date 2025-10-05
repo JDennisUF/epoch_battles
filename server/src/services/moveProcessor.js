@@ -11,12 +11,12 @@ class MoveProcessor {
       }
 
       // Validate it's the player's turn
-      const playerColor = game.players.find(p => p.userId === playerId)?.color;
-      if (!playerColor) {
+      const playerSide = game.players.find(p => p.userId === playerId)?.side;
+      if (!playerSide) {
         return { success: false, error: 'Player not in game' };
       }
 
-      if (game.gameState.currentPlayer !== playerColor) {
+      if (game.gameState.currentPlayer !== playerSide) {
         return { success: false, error: 'Not your turn' };
       }
 
@@ -28,13 +28,13 @@ class MoveProcessor {
       const board = game.gameState.board;
 
       // Validate the move
-      const moveValidation = gameLogic.validateMove(board, fromX, fromY, toX, toY, playerColor, game.mapData);
+      const moveValidation = gameLogic.validateMove(board, fromX, fromY, toX, toY, playerSide, game.mapData);
       if (!moveValidation.valid) {
         return { success: false, error: moveValidation.reason };
       }
 
       // Process the move
-      const moveResult = await this.executeMove(game, fromX, fromY, toX, toY, playerColor);
+      const moveResult = await this.executeMove(game, fromX, fromY, toX, toY, playerSide);
       
       // Save the updated game state
       await game.save();
@@ -51,7 +51,7 @@ class MoveProcessor {
     }
   }
 
-  async executeMove(game, fromX, fromY, toX, toY, playerColor) {
+  async executeMove(game, fromX, fromY, toX, toY, playerSide) {
     const board = game.gameState.board;
     const movingPiece = board[fromY][fromX];
     const targetPiece = board[toY][toX];
@@ -78,7 +78,7 @@ class MoveProcessor {
             name: movingPiece.name,
             rank: movingPiece.rank
           },
-          army: game.players.find(p => p.color === movingPiece.color)?.army || 'default'
+          army: game.players.find(p => p.side === movingPiece.side)?.army || 'default'
         },
         defender: {
           unit: {
@@ -86,7 +86,7 @@ class MoveProcessor {
             name: targetPiece.name,
             rank: targetPiece.rank
           },
-          army: game.players.find(p => p.color === targetPiece.color)?.army || 'default'
+          army: game.players.find(p => p.side === targetPiece.side)?.army || 'default'
         },
         result: combatResult.result,
         winner: combatResult.result === 'attacker_wins' ? 'attacker' : 
@@ -132,12 +132,12 @@ class MoveProcessor {
       const flagCaptured = this.isFlagPiece(targetPiece) && moveResult.combat.result === 'attacker_wins';
       if (flagCaptured) {
         game.gameState.phase = 'finished';
-        game.gameState.winner = playerColor;
+        game.gameState.winner = playerSide;
         game.status = 'finished';
         game.finishedAt = new Date();
         
         moveResult.gameWon = true;
-        moveResult.winner = playerColor;
+        moveResult.winner = playerSide;
         moveResult.winReason = 'flag_captured';
       }
     }
@@ -145,16 +145,16 @@ class MoveProcessor {
     // Check for other win conditions (if game not already won)
     if (game.gameState.phase === 'playing') {
       // Check if the opponent has lost (no flag or no movable pieces)
-      const opponentColor = playerColor === 'home' ? 'away' : 'home';
-      const winCheck = gameLogic.checkWinCondition(board, opponentColor);
+      const opponentSide = playerSide === 'home' ? 'away' : 'home';
+      const winCheck = gameLogic.checkWinCondition(board, opponentSide);
       if (winCheck.gameOver) {
         game.gameState.phase = 'finished';
-        game.gameState.winner = playerColor; // The player who made the move wins
+        game.gameState.winner = playerSide; // The player who made the move wins
         game.status = 'finished';
         game.finishedAt = new Date();
         
         moveResult.gameWon = true;
-        moveResult.winner = playerColor;
+        moveResult.winner = playerSide;
         moveResult.winReason = winCheck.reason;
       }
     }
@@ -165,8 +165,8 @@ class MoveProcessor {
 
     // Switch turns (if game not finished)
     if (game.gameState.phase === 'playing') {
-      game.gameState.currentPlayer = playerColor === 'home' ? 'away' : 'home';
-      game.gameState.turnNumber += playerColor === 'away' ? 1 : 0;
+      game.gameState.currentPlayer = playerSide === 'home' ? 'away' : 'home';
+      game.gameState.turnNumber += playerSide === 'away' ? 1 : 0;
     }
 
     // Update game state
@@ -186,10 +186,10 @@ class MoveProcessor {
         return { success: false, error: 'Game not found' };
       }
 
-      const playerColor = game.players.find(p => p.userId === playerId)?.color;
-      console.log('🎨 Player color:', playerColor, 'for user:', playerId);
+      const playerSide = game.players.find(p => p.userId === playerId)?.side;
+      console.log('🎨 Player side:', playerSide, 'for user:', playerId);
       
-      if (!playerColor) {
+      if (!playerSide) {
         return { success: false, error: 'Player not in game' };
       }
 
@@ -208,16 +208,16 @@ class MoveProcessor {
       
       console.log('🎯 Setup processing:', {
         playerId,
-        playerColor,
+        playerSide,
         armyId,
         isRandom,
         placementsCount: placements?.length
       });
 
       if (isRandom) {
-        army = gameLogic.generateRandomPlacement(playerColor, armyId, game.mapData);
+        army = gameLogic.generateRandomPlacement(playerSide, armyId, game.mapData);
       } else {
-        army = this.validatePlacements(placements, playerColor, armyId, game.mapData);
+        army = this.validatePlacements(placements, playerSide, armyId, game.mapData);
         if (!army.valid) {
           console.error('❌ Validation failed:', army.error);
           return { success: false, error: army.error };
@@ -271,10 +271,10 @@ class MoveProcessor {
         return { success: false, error: 'Game not found' };
       }
 
-      const playerColor = game.players.find(p => p.userId === playerId)?.color;
-      console.log('🎨 Player color:', playerColor, 'for user:', playerId);
+      const playerSide = game.players.find(p => p.userId === playerId)?.side;
+      console.log('🎨 Player side:', playerSide, 'for user:', playerId);
       
-      if (!playerColor) {
+      if (!playerSide) {
         return { success: false, error: 'Player not in game' };
       }
 
@@ -293,7 +293,7 @@ class MoveProcessor {
       
       console.log('🎯 Piece placement processing:', {
         playerId,
-        playerColor,
+        playerSide,
         armyId,
         isRandom,
         placementsCount: placements?.length
@@ -301,9 +301,9 @@ class MoveProcessor {
 
       // If isRandom is true OR placements is empty, use random placement
       if (isRandom || !placements || placements.length === 0) {
-        army = gameLogic.generateRandomPlacement(playerColor, armyId, game.mapData);
+        army = gameLogic.generateRandomPlacement(playerSide, armyId, game.mapData);
       } else {
-        army = this.validatePlacements(placements, playerColor, armyId, game.mapData);
+        army = this.validatePlacements(placements, playerSide, armyId, game.mapData);
         if (!army.valid) {
           console.error('❌ Validation failed:', army.error);
           return { success: false, error: army.error };
@@ -349,10 +349,10 @@ class MoveProcessor {
         return { success: false, error: 'Game not found' };
       }
 
-      const playerColor = game.players.find(p => p.userId === playerId)?.color;
-      console.log('🎨 Player color:', playerColor, 'for user:', playerId);
+      const playerSide = game.players.find(p => p.userId === playerId)?.side;
+      console.log('🎨 Player side:', playerSide, 'for user:', playerId);
       
-      if (!playerColor) {
+      if (!playerSide) {
         return { success: false, error: 'Player not in game' };
       }
 
@@ -398,7 +398,7 @@ class MoveProcessor {
     }
   }
 
-  validatePlacements(placements, color, armyId = 'default', mapData = null) {
+  validatePlacements(placements, side, armyId = 'default', mapData = null) {
     if (!placements || placements.length !== 40) {
       return { valid: false, error: 'Must place exactly 40 pieces' };
     }
@@ -436,7 +436,7 @@ class MoveProcessor {
           .fill(null)
           .map(() => Array(mapData.boardSize?.width || 10).fill(null));
         
-        const validation = gameLogic.validatePlacement(tempBoard, null, placement.x, placement.y, color, mapData);
+        const validation = gameLogic.validatePlacement(tempBoard, null, placement.x, placement.y, side, mapData);
         if (!validation.valid) {
           return { valid: false, error: `Invalid placement at (${placement.x}, ${placement.y}): ${validation.reason}` };
         }
@@ -457,9 +457,9 @@ class MoveProcessor {
     const pieces = placements.map((placement, index) => {
       const pieceInfo = armyData.pieces[placement.type];
       return {
-        id: `${color}_${placement.type}_${index}`,
+        id: `${side}_${placement.type}_${index}`,
         type: placement.type,
-        color: color,
+        side: side,
         rank: pieceInfo.rank,
         name: pieceInfo.name,
         symbol: pieceInfo.symbol,
@@ -526,7 +526,7 @@ class MoveProcessor {
           
           // If there's an enemy piece adjacent to this scout, reveal it
           if (adjacentPiece && 
-              adjacentPiece.color !== piece.color && 
+              adjacentPiece.side !== piece.side && 
               !adjacentPiece.revealed) {
             adjacentPiece.revealed = true;
             console.log(`🔍 Unit revealed by scout detection: ${adjacentPiece.name} at (${adjX},${adjY}) detected by ${piece.name} at (${x},${y})`);

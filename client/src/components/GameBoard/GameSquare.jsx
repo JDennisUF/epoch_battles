@@ -125,7 +125,7 @@ function GameSquare({
   x, 
   y, 
   piece, 
-  playerColor, 
+  playerSide, 
   playerArmy,
   opponentArmy,
   gamePhase,
@@ -142,7 +142,7 @@ function GameSquare({
 }) {
   const terrainType = getTerrainType(x, y, mapData);
   const isWater = terrainType === 'water';
-  const clickable = !isWater && (isSetupArea || isValidMove || (piece && piece.color === playerColor));
+  const clickable = !isWater && (isSetupArea || isValidMove || (piece && piece.side === playerSide));
   
   // Debug actual terrain calculation
   if (x === 2 && y === 4) {
@@ -158,8 +158,8 @@ function GameSquare({
     if (!piece) return null;
 
     const symbol = getPieceSymbol(piece);
-    const color = piece.color === playerColor ? '#4ade80' : '#ef4444';
-    const isPlayerPiece = piece.color === playerColor;
+    const color = piece.side === playerSide ? '#4ade80' : '#ef4444';
+    const isPlayerPiece = piece.side === playerSide;
     const isDraggable = gamePhase === 'setup' && isPlayerPiece && piece.position;
     
     // Show image for player's own pieces if we have army data
@@ -192,7 +192,7 @@ function GameSquare({
               {symbol}
             </PieceSymbol>
           </div>
-          {(piece.revealed || piece.color === playerColor) && (
+          {(piece.revealed || piece.side === playerSide) && (
             <PieceRank>{piece.rank || "-"}</PieceRank>
           )}
         </PieceContainer>
@@ -286,7 +286,7 @@ function GameSquare({
         onDragEnd={isDraggable ? onDragEnd : undefined}
       >
         <PieceSymbol>{symbol}</PieceSymbol>
-        {(piece.revealed || piece.color === playerColor) && (
+        {(piece.revealed || piece.side === playerSide) && (
           <PieceRank>{piece.rank || "-"}</PieceRank>
         )}
       </PieceContainer>
@@ -304,7 +304,7 @@ function GameSquare({
       onClick={clickable ? onClick : undefined}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      title={isWater ? 'Water' : piece ? `${piece.name} (${piece.color})` : `${terrainType} terrain (${x}, ${y})`}
+      title={isWater ? 'Water' : piece ? `${piece.name} (${piece.side})` : `${terrainType} terrain (${x}, ${y})`}
     >
       {renderPiece()}
     </Square>

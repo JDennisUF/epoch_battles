@@ -1,0 +1,152 @@
+{
+  "id": "shogun_dynasty",
+  "name": "Shogun Dynasty",
+  "description": "A disciplined army of samurai, ninja, and feudal lords serving under the great Shogun.",
+  "pieces": {
+    "shogun": {
+      "id": "shogun",
+      "name": "Shogun",
+      "rank": 1,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Strongest unit, defeated only by Ninja when attacked",
+      "symbol": "🈶",
+      "description": "Supreme military ruler of the dynasty",
+      "class": "marshal"
+    },
+    "daimyo": {
+      "id": "daimyo",
+      "name": "Daimyo",
+      "rank": 2,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "🎌",
+      "description": "Feudal lord commanding vast lands and loyal retainers",
+      "class": "general"
+    },
+    "samurai_commander": {
+      "id": "samurai_commander",
+      "name": "Samurai Commander",
+      "rank": 3,
+      "count": 2,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "⚔️",
+      "description": "Leader of disciplined samurai legions",
+      "class": "colonel"
+    },
+    "ronin_captain": {
+      "id": "ronin_captain",
+      "name": "Ronin Captain",
+      "rank": 4,
+      "count": 3,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "🗡️",
+      "description": "Masterless samurai fighting for honor and fortune",
+      "class": "major"
+    },
+    "archer_captain": {
+      "id": "archer_captain",
+      "name": "Archer Captain",
+      "rank": 5,
+      "count": 4,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "🏹",
+      "description": "Commands bowmen who rain arrows upon enemies from afar",
+      "class": "captain"
+    },
+    "ashigaru": {
+      "id": "ashigaru",
+      "name": "Ashigaru",
+      "rank": 6,
+      "count": 4,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "🥷",
+      "description": "Common foot soldiers forming the core of the army",
+      "class": "lieutenant"
+    },
+    "spear_guard": {
+      "id": "spear_guard",
+      "name": "Spear Guard",
+      "rank": 7,
+      "count": 4,
+      "moveable": true,
+      "canAttack": true,
+      "special": null,
+      "symbol": "🛡️",
+      "description": "Disciplined infantry trained in spear formations",
+      "class": "sergeant"
+    },
+    "sapper": {
+      "id": "sapper",
+      "name": "Sapper",
+      "rank": 8,
+      "count": 5,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Only unit that can safely dismantle Explosive Barrels",
+      "symbol": "⛏️",
+      "description": "Engineers skilled in setting and defusing explosive traps",
+      "class": "miner"
+    },
+    "scout_rider": {
+      "id": "scout_rider",
+      "name": "Scout Rider",
+      "rank": 9,
+      "count": 8,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Can move multiple spaces in a straight line",
+      "symbol": "🐎",
+      "description": "Mounted scouts swiftly surveying the battlefield",
+      "class": "scout"
+    },
+    "ninja": {
+      "id": "ninja",
+      "name": "Ninja",
+      "rank": 10,
+      "count": 1,
+      "moveable": true,
+      "canAttack": true,
+      "special": "Defeats Shogun when attacking, weakest otherwise",
+      "symbol": "🕶️",
+      "description": "Stealth assassin striking unseen from the shadows",
+      "class": "spy"
+    },
+    "dynasty_banner": {
+      "id": "dynasty_banner",
+      "name": "Dynasty Banner",
+      "rank": null,
+      "count": 1,
+      "moveable": false,
+      "canAttack": false,
+      "special": "Must be captured to win",
+      "symbol": "🏳️",
+      "description": "Sacred banner representing the Shogun's rule",
+      "class": "flag"
+    },
+    "explosive_barrel": {
+      "id": "explosive_barrel",
+      "name": "Explosive Barrel",
+      "rank": null,
+      "count": 6,
+      "moveable": false,
+      "canAttack": false,
+      "special": "Destroys any attacking unit except Sappers",
+      "symbol": "💥",
+      "description": "Hidden barrels of gunpowder waiting to explode",
+      "class": "bomb"
+    }
+  },
+  "totalPieces": 40
+}

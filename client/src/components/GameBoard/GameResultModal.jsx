@@ -132,14 +132,14 @@ const ExitButton = styled(Button)`
   }
 `;
 
-function GameResultModal({ gameResult, playerColor, players, onRematch, onExit }) {
+function GameResultModal({ gameResult, playerSide, players, onRematch, onExit }) {
   if (!gameResult) return null;
 
   const { winner, reason } = gameResult;
-  const isPlayerWinner = winner === playerColor;
+  const isPlayerWinner = winner === playerSide;
   
-  const winnerPlayer = players.find(p => p.color === winner);
-  const loserPlayer = players.find(p => p.color !== winner);
+  const winnerPlayer = players.find(p => p.side === winner);
+  const loserPlayer = players.find(p => p.side !== winner);
 
   const getReasonText = (reason) => {
     switch (reason) {

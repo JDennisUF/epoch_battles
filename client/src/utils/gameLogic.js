@@ -1,4 +1,4 @@
-// Map data will be loaded dynamically from public/data/maps/
+// Map data and terrain data will be loaded dynamically from public/data/maps/
 
 export const PIECES = {
   marshal: {
@@ -165,37 +165,42 @@ export const getTerrainType = (x, y, mapData) => {
   return 'error_no_terrain_overrides';
 };
 
-export const isSetupRow = (y, color) => {
-  return GAME_CONFIG.setupRows[color].includes(y);
+export const isSetupRow = (y, side) => {
+  return GAME_CONFIG.setupRows[side].includes(y);
 };
 
 export const getPieceSymbol = (piece) => {
   if (!piece) return null;
-  if (piece.revealed || piece.color === 'own') {
+  if (piece.revealed || piece.side === 'own') {
     return PIECES[piece.type]?.symbol || '?';
   }
   return '🔹'; // Hidden piece symbol
 };
 
-export const getPieceColor = (piece, playerColor) => {
+export const getPieceColor = (piece, playerSide) => {
   if (!piece) return null;
-  return piece.color === playerColor ? '#4ade80' : '#ef4444';
+  return piece.side === playerSide ? '#4ade80' : '#ef4444';
 };
 
-export const canMoveTo = (fromX, fromY, toX, toY, board, playerColor) => {
+export const canMoveTo = (fromX, fromY, toX, toY, board, playerSide, mapData = null) => {
   const piece = board[fromY]?.[fromX];
-  if (!piece || piece.color !== playerColor) return false;
+  if (!piece || piece.side !== playerSide) return false;
   if (!piece.moveable) return false;
 
-  // Basic bounds check
-  if (toX < 0 || toX >= 10 || toY < 0 || toY >= 10) return false;
+  // Use provided mapData or fall back to GAME_CONFIG
+  const currentMapData = mapData || GAME_CONFIG;
 
-  // Can't move to water
-  if (getTerrainType(toX, toY, GAME_CONFIG) === 'water') return false;
+  // Basic bounds check
+  if (toX < 0 || toX >= (currentMapData.boardSize?.width || 10) || 
+      toY < 0 || toY >= (currentMapData.boardSize?.height || 10)) return false;
+
+  // Can't move to impassable terrain
+  const terrainType = getTerrainType(toX, toY, currentMapData);
+  if (!isTerrainPassable(terrainType)) return false;
 
   // Can't attack own pieces
   const target = board[toY]?.[toX];
-  if (target && target.color === playerColor) return false;
+  if (target && target.side === playerSide) return false;
 
   // Must move in straight line
   const dx = Math.abs(toX - fromX);
@@ -227,48 +232,92 @@ export const canMoveTo = (fromX, fromY, toX, toY, board, playerColor) => {
 };
 
 // Count water tiles in player's setup area
-export const countWaterTilesInSetupArea = (mapData, color) => {
-  if (!mapData || !mapData.setupRows || !mapData.terrainOverrides) {
+// Load terrain data (this would normally be loaded asynchronously)
+let terrainData = null;
+
+export const loadTerrainData = async () => {
+  if (!terrainData) {
+    try {
+      const response = await fetch('/data/maps/terrain/terrain.json');
+      terrainData = await response.json();
+    } catch (error) {
+      console.error('Failed to load terrain data:', error);
+      // Fallback terrain data
+      terrainData = {
+        terrainTypes: {
+          grassland: { passable: true },
+          dirt: { passable: true },
+          water: { passable: false },
+          mountain: { passable: true },
+          sand: { passable: true }
+        }
+      };
+    }
+  }
+  return terrainData;
+};
+
+// Check if terrain is passable
+export const isTerrainPassable = (terrainType) => {
+  if (!terrainData) {
+    // Default to passable if terrain data not loaded yet
+    return terrainType !== 'water';
+  }
+  const terrain = terrainData.terrainTypes[terrainType];
+  return terrain ? terrain.passable : true;
+};
+
+// Count impassable terrain tiles in player's setup area
+export const countImpassableTerrainInSetupArea = (mapData, side) => {
+  if (!mapData || !mapData.setupRows) {
     return 0;
   }
   
-  const setupRows = mapData.setupRows[color];
+  const setupRows = mapData.setupRows[side];
   if (!setupRows) return 0;
   
-  const waterTiles = mapData.terrainOverrides.water || [];
-  let waterCount = 0;
+  let impassableCount = 0;
   
-  for (const waterTile of waterTiles) {
-    if (setupRows.includes(waterTile.y)) {
-      waterCount++;
+  // Check each position in the setup area
+  for (const row of setupRows) {
+    for (let col = 0; col < mapData.boardSize.width; col++) {
+      const terrainType = getTerrainType(col, row, mapData);
+      if (!isTerrainPassable(terrainType)) {
+        impassableCount++;
+      }
     }
   }
   
-  return waterCount;
+  return impassableCount;
 };
 
-export const generateArmy = (color, armyData = null, mapData = null) => {
+// Legacy function for backward compatibility
+export const countWaterTilesInSetupArea = (mapData, side) => {
+  return countImpassableTerrainInSetupArea(mapData, side);
+};
+
+export const generateArmy = (side, armyData = null, mapData = null) => {
   const army = [];
   const piecesData = armyData?.pieces || PIECES;
   
-  // Count water tiles in setup area to reduce scouts
-  const waterTilesInSetup = countWaterTilesInSetupArea(mapData, color);
-  console.log(`🗺️ Water tiles in ${color} setup area:`, waterTilesInSetup);
+  // Count impassable terrain tiles in setup area to reduce scouts
+  const impassableTerrainInSetup = countImpassableTerrainInSetupArea(mapData, side);
+  console.log(`🗺️ Impassable terrain tiles in ${side} setup area:`, impassableTerrainInSetup);
   
   Object.entries(piecesData).forEach(([pieceType, pieceInfo]) => {
     let count = pieceInfo.count;
     
-    // Reduce scout count by number of water tiles in setup area
+    // Reduce scout count by number of impassable terrain tiles in setup area
     if (pieceType === 'scout' || (pieceInfo.class === 'scout')) {
-      count = Math.max(0, count - waterTilesInSetup);
-      console.log(`🔍 Reducing ${pieceType} count from ${pieceInfo.count} to ${count} due to ${waterTilesInSetup} water tiles`);
+      count = Math.max(0, count - impassableTerrainInSetup);
+      console.log(`🔍 Reducing ${pieceType} count from ${pieceInfo.count} to ${count} due to ${impassableTerrainInSetup} impassable terrain tiles`);
     }
     
     for (let i = 0; i < count; i++) {
       army.push({
-        id: `${color}_${pieceType}_${i}`,
+        id: `${side}_${pieceType}_${i}`,
         type: pieceType,
-        color: color,
+        side: side,
         rank: pieceInfo.rank,
         name: pieceInfo.name,
         symbol: pieceInfo.symbol,
@@ -280,6 +329,6 @@ export const generateArmy = (color, armyData = null, mapData = null) => {
     }
   });
   
-  console.log(`⚔️ Generated army for ${color}:`, army.length, 'pieces');
+  console.log(`⚔️ Generated army for ${side}:`, army.length, 'pieces');
   return army;
 };

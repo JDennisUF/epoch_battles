@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import GameSquare from './GameSquare';
 import PieceSelector from './PieceSelector';
 import PlacementSelector from './PlacementSelector';
-import { GAME_CONFIG, getTerrainType, canMoveTo, generateArmy } from '../../utils/gameLogic';
+import { GAME_CONFIG, getTerrainType, canMoveTo, generateArmy, loadTerrainData } from '../../utils/gameLogic';
 import ArmySelector from './ArmySelector';
 import CombatModal from './CombatModal';
 import GameResultModal from './GameResultModal';
@@ -169,8 +169,8 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
   const { socket } = useSocket();
   const { user } = useAuth();
 
-  const playerColor = players.find(p => p.userId === user.id)?.color;
-  const isCurrentTurn = gameState?.currentPlayer === playerColor;
+  const playerSide = players.find(p => p.userId === user.id)?.side;
+  const isCurrentTurn = gameState?.currentPlayer === playerSide;
   const gamePhase = gameState?.phase || 'setup';
   const mapData = gameState?.mapData;
   const player = localPlayers.find(p => p.userId === user.id);
@@ -190,6 +190,13 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     console.error('❌ Invalid mapData structure:', mapData);
     console.error('❌ Full gameState:', gameState);
   }
+
+  // Load terrain data on component mount
+  useEffect(() => {
+    loadTerrainData().catch(error => {
+      console.error('Failed to load terrain data:', error);
+    });
+  }, []);
 
   useEffect(() => {
     if (!socket) return;
@@ -352,7 +359,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     }
 
     // Check if target is in valid setup area
-    if (!mapData.setupRows?.[playerColor]?.includes(targetY)) {
+    if (!mapData.setupRows?.[playerSide]?.includes(targetY)) {
       setDraggedPiece(null);
       setDraggedFromPosition(null);
       return;
@@ -397,7 +404,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     if (!selectedPieceType) return;
     
     // Check if it's a valid setup position
-    if (!mapData.setupRows?.[playerColor]?.includes(y)) return;
+    if (!mapData.setupRows?.[playerSide]?.includes(y)) return;
     if (gameState.board[y][x]) return; // Square occupied
     if (getTerrainType(x, y, mapData) === 'water') return;
 
@@ -429,7 +436,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
           toX: x,
           toY: y
         });
-      } else if (clickedPiece && clickedPiece.color === playerColor) {
+      } else if (clickedPiece && clickedPiece.side === playerSide) {
         // Select different piece
         selectPiece(x, y, clickedPiece);
       } else {
@@ -437,7 +444,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
         setSelectedSquare(null);
         setValidMoves([]);
       }
-    } else if (clickedPiece && clickedPiece.color === playerColor && clickedPiece.moveable) {
+    } else if (clickedPiece && clickedPiece.side === playerSide && clickedPiece.moveable) {
       // Select piece
       selectPiece(x, y, clickedPiece);
     }
@@ -451,7 +458,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     if (gameState?.board) {
       for (let toY = 0; toY < 10; toY++) {
         for (let toX = 0; toX < 10; toX++) {
-          if (canMoveTo(x, y, toX, toY, gameState.board, playerColor)) {
+          if (canMoveTo(x, y, toX, toY, gameState.board, playerSide, mapData)) {
             moves.push({ x: toX, y: toY });
           }
         }
@@ -503,7 +510,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     setSetupPieces([]);
     
     // Generate army pieces with positions from placement
-    const army = generateArmy(playerColor, armyData, mapData);
+    const army = generateArmy(playerSide, armyData, mapData);
     const placedArmy = army.map((piece, index) => {
       const placement = placementData[index];
       return {
@@ -584,16 +591,16 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
   // Initialize setup pieces if in setup phase and army is selected
   useEffect(() => {
     if (gamePhase === 'setup' && hasSelectedArmy && setupPieces.length === 0 && armyData) {
-      setSetupPieces(generateArmy(playerColor, armyData, mapData));
+      setSetupPieces(generateArmy(playerSide, armyData, mapData));
     }
-  }, [gamePhase, hasSelectedArmy, setupPieces.length, playerColor, armyData, mapData]);
+  }, [gamePhase, hasSelectedArmy, setupPieces.length, playerSide, armyData, mapData]);
 
   const renderBoard = () => {
     const squares = [];
     console.log('🎮 Rendering board with gameState:', { 
       opponentArmy: gameState?.opponentArmy, 
       phase: gamePhase, 
-      playerColor 
+      playerSide 
     });
     
     for (let y = 0; y < 10; y++) {
@@ -616,7 +623,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
           }
           return move.x === x && move.y === y;
         });
-        const isSetupArea = gamePhase === 'setup' && mapData.setupRows?.[playerColor]?.includes(y);
+        const isSetupArea = gamePhase === 'setup' && mapData.setupRows?.[playerSide]?.includes(y);
 
         squares.push(
           <GameSquare
@@ -624,7 +631,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
             x={x}
             y={y}
             piece={piece}
-            playerColor={playerColor}
+            playerSide={playerSide}
             playerArmy={player?.army || selectedArmy}
             opponentArmy={gameState?.opponentArmy}
             gamePhase={gamePhase}
@@ -683,7 +690,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
         <ArmySelector 
           onSelectArmy={handleArmySelection}
           onCancel={handleCancelArmySelection}
-          playerColor={playerColor}
+          playerSide={playerSide}
         />
         {/* Show blurred game board in background */}
         <div style={{ filter: 'blur(5px)', pointerEvents: 'none' }}>
@@ -719,12 +726,12 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
         <InfoSection>
           <InfoTitle>Players</InfoTitle>
           {localPlayers.map(player => (
-            <PlayerInfo key={player.userId} color={player.color === 'home' ? '#3b82f6' : '#ef4444'}>
+            <PlayerInfo key={player.userId} color={player.side === 'home' ? '#3b82f6' : '#ef4444'}>
               <span>
-                {player.username} ({player.color === 'home' ? 'Home' : 'Away'})
+                {player.username} ({player.side === 'home' ? 'Home' : 'Away'})
                 {gamePhase === 'setup' && player.isReady && ' ✓'}
               </span>
-              <span>{player.color === playerColor ? '(You)' : ''}</span>
+              <span>{player.side === playerSide ? '(You)' : ''}</span>
             </PlayerInfo>
           ))}
         </InfoSection>
@@ -793,7 +800,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
       {gameResult && (
         <GameResultModal 
           gameResult={gameResult}
-          playerColor={playerColor}
+          playerSide={playerSide}
           players={localPlayers}
           onRematch={() => {
             // TODO: Implement rematch functionality
@@ -858,12 +865,12 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
         <InfoSection>
           <InfoTitle>Players</InfoTitle>
           {localPlayers.map(player => (
-            <PlayerInfo key={player.userId} color={player.color === 'home' ? '#3b82f6' : '#ef4444'}>
+            <PlayerInfo key={player.userId} color={player.side === 'home' ? '#3b82f6' : '#ef4444'}>
               <span>
-                {player.username} ({player.color === 'home' ? 'Home' : 'Away'})
+                {player.username} ({player.side === 'home' ? 'Home' : 'Away'})
                 {gamePhase === 'setup' && player.isReady && ' ✓'}
               </span>
-              <span>{player.color === playerColor ? '(You)' : ''}</span>
+              <span>{player.side === playerSide ? '(You)' : ''}</span>
             </PlayerInfo>
           ))}
         </InfoSection>

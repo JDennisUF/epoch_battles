@@ -148,14 +148,14 @@ router.post('/forfeit', auth, async (req, res) => {
     }
 
     // Determine winner (the other player)
-    const playerColor = game.players.find(p => p.userId === req.user.id)?.color;
-    const winnerColor = playerColor === 'home' ? 'away' : 'home';
-    const winner = game.players.find(p => p.color === winnerColor);
+    const playerSide = game.players.find(p => p.userId === req.user.id)?.side;
+    const winnerSide = playerSide === 'home' ? 'away' : 'home';
+    const winner = game.players.find(p => p.side === winnerSide);
 
     // Update game state
     game.status = 'finished';
     game.gameState.phase = 'finished';
-    game.gameState.winner = winnerColor;
+    game.gameState.winner = winnerSide;
     game.finishedAt = new Date();
     
     await game.save();

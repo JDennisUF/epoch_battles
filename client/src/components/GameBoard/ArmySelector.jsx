@@ -209,7 +209,7 @@ const ARMIES = [
   }
 ];
 
-function ArmySelector({ onSelectArmy, onCancel, playerColor }) {
+function ArmySelector({ onSelectArmy, onCancel, playerSide }) {
   const [selectedArmy, setSelectedArmy] = useState(null);
   const [armyData, setArmyData] = useState({});
   const [loading, setLoading] = useState(true);

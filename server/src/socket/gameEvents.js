@@ -53,7 +53,7 @@ const gameEvents = (socket, io) => {
             {
               userId: fromUserId,
               username: fromUser.username,
-              color: 'home',
+              side: 'home',
               isReady: false,
               piecesPlaced: false,
               army: null
@@ -61,7 +61,7 @@ const gameEvents = (socket, io) => {
             {
               userId: socket.user.id,
               username: socket.user.username,
-              color: 'away',
+              side: 'away',
               isReady: false,
               piecesPlaced: false,
               army: null
@@ -370,17 +370,17 @@ const gameEvents = (socket, io) => {
       }
 
       const player = game.players.find(p => p.userId === socket.user.id);
-      const playerColor = player?.color;
+      const playerSide = player?.side;
       const armyId = player?.army || 'fantasy';
       
-      if (!playerColor) {
+      if (!playerSide) {
         socket.emit('setup_error', { message: 'Player not in game' });
         return;
       }
 
       // Ensure we have valid map data, fallback to default if needed
       const mapDataToUse = game.mapData || null; // Let generateRandomPlacement handle the fallback
-      const randomArmy = gameLogic.generateRandomPlacement(playerColor, armyId, mapDataToUse);
+      const randomArmy = gameLogic.generateRandomPlacement(playerSide, armyId, mapDataToUse);
       
       socket.emit('random_placement', {
         pieces: randomArmy

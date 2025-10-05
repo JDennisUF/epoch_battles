@@ -5,6 +5,7 @@ const path = require('path');
 const fantasyArmy = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../client/public/data/armies/fantasy/fantasy.json'), 'utf8'));
 const classicMap = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../client/public/data/maps/classic.json'), 'utf8'));
 const combatData = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/combat.json'), 'utf8'));
+const terrainData = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../client/public/data/maps/terrain/terrain.json'), 'utf8'));
 
 class GameLogic {
   constructor() {
@@ -13,6 +14,7 @@ class GameLogic {
     this.combatRules = combatData.combatRules;
     this.movementRules = combatData.movementRules;
     this.gamePhases = combatData.gamePhases;
+    this.terrainTypes = terrainData.terrainTypes;
   }
 
 
@@ -29,31 +31,64 @@ class GameLogic {
     }
   }
 
-  // Count water tiles in player's setup area
-  countWaterTilesInSetupArea(color, mapData = null) {
+  // Get terrain type at specific coordinates
+  getTerrainType(x, y, mapData = null) {
     const currentMapData = this.isValidMapData(mapData) ? mapData : this.mapData;
     
-    if (!currentMapData || !currentMapData.setupRows || !currentMapData.terrainOverrides) {
-      return 0;
+    if (!currentMapData || !currentMapData.terrainOverrides) {
+      return currentMapData?.defaultTerrain || 'grassland';
     }
     
-    const setupRows = currentMapData.setupRows[color];
-    if (!setupRows) return 0;
-    
-    const waterTiles = currentMapData.terrainOverrides.water || [];
-    let waterCount = 0;
-    
-    for (const waterTile of waterTiles) {
-      if (setupRows.includes(waterTile.y)) {
-        waterCount++;
+    // Check terrain overrides first
+    for (const [terrainType, coordinates] of Object.entries(currentMapData.terrainOverrides)) {
+      if (coordinates.some(coord => coord.x === x && coord.y === y)) {
+        return terrainType;
       }
     }
     
-    return waterCount;
+    // Return default terrain if no override found
+    return currentMapData.defaultTerrain || 'grassland';
+  }
+
+  // Check if terrain is passable (can place units on it)
+  isTerrainPassable(terrainType) {
+    const terrain = this.terrainTypes[terrainType];
+    return terrain ? terrain.passable : true; // Default to passable if terrain type not found
+  }
+
+  // Count impassable terrain tiles in player's setup area
+  countImpassableTerrainInSetupArea(side, mapData = null) {
+    const currentMapData = this.isValidMapData(mapData) ? mapData : this.mapData;
+    
+    if (!currentMapData || !currentMapData.setupRows) {
+      return 0;
+    }
+    
+    const setupRows = currentMapData.setupRows[side];
+    if (!setupRows) return 0;
+    
+    let impassableCount = 0;
+    
+    // Check each position in the setup area
+    for (const row of setupRows) {
+      for (let col = 0; col < currentMapData.boardSize.width; col++) {
+        const terrainType = this.getTerrainType(col, row, currentMapData);
+        if (!this.isTerrainPassable(terrainType)) {
+          impassableCount++;
+        }
+      }
+    }
+    
+    return impassableCount;
+  }
+
+  // Legacy function for backward compatibility - now calls the new function
+  countWaterTilesInSetupArea(side, mapData = null) {
+    return this.countImpassableTerrainInSetupArea(side, mapData);
   }
 
   // Generate starting army for a player
-  generateArmy(color, armyId = 'fantasy', mapData = null) {
+  generateArmy(side, armyId = 'fantasy', mapData = null) {
     if (!armyId) {
       throw new Error('Army ID is required');
     }
@@ -61,24 +96,24 @@ class GameLogic {
     const armyData = this.loadArmyData(armyId);
     const army = [];
     
-    // Count water tiles in setup area to reduce scouts
-    const waterTilesInSetup = this.countWaterTilesInSetupArea(color, mapData);
-    console.log(`🗺️ Water tiles in ${color} setup area:`, waterTilesInSetup);
+    // Count impassable terrain tiles in setup area to reduce scouts
+    const impassableTerrainInSetup = this.countImpassableTerrainInSetupArea(side, mapData);
+    console.log(`🗺️ Impassable terrain tiles in ${side} setup area:`, impassableTerrainInSetup);
     
     Object.entries(armyData.pieces).forEach(([pieceType, pieceInfo]) => {
       let count = pieceInfo.count;
       
-      // Reduce scout count by number of water tiles in setup area
+      // Reduce scout count by number of impassable terrain tiles in setup area
       if (pieceType === 'scout' || (pieceInfo.class === 'scout')) {
-        count = Math.max(0, count - waterTilesInSetup);
-        console.log(`🔍 Reducing ${pieceType} count from ${pieceInfo.count} to ${count} due to ${waterTilesInSetup} water tiles`);
+        count = Math.max(0, count - impassableTerrainInSetup);
+        console.log(`🔍 Reducing ${pieceType} count from ${pieceInfo.count} to ${count} due to ${impassableTerrainInSetup} impassable terrain tiles`);
       }
       
       for (let i = 0; i < count; i++) {
         army.push({
-          id: `${color}_${pieceType}_${i}`,
+          id: `${side}_${pieceType}_${i}`,
           type: pieceType,
-          color: color,
+          side: side,
           rank: pieceInfo.rank,
           name: pieceInfo.name,
           symbol: pieceInfo.symbol,
@@ -92,7 +127,7 @@ class GameLogic {
       }
     });
 
-    console.log(`⚔️ Generated army for ${color}:`, army.length, 'pieces');
+    console.log(`⚔️ Generated army for ${side}:`, army.length, 'pieces');
     return army;
   }
 
@@ -111,7 +146,7 @@ class GameLogic {
   }
 
   // Validate piece placement during setup
-  validatePlacement(board, piece, x, y, color, mapData = null) {
+  validatePlacement(board, piece, x, y, side, mapData = null) {
     // Use provided map data if valid, otherwise fall back to default
     let currentMapData;
     
@@ -136,13 +171,14 @@ class GameLogic {
       return { valid: false, reason: 'Square occupied' };
     }
 
-    // Check if placement is on water
-    if (this.getTerrainType(x, y, currentMapData) === 'water') {
-      return { valid: false, reason: 'Cannot place on water' };
+    // Check if placement is on impassable terrain
+    const terrainType = this.getTerrainType(x, y, currentMapData);
+    if (!this.isTerrainPassable(terrainType)) {
+      return { valid: false, reason: `Cannot place on ${terrainType}` };
     }
 
     // Check if placement is in correct setup area
-    const setupRows = currentMapData.setupRows[color];
+    const setupRows = currentMapData.setupRows[side];
     if (!setupRows.includes(y)) {
       return { valid: false, reason: 'Invalid setup area' };
     }
@@ -151,7 +187,7 @@ class GameLogic {
   }
 
   // Validate move during gameplay
-  validateMove(board, fromX, fromY, toX, toY, color, mapData = null) {
+  validateMove(board, fromX, fromY, toX, toY, side, mapData = null) {
     const currentMapData = this.isValidMapData(mapData) ? mapData : this.mapData;
     // Check bounds
     if (toX < 0 || toX >= currentMapData.boardSize.width || 
@@ -164,7 +200,7 @@ class GameLogic {
       return { valid: false, reason: 'No piece at source' };
     }
 
-    if (piece.color !== color) {
+    if (piece.side !== side) {
       return { valid: false, reason: 'Not your piece' };
     }
 
@@ -180,7 +216,7 @@ class GameLogic {
       return { valid: false, reason: 'Cannot move to water' };
     }
 
-    if (targetSquare && targetSquare.color === color) {
+    if (targetSquare && targetSquare.side === side) {
       return { valid: false, reason: 'Cannot attack own piece' };
     }
 
@@ -365,7 +401,7 @@ class GameLogic {
         return {
           result: 'game_won',
           winner: attacker,
-          description: `${attacker.color} captures the flag and wins!`
+          description: `${attacker.side} captures the flag and wins!`
         };
       default:
         return this.resolveCombat(attacker, defender);
@@ -373,16 +409,16 @@ class GameLogic {
   }
 
   // Check if the specified player has lost (no flag or no movable pieces)
-  checkWinCondition(board, color) {
+  checkWinCondition(board, side) {
     let hasFlag = false;
     let hasMovablePieces = false;
 
-    console.log(`Checking win condition for color: ${color}`);
+    console.log(`Checking win condition for side: ${side}`);
     
     for (let y = 0; y < board.length; y++) {
       for (let x = 0; x < board[y].length; x++) {
         const piece = board[y][x];
-        if (piece && piece.color === color) {
+        if (piece && piece.side === side) {
           // Check if this is a flag piece (piece that must be captured to win)
           console.log('Checking piece:', piece);
           if (piece.class === 'flag') {
@@ -446,7 +482,7 @@ class GameLogic {
   }
 
   // Generate random piece placement for quick setup
-  generateRandomPlacement(color, armyId = 'fantasy', mapData = null) {
+  generateRandomPlacement(side, armyId = 'fantasy', mapData = null) {
     // Use provided map data if valid, otherwise fall back to default
     let currentMapData;
     
@@ -462,18 +498,23 @@ class GameLogic {
       throw new Error('No valid map data available (both provided and default are invalid)');
     }
     
-    if (!currentMapData.setupRows[color]) {
-      throw new Error(`No setup rows for color '${color}'. Available colors: ${Object.keys(currentMapData.setupRows).join(', ')}`);
+    if (!currentMapData.setupRows[side]) {
+      throw new Error(`No setup rows for side '${side}'. Available sides: ${Object.keys(currentMapData.setupRows).join(', ')}`);
     }
     
-    const army = this.generateArmy(color, armyId, currentMapData);
-    const setupRows = currentMapData.setupRows[color];
+    const army = this.generateArmy(side, armyId, currentMapData);
+    const setupRows = currentMapData.setupRows[side];
     const positions = [];
 
-    // Generate all valid positions
+    // Generate all valid positions (only passable terrain)
     for (const row of setupRows) {
       for (let col = 0; col < currentMapData.boardSize.width; col++) {
-        positions.push({ x: col, y: row });
+        const terrainType = this.getTerrainType(col, row, currentMapData);
+        if (this.isTerrainPassable(terrainType)) {
+          positions.push({ x: col, y: row });
+        } else {
+          console.log(`🚫 Skipping impassable terrain at (${col}, ${row}): ${terrainType}`);
+        }
       }
     }
 
@@ -483,7 +524,7 @@ class GameLogic {
     console.log(`🎲 Generating random placement for ${armyId}:`, {
       armyPieces: army.length,
       availablePositions: shuffledPositions.length,
-      color
+      side
     });
 
     // Verify we have enough positions

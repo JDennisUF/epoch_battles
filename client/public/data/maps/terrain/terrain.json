@@ -1,0 +1,59 @@
+{
+  "terrainTypes": {
+    "grassland": {
+      "id": "grassland",
+      "name": "Grassland",
+      "description": "Open grassy terrain suitable for all unit types",
+      "passable": true,
+      "defenseBonus": 0,
+      "visibility": "clear",
+      "backgroundColor": "#22c55e",
+      "backgroundImage": "/data/maps/terrain/grassland.png",
+      "symbol": "🌿"
+    },
+    "water": {
+      "id": "water",
+      "name": "Water",
+      "description": "Rivers, lakes, and ponds that block unit movement and placement",
+      "passable": false,
+      "defenseBonus": 0,
+      "visibility": "clear",
+      "backgroundColor": "#3b82f6",
+      "backgroundImage": "/data/maps/terrain/water.png",
+      "symbol": "🌊"
+    },
+    "dirt": {
+      "id": "dirt",
+      "name": "Dirt Path",
+      "description": "Worn paths and rocky ground providing neutral terrain",
+      "passable": true,
+      "defenseBonus": 0,
+      "visibility": "clear",
+      "backgroundColor": "#a3a3a3",
+      "backgroundImage": "/data/maps/terrain/dirt.png",
+      "symbol": "🏔️"
+    },
+    "mountain": {
+      "id": "mountain",
+      "name": "Mountain",
+      "description": "High elevation rocky terrain that provides defensive advantages",
+      "passable": true,
+      "defenseBonus": 1,
+      "visibility": "elevated",
+      "backgroundColor": "#6b7280",
+      "backgroundImage": "/data/maps/terrain/mountain.png",
+      "symbol": "⛰️"
+    },
+    "sand": {
+      "id": "sand",
+      "name": "Sand",
+      "description": "Desert sand dunes that slow movement but allow passage",
+      "passable": true,
+      "defenseBonus": 0,
+      "visibility": "clear",
+      "backgroundColor": "#fbbf24",
+      "backgroundImage": "/data/maps/terrain/sand.png",
+      "symbol": "🏜️"
+    }
+  }
+}

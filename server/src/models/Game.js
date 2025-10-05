@@ -67,9 +67,9 @@ const Game = sequelize.define('Game', {
 
 // Instance methods
 Game.prototype.getGameStateForPlayer = function(playerId) {
-  const playerColor = this.players.find(p => p.userId === playerId)?.color;
+  const playerSide = this.players.find(p => p.userId === playerId)?.side;
   
-  if (!playerColor) {
+  if (!playerSide) {
     throw new Error('Player not found in game');
   }
 
@@ -90,8 +90,8 @@ Game.prototype.getGameStateForPlayer = function(playerId) {
   // Create a copy of the game state
   const gameState = {
     ...this.gameState,
-    playerColor,
-    opponentColor: playerColor === 'home' ? 'away' : 'home',
+    playerSide,
+    opponentSide: playerSide === 'home' ? 'away' : 'home',
     mapData: mapData
   };
 
@@ -111,18 +111,18 @@ Game.prototype.getGameStateForPlayer = function(playerId) {
         }
         
         // Show own pieces completely
-        if (piece.color === playerColor) {
+        if (piece.side === playerSide) {
           return piece;
         }
         
-        // Hide opponent piece types (only show color and position)
+        // Hide opponent piece types (only show side and position)
         if (piece.revealed) {
           // If revealed, show all piece information
           return piece;
         } else {
           // If hidden, only show basic info
           return {
-            color: piece.color,
+            side: piece.side,
             revealed: false,
             type: 'hidden'
           };
