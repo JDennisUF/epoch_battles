@@ -28,5 +28,6 @@
     ]
   },
   "theme": "countryside",
-  "difficulty": "easy"
+  "difficulty": "easy",
+  "numStartingPositions": 36
 }

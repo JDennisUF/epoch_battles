@@ -235,7 +235,8 @@ function PlacementSelector({
   currentPlacements, 
   onLoadPlacement, 
   onSavePlacement,
-  disabled = false
+  disabled = false,
+  expectedPieceCount = 40
 }) {
   const [activeTab, setActiveTab] = useState('global');
   const [placements, setPlacements] = useState({ global: [], user: [], favorites: [] });
@@ -297,8 +298,8 @@ function PlacementSelector({
   };
 
   const handleSaveClick = () => {
-    if (!currentPlacements || currentPlacements.length !== 40) {
-      alert('Please place all 40 pieces before saving');
+    if (!currentPlacements || currentPlacements.length !== expectedPieceCount) {
+      alert(`Please place all ${expectedPieceCount} pieces before saving`);
       return;
     }
     setShowSaveForm(true);
@@ -337,7 +338,18 @@ function PlacementSelector({
       
     } catch (error) {
       console.error('Failed to save placement:', error);
-      alert('Failed to save placement');
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      console.error('Request data being sent:', {
+        name: saveForm.name,
+        description: saveForm.description,
+        mapId,
+        placements: currentPlacements,
+        isGlobal: false
+      });
+      
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to save placement';
+      alert(`Failed to save placement: ${errorMessage}`);
     } finally {
       setSaving(false);
     }
@@ -446,7 +458,7 @@ function PlacementSelector({
         <SaveContainer>
           <SaveButton 
             onClick={handleSaveClick}
-            disabled={disabled || !currentPlacements || currentPlacements.length !== 40}
+            disabled={disabled || !currentPlacements || currentPlacements.length !== expectedPieceCount}
           >
             Save Current Setup
           </SaveButton>

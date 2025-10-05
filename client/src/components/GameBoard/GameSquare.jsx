@@ -23,6 +23,8 @@ const Square = styled.div.withConfig({
       case 'water': return 'url(/data/maps/terrain/water.png)';
       case 'dirt': return 'url(/data/maps/terrain/dirt.png)';
       case 'grassland': return 'url(/data/maps/terrain/grassland.png)';
+      case 'mountain': return 'url(/data/maps/terrain/mountain.png)';
+      case 'sand': return 'url(/data/maps/terrain/sand.png)';
       default: return 'none';
     }
   }};
@@ -36,6 +38,8 @@ const Square = styled.div.withConfig({
       case 'water': return '#3b82f6';
       case 'dirt': return '#a3a3a3';  
       case 'grassland': return '#22c55e';
+      case 'mountain': return '#6b7280';
+      case 'sand': return '#fbbf24';
       default: return '#f3f4f6';
     }
   }};
@@ -96,21 +100,39 @@ const PieceContainer = styled.div.withConfig({
   }
 `;
 
+const DefensiveBonusIndicator = styled.div`
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: transparent;
+  font-size: 0.8rem;
+  z-index: 3;
+  line-height: 1;
+  text-shadow: 0 0 3px rgba(0, 0, 0, 0.8), 0 0 6px rgba(0, 0, 0, 0.6);
+`;
+
 const PieceSymbol = styled.div`
   font-size: 2.2rem;
   line-height: 1;
 `;
 
 const PieceRank = styled.div`
-  font-size: 0.9rem;
-  font-weight: 600;
-  margin-top: 3px;
-  opacity: 0.8;
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: white;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1;
+  z-index: 3;
 `;
 
 const PieceImage = styled.img`
-  width: 64px;
-  height: 64px;
+  width: 84px;
+  height: 84px;
   object-fit: cover;
   border-radius: 6px;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
@@ -191,10 +213,15 @@ function GameSquare({
             <PieceSymbol data-fallback="symbol" style={{ display: 'none', fontSize: '2.2rem' }}>
               {symbol}
             </PieceSymbol>
+            {terrainType === 'mountain' && (
+              <DefensiveBonusIndicator title="Mountain Defense: +1 rank when defending">
+                🛡️
+              </DefensiveBonusIndicator>
+            )}
+            {(piece.revealed || piece.side === playerSide) && piece.rank && (
+              <PieceRank>{piece.rank}</PieceRank>
+            )}
           </div>
-          {(piece.revealed || piece.side === playerSide) && (
-            <PieceRank>{piece.rank || "-"}</PieceRank>
-          )}
         </PieceContainer>
       );
     }
@@ -228,8 +255,13 @@ function GameSquare({
             <PieceSymbol data-fallback="symbol" style={{ display: 'none', fontSize: '2.2rem' }}>
               {symbol}
             </PieceSymbol>
+            {terrainType === 'mountain' && (
+              <DefensiveBonusIndicator title="Mountain Defense: +1 rank when defending">
+                🛡️
+              </DefensiveBonusIndicator>
+            )}
+            {piece.rank && <PieceRank>{piece.rank}</PieceRank>}
           </div>
-          <PieceRank>{piece.rank || "-"}</PieceRank>
         </PieceContainer>
       );
     }
@@ -271,6 +303,11 @@ function GameSquare({
             <PieceSymbol data-fallback="symbol" style={{ display: 'none', fontSize: '2.2rem' }}>
               {symbol}
             </PieceSymbol>
+            {terrainType === 'mountain' && (
+              <DefensiveBonusIndicator title="Mountain Defense: +1 rank when defending">
+                🛡️
+              </DefensiveBonusIndicator>
+            )}
           </div>
         </PieceContainer>
       );
@@ -285,10 +322,17 @@ function GameSquare({
         onDragStart={isDraggable ? onDragStart : undefined}
         onDragEnd={isDraggable ? onDragEnd : undefined}
       >
-        <PieceSymbol>{symbol}</PieceSymbol>
-        {(piece.revealed || piece.side === playerSide) && (
-          <PieceRank>{piece.rank || "-"}</PieceRank>
-        )}
+        <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <PieceSymbol>{symbol}</PieceSymbol>
+          {terrainType === 'mountain' && (
+            <DefensiveBonusIndicator title="Mountain Defense: +1 rank when defending">
+              🛡️
+            </DefensiveBonusIndicator>
+          )}
+          {(piece.revealed || piece.side === playerSide) && piece.rank && (
+            <PieceRank>{piece.rank}</PieceRank>
+          )}
+        </div>
       </PieceContainer>
     );
   };

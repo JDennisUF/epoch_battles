@@ -1,7 +1,7 @@
 {
   "id": "fortress",
   "name": "Fortress Siege",
-  "description": "A fortified position with narrow approaches, favoring defensive strategies",
+  "description": "A fortified position favoring defensive strategies",
   "boardSize": {
     "width": 10,
     "height": 10
@@ -28,5 +28,6 @@
     ]
   },
   "theme": "medieval",
-  "difficulty": "medium"
+  "difficulty": "medium",
+  "numStartingPositions": 40
 }

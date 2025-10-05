@@ -6,6 +6,13 @@ const gameEvents = (socket, io) => {
   socket.on('invite_player', async (data) => {
     const { targetUserId, mapData } = data;
     
+    console.log('📨 Received invitation with mapData:', {
+      hasMapData: !!mapData,
+      mapId: mapData?.id,
+      mapName: mapData?.name,
+      hasTerrainOverrides: !!mapData?.terrainOverrides
+    });
+    
     try {
       const targetUser = await User.findByPk(targetUserId);
       if (!targetUser || !targetUser.isOnline) {
@@ -45,6 +52,13 @@ const gameEvents = (socket, io) => {
 
       if (accepted) {
         // Create new game with proper board using the selected map
+        console.log('🗺️ Creating game with mapData:', {
+          hasMapData: !!mapData,
+          mapId: mapData?.id,
+          mapName: mapData?.name,
+          hasTerrainOverrides: !!mapData?.terrainOverrides
+        });
+        
         const gameLogic = require('../services/gameLogic');
         const initialBoard = gameLogic.createBoard(mapData);
         
@@ -378,8 +392,20 @@ const gameEvents = (socket, io) => {
         return;
       }
 
-      // Ensure we have valid map data, fallback to default if needed
-      const mapDataToUse = game.mapData || null; // Let generateRandomPlacement handle the fallback
+      // Parse map data if it's stored as a string
+      let mapDataToUse = game.mapData;
+      if (typeof mapDataToUse === 'string') {
+        try {
+          mapDataToUse = JSON.parse(mapDataToUse);
+        } catch (error) {
+          throw new Error(`Failed to parse game map data: ${error.message}`);
+        }
+      }
+      
+      if (!mapDataToUse) {
+        throw new Error('No map data available for random setup');
+      }
+      
       const randomArmy = gameLogic.generateRandomPlacement(playerSide, armyId, mapDataToUse);
       
       socket.emit('random_placement', {
@@ -389,6 +415,54 @@ const gameEvents = (socket, io) => {
     } catch (error) {
       console.error('Random setup error:', error);
       socket.emit('setup_error', { message: 'Failed to generate random setup' });
+    }
+  });
+
+  // Handle chat messages
+  socket.on('chat_message', async (data) => {
+    const { gameId, message } = data;
+    
+    try {
+      const game = await Game.findByPk(gameId);
+      if (!game) {
+        socket.emit('chat_error', { message: 'Game not found' });
+        return;
+      }
+
+      // Check if user is a player in this game
+      const isPlayer = game.players.some(p => p.userId === socket.user.id);
+      if (!isPlayer) {
+        socket.emit('chat_error', { message: 'You are not a player in this game' });
+        return;
+      }
+
+      // Validate message
+      if (!message || typeof message !== 'string' || message.trim().length === 0) {
+        socket.emit('chat_error', { message: 'Invalid message' });
+        return;
+      }
+
+      if (message.trim().length > 500) {
+        socket.emit('chat_error', { message: 'Message too long (max 500 characters)' });
+        return;
+      }
+
+      const chatMessage = {
+        userId: socket.user.id,
+        username: socket.user.username,
+        message: message.trim(),
+        timestamp: new Date().toISOString()
+      };
+
+      // Store chat message in game (if we add chat history to the database)
+      // For now, just broadcast to all players in the game
+      io.to(`game_${gameId}`).emit('chat_message', chatMessage);
+
+      console.log(`💬 Chat message in game ${gameId} from ${socket.user.username}: ${message.trim()}`);
+      
+    } catch (error) {
+      console.error('Chat message error:', error);
+      socket.emit('chat_error', { message: 'Failed to send chat message' });
     }
   });
 };

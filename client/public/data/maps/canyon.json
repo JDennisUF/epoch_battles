@@ -26,5 +26,6 @@
     ]
   },
   "theme": "desert",
-  "difficulty": "hard"
+  "difficulty": "hard",
+  "numStartingPositions": 36
 }

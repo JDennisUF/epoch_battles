@@ -55,6 +55,14 @@ const User = sequelize.define('User', {
   currentGameId: {
     type: DataTypes.UUID,
     allowNull: true
+  },
+  currentMap: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'classic',
+    validate: {
+      len: [1, 50]
+    }
   }
 }, {
   tableName: 'users',

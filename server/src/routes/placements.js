@@ -2,8 +2,33 @@ const express = require('express');
 const { auth } = require('../middleware/auth');
 const { Placement, UserPlacement, User } = require('../models');
 const { Op } = require('sequelize');
+const gameLogic = require('../services/gameLogic');
 
 const router = express.Router();
+
+// Helper function to get expected piece count for a map
+async function getExpectedPieceCount(mapId, armyId = 'default') {
+  try {
+    // Load map data
+    const fs = require('fs');
+    const path = require('path');
+    const mapPath = path.join(__dirname, `../../../client/public/data/maps/${mapId}.json`);
+    
+    if (!fs.existsSync(mapPath)) {
+      console.warn(`Map file not found: ${mapPath}`);
+      return 40; // Default to 40 pieces
+    }
+    
+    const mapData = JSON.parse(fs.readFileSync(mapPath, 'utf8'));
+    
+    // Generate a sample army to get the expected count
+    const sampleArmy = gameLogic.generateArmy('home', armyId, mapData);
+    return sampleArmy.length;
+  } catch (error) {
+    console.error('Error calculating expected piece count:', error);
+    return 40; // Default to 40 pieces on error
+  }
+}
 
 // Get placements for specific map
 router.get('/map/:mapId', auth, async (req, res) => {
@@ -89,9 +114,14 @@ router.post('/', auth, async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Validate placements array (should have 40 pieces)
-    if (placements.length !== 40) {
-      return res.status(400).json({ message: 'Placement must contain exactly 40 pieces' });
+    // Get expected piece count for this map
+    const expectedPieceCount = await getExpectedPieceCount(mapId);
+    
+    // Validate placements array
+    if (placements.length !== expectedPieceCount) {
+      return res.status(400).json({ 
+        message: `Placement must contain exactly ${expectedPieceCount} pieces (found ${placements.length})` 
+      });
     }
 
     // Create placement
@@ -223,8 +253,17 @@ router.put('/:placementId', auth, async (req, res) => {
     }
 
     // Validate placements if provided
-    if (placements && (!Array.isArray(placements) || placements.length !== 40)) {
-      return res.status(400).json({ message: 'Placement must contain exactly 40 pieces' });
+    if (placements) {
+      if (!Array.isArray(placements)) {
+        return res.status(400).json({ message: 'Placements must be an array' });
+      }
+      
+      const expectedPieceCount = await getExpectedPieceCount(placement.mapId);
+      if (placements.length !== expectedPieceCount) {
+        return res.status(400).json({ 
+          message: `Placement must contain exactly ${expectedPieceCount} pieces (found ${placements.length})` 
+        });
+      }
     }
 
     // Update placement

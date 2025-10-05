@@ -53,6 +53,8 @@ const MapSquare = styled.div`
       case 'water': return '#3b82f6';
       case 'dirt': return '#a3a3a3';
       case 'grassland': return '#22c55e';
+      case 'mountain': return '#6b7280';
+      case 'sand': return '#fbbf24';
       default: return '#22c55e';
     }
   }};
@@ -200,6 +202,14 @@ function MapPreview({ map, position }) {
         <LegendItem>
           <LegendColor color="#3b82f6" />
           <span>Water</span>
+        </LegendItem>
+        <LegendItem>
+          <LegendColor color="#6b7280" />
+          <span>Mountain</span>
+        </LegendItem>
+        <LegendItem>
+          <LegendColor color="#fbbf24" />
+          <span>Sand</span>
         </LegendItem>
       </Legend>
     </PreviewContainer>

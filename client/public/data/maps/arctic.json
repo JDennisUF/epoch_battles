@@ -28,5 +28,6 @@
     ]
   },
   "theme": "arctic",
-  "difficulty": "medium"
+  "difficulty": "medium",
+  "numStartingPositions": 36
 }

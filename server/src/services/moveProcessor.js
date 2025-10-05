@@ -27,8 +27,22 @@ class MoveProcessor {
       const { fromX, fromY, toX, toY } = moveData;
       const board = game.gameState.board;
 
+      // Parse map data if it's stored as a string
+      let mapDataToUse = game.mapData;
+      if (typeof mapDataToUse === 'string') {
+        try {
+          mapDataToUse = JSON.parse(mapDataToUse);
+        } catch (error) {
+          throw new Error(`Failed to parse game map data in processMove: ${error.message}`);
+        }
+      }
+      
+      if (!mapDataToUse) {
+        throw new Error('No map data available for move validation');
+      }
+
       // Validate the move
-      const moveValidation = gameLogic.validateMove(board, fromX, fromY, toX, toY, playerSide, game.mapData);
+      const moveValidation = gameLogic.validateMove(board, fromX, fromY, toX, toY, playerSide, mapDataToUse);
       if (!moveValidation.valid) {
         return { success: false, error: moveValidation.reason };
       }
@@ -66,7 +80,21 @@ class MoveProcessor {
 
     if (targetPiece) {
       // Combat!
-      const combatResult = gameLogic.resolveCombat(movingPiece, targetPiece);
+      // Parse map data to get defender's terrain
+      let mapDataToUse = game.mapData;
+      if (typeof mapDataToUse === 'string') {
+        try {
+          mapDataToUse = JSON.parse(mapDataToUse);
+        } catch (error) {
+          console.error('Failed to parse map data for combat:', error);
+          mapDataToUse = null;
+        }
+      }
+      
+      // Get defender's terrain for combat bonuses
+      const defenderTerrain = mapDataToUse ? gameLogic.getTerrainType(toX, toY, mapDataToUse) : null;
+      
+      const combatResult = gameLogic.resolveCombat(movingPiece, targetPiece, defenderTerrain);
       moveResult.type = 'attack';
       moveResult.combat = combatResult;
       
@@ -90,7 +118,8 @@ class MoveProcessor {
         },
         result: combatResult.result,
         winner: combatResult.result === 'attacker_wins' ? 'attacker' : 
-                combatResult.result === 'defender_wins' ? 'defender' : 'none'
+                combatResult.result === 'defender_wins' ? 'defender' : 'none',
+        description: combatResult.description
       };
 
       // Reveal both pieces
@@ -206,6 +235,20 @@ class MoveProcessor {
       const player = game.players.find(p => p.userId === playerId);
       const armyId = player?.army || 'default';
       
+      // Parse map data if it's stored as a string
+      let mapDataToUse = game.mapData;
+      if (typeof mapDataToUse === 'string') {
+        try {
+          mapDataToUse = JSON.parse(mapDataToUse);
+        } catch (error) {
+          throw new Error(`Failed to parse game map data in placePieces: ${error.message}`);
+        }
+      }
+      
+      if (!mapDataToUse) {
+        throw new Error('No map data available for piece placement');
+      }
+
       console.log('🎯 Setup processing:', {
         playerId,
         playerSide,
@@ -215,9 +258,9 @@ class MoveProcessor {
       });
 
       if (isRandom) {
-        army = gameLogic.generateRandomPlacement(playerSide, armyId, game.mapData);
+        army = gameLogic.generateRandomPlacement(playerSide, armyId, mapDataToUse);
       } else {
-        army = this.validatePlacements(placements, playerSide, armyId, game.mapData);
+        army = this.validatePlacements(placements, playerSide, armyId, mapDataToUse);
         if (!army.valid) {
           console.error('❌ Validation failed:', army.error);
           return { success: false, error: army.error };
@@ -291,19 +334,38 @@ class MoveProcessor {
       const player = game.players.find(p => p.userId === playerId);
       const armyId = player?.army || 'default';
       
+      // Parse map data if it's stored as a string
+      let mapDataToUse = game.mapData;
+      if (typeof mapDataToUse === 'string') {
+        try {
+          mapDataToUse = JSON.parse(mapDataToUse);
+        } catch (error) {
+          throw new Error(`Failed to parse game map data in placePieces (second method): ${error.message}`);
+        }
+      }
+      
+      if (!mapDataToUse) {
+        throw new Error('No map data available for piece placement');
+      }
+      
       console.log('🎯 Piece placement processing:', {
         playerId,
         playerSide,
         armyId,
         isRandom,
-        placementsCount: placements?.length
+        placementsCount: placements?.length,
+        gameMapData: {
+          hasMapData: !!mapDataToUse,
+          mapId: mapDataToUse?.id,
+          hasTerrainOverrides: !!mapDataToUse?.terrainOverrides
+        }
       });
 
       // If isRandom is true OR placements is empty, use random placement
       if (isRandom || !placements || placements.length === 0) {
-        army = gameLogic.generateRandomPlacement(playerSide, armyId, game.mapData);
+        army = gameLogic.generateRandomPlacement(playerSide, armyId, mapDataToUse);
       } else {
-        army = this.validatePlacements(placements, playerSide, armyId, game.mapData);
+        army = this.validatePlacements(placements, playerSide, armyId, mapDataToUse);
         if (!army.valid) {
           console.error('❌ Validation failed:', army.error);
           return { success: false, error: army.error };
@@ -398,15 +460,33 @@ class MoveProcessor {
     }
   }
 
-  validatePlacements(placements, side, armyId = 'default', mapData = null) {
-    if (!placements || placements.length !== 40) {
-      return { valid: false, error: 'Must place exactly 40 pieces' };
+  validatePlacements(placements, side, armyId = 'default', mapData) {
+    // Parse map data if it's stored as a string
+    let parsedMapData = mapData;
+    if (typeof parsedMapData === 'string') {
+      try {
+        parsedMapData = JSON.parse(parsedMapData);
+      } catch (error) {
+        throw new Error(`Failed to parse map data in validatePlacements: ${error.message}`);
+      }
+    }
+    
+    if (!parsedMapData) {
+      throw new Error('No map data provided for validatePlacements');
+    }
+    
+    // Generate the expected army with terrain-based reductions
+    const expectedArmy = gameLogic.generateArmy(side, armyId, parsedMapData);
+    const expectedPieceCount = expectedArmy.length;
+    
+    if (!placements || placements.length !== expectedPieceCount) {
+      return { valid: false, error: `Must place exactly ${expectedPieceCount} pieces (reduced from 40 due to impassable terrain)` };
     }
 
-    const armyData = gameLogic.loadArmyData(armyId);
+    // Calculate expected counts from the terrain-adjusted army
     const expectedCounts = {};
-    Object.entries(armyData.pieces).forEach(([type, info]) => {
-      expectedCounts[type] = info.count;
+    expectedArmy.forEach(piece => {
+      expectedCounts[piece.type] = (expectedCounts[piece.type] || 0) + 1;
     });
     
     console.log('📊 Validating army:', armyId, 'Expected pieces:', expectedCounts);
@@ -430,16 +510,14 @@ class MoveProcessor {
 
     // Validate placement positions
     for (const placement of placements) {
-      if (mapData) {
-        // Create a temporary empty board for validation (we'll check for duplicate positions separately)
-        const tempBoard = Array(mapData.boardSize?.height || 10)
-          .fill(null)
-          .map(() => Array(mapData.boardSize?.width || 10).fill(null));
-        
-        const validation = gameLogic.validatePlacement(tempBoard, null, placement.x, placement.y, side, mapData);
-        if (!validation.valid) {
-          return { valid: false, error: `Invalid placement at (${placement.x}, ${placement.y}): ${validation.reason}` };
-        }
+      // Create a temporary empty board for validation (we'll check for duplicate positions separately)
+      const tempBoard = Array(parsedMapData.boardSize.height)
+        .fill(null)
+        .map(() => Array(parsedMapData.boardSize.width).fill(null));
+      
+      const validation = gameLogic.validatePlacement(tempBoard, null, placement.x, placement.y, side, parsedMapData);
+      if (!validation.valid) {
+        return { valid: false, error: `Invalid placement at (${placement.x}, ${placement.y}): ${validation.reason}` };
       }
     }
     
@@ -453,6 +531,9 @@ class MoveProcessor {
       positions.add(posKey);
     }
 
+    // Load army data to get piece information
+    const armyData = gameLogic.loadArmyData(armyId);
+    
     // Convert placements to pieces
     const pieces = placements.map((placement, index) => {
       const pieceInfo = armyData.pieces[placement.type];

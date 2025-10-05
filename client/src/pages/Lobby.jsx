@@ -67,6 +67,21 @@ const QuickActions = styled.div`
   margin-bottom: 30px;
 `;
 
+const MapSelectorContainer = styled.div`
+  margin-bottom: 30px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+`;
+
+const MapSelectorTitle = styled.h3`
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  text-align: center;
+  color: #4ade80;
+`;
+
 const ActionButton = styled.button`
   background: linear-gradient(45deg, #667eea, #764ba2);
   border: none;
@@ -214,6 +229,61 @@ function Lobby() {
   const [gameInvitations, setGameInvitations] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [selectedMap, setSelectedMap] = useState(null);
+  const [isLoadingInitialMap, setIsLoadingInitialMap] = useState(true);
+
+  // Function to save map selection to server
+  const saveMapSelection = async (mapData) => {
+    if (mapData && mapData.id && !isLoadingInitialMap) {
+      try {
+        await axios.put('/users/current-map', { mapId: mapData.id });
+        console.log('Map selection saved:', mapData.id);
+      } catch (error) {
+        console.error('Failed to save map selection:', error);
+      }
+    }
+  };
+
+  // Handle map selection change (only for user interactions)
+  const handleMapSelect = React.useCallback((mapData) => {
+    setSelectedMap(mapData);
+    saveMapSelection(mapData);
+  }, [isLoadingInitialMap]);
+
+  // Load user's current map selection
+  useEffect(() => {
+    const loadCurrentMap = async () => {
+      try {
+        const response = await axios.get('/users/me/current-map');
+        const mapId = response.data.currentMap;
+        if (mapId) {
+          // Load the map data
+          const mapResponse = await fetch(`/data/maps/${mapId}.json`);
+          if (mapResponse.ok) {
+            const mapData = await mapResponse.json();
+            setSelectedMap(mapData);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load current map:', error);
+        // Fallback to classic map
+        try {
+          const mapResponse = await fetch('/data/maps/classic.json');
+          if (mapResponse.ok) {
+            const mapData = await mapResponse.json();
+            setSelectedMap(mapData);
+          }
+        } catch (fallbackError) {
+          console.error('Failed to load fallback map:', fallbackError);
+        }
+      }
+    };
+
+    if (user) {
+      loadCurrentMap().finally(() => {
+        setIsLoadingInitialMap(false);
+      });
+    }
+  }, [user]);
 
   // Fetch online users from API
   useEffect(() => {
@@ -362,6 +432,15 @@ function Lobby() {
             Welcome back, {user?.username}! Ready for battle?
           </WelcomeMessage>
 
+          <MapSelectorContainer>
+            <MapSelectorTitle>Choose Your Battlefield</MapSelectorTitle>
+            <MapSelector
+              selectedMap={selectedMap}
+              onMapSelect={handleMapSelect}
+              disabled={!connected}
+            />
+          </MapSelectorContainer>
+
           <QuickActions>
             <ActionButton onClick={handleRandomMatch} disabled={!connected}>
               🎲 Random Match
@@ -385,14 +464,6 @@ function Lobby() {
         </MainContent>
 
         <Sidebar>
-          <SidebarCard>
-            <MapSelector
-              selectedMap={selectedMap}
-              onMapSelect={setSelectedMap}
-              disabled={!connected}
-            />
-          </SidebarCard>
-          
           <SidebarCard>
             <SectionTitle>Online Players ({onlineUsers.length})</SectionTitle>
             {onlineUsers.length === 0 ? (

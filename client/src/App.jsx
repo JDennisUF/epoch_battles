@@ -19,8 +19,13 @@ const AppContainer = styled.div`
 `;
 
 const MainContent = styled.main`
-  padding-top: 60px; // Account for fixed header
-  min-height: calc(100vh - 60px);
+  padding-top: 70px; // Account for fixed header
+  min-height: calc(100vh - 70px);
+
+  @media (max-width: 768px) {
+    padding-top: 60px;
+    min-height: calc(100vh - 60px);
+  }
 `;
 
 function ProtectedRoute({ children }) {

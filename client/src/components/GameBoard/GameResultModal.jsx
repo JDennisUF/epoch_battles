@@ -94,12 +94,11 @@ const ReasonText = styled.p`
 
 const ButtonGroup = styled.div`
   display: flex;
-  gap: 15px;
   justify-content: center;
   margin-top: 30px;
 `;
 
-const Button = styled.button`
+const ExitButton = styled.button`
   padding: 12px 24px;
   border: none;
   border-radius: 10px;
@@ -107,32 +106,17 @@ const Button = styled.button`
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 1rem;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  }
-`;
-
-const RematchButton = styled(Button)`
-  background: linear-gradient(45deg, #10b981, #059669);
-  color: white;
-
-  &:hover {
-    background: linear-gradient(45deg, #059669, #047857);
-  }
-`;
-
-const ExitButton = styled(Button)`
   background: linear-gradient(45deg, #6b7280, #4b5563);
   color: white;
 
   &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     background: linear-gradient(45deg, #4b5563, #374151);
   }
 `;
 
-function GameResultModal({ gameResult, playerSide, players, onRematch, onExit }) {
+function GameResultModal({ gameResult, playerSide, players, onExit }) {
   if (!gameResult) return null;
 
   const { winner, reason } = gameResult;
@@ -153,7 +137,9 @@ function GameResultModal({ gameResult, playerSide, players, onRematch, onExit })
   };
 
   const getArmyImagePath = (player) => {
-    if (!player?.army) return null;
+    if (!player?.army) {
+      throw new Error(`Missing army data for player: ${JSON.stringify(player)}`);
+    }
     return `/data/armies/${player.army}/${player.army}.png`;
   };
 
@@ -167,17 +153,14 @@ function GameResultModal({ gameResult, playerSide, players, onRematch, onExit })
         <WinnerSection>
           <ArmyImage 
             src={getArmyImagePath(winnerPlayer)}
-            alt={`${winnerPlayer?.army} army`}
+            alt={`${winnerPlayer.army} army`}
             isWinner={true}
-            onError={(e) => {
-              e.target.style.display = 'none';
-            }}
           />
           <PlayerName isWinner={true}>
-            {winnerPlayer?.username || 'Unknown Player'}
+            {winnerPlayer.username}
           </PlayerName>
           <PlayerColor>
-            {winner} Army Wins
+            {winnerPlayer.army} Army Wins
           </PlayerColor>
         </WinnerSection>
 
@@ -186,9 +169,6 @@ function GameResultModal({ gameResult, playerSide, players, onRematch, onExit })
         </ReasonText>
 
         <ButtonGroup>
-          <RematchButton onClick={onRematch}>
-            Play Again
-          </RematchButton>
           <ExitButton onClick={onExit}>
             Exit Game
           </ExitButton>

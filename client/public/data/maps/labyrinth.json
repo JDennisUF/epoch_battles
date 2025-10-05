@@ -1,7 +1,7 @@
 {
   "id": "labyrinth",
   "name": "Ancient Labyrinth",
-  "description": "A complex maze of walls and corridors that limits movement and creates ambush opportunities",
+  "description": "A complex maze that limits movement and creates ambush opportunities",
   "boardSize": {
     "width": 10,
     "height": 10
@@ -28,5 +28,6 @@
     ]
   },
   "theme": "ancient",
-  "difficulty": "hard"
+  "difficulty": "hard",
+  "numStartingPositions": 33
 }

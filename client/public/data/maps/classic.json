@@ -20,5 +20,6 @@
     ]
   },
   "theme": "military",
-  "difficulty": "standard"
+  "difficulty": "standard",
+  "numStartingPositions": 40
 }

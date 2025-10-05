@@ -88,11 +88,13 @@ const UnitDisplay = styled.div.withConfig({
   position: relative;
   flex: 1;
   animation: ${props => props.isShaking ? shakeAnimation : 'none'} 0.5s ease-in-out;
-  opacity: ${props => props.isLoser ? 0 : 1};
+  opacity: ${props => props.isLoser ? 0.3 : 1};
   transition: opacity 0.8s ease-out;
+  filter: ${props => props.isLoser ? 'grayscale(80%)' : 'none'};
   
   ${props => props.isLoser && css`
-    animation: ${fadeOut} 0.8s ease-out forwards;
+    transform: scale(0.95);
+    transition: opacity 0.8s ease-out, filter 0.8s ease-out, transform 0.8s ease-out;
   `}
 `;
 
@@ -245,10 +247,14 @@ function CombatModal({ combatData, onClose }) {
 
         {showResult && (
           <ResultText victory={winner === 'attacker'}>
-            {result === 'attacker_wins' && `${attacker.unit.name} defeats ${defender.unit.name}!`}
-            {result === 'defender_wins' && `${defender.unit.name} defeats ${attacker.unit.name}!`}
-            {result === 'both_destroyed' && 'Both units destroyed!'}
-            {result === 'move_blocked' && 'Attack blocked!'}
+            {combatData.description || (
+              <>
+                {result === 'attacker_wins' && `${attacker.unit.name} defeats ${defender.unit.name}!`}
+                {result === 'defender_wins' && `${defender.unit.name} defeats ${attacker.unit.name}!`}
+                {result === 'both_destroyed' && 'Both units destroyed!'}
+                {result === 'move_blocked' && 'Attack blocked!'}
+              </>
+            )}
           </ResultText>
         )}
 

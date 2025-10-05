@@ -108,4 +108,64 @@ router.get('/search/:query', auth, async (req, res) => {
   }
 });
 
+// Update user's current map selection
+router.put('/current-map', auth, async (req, res) => {
+  try {
+    const { mapId } = req.body;
+    
+    if (!mapId || typeof mapId !== 'string') {
+      return res.status(400).json({ message: 'Valid map ID is required' });
+    }
+
+    // Validate map ID (basic validation - you could make this more strict)
+    const validMapIds = [
+      'classic', 
+      'highlands', 
+      'canyon', 
+      'fortress', 
+      'valley', 
+      'crossroads', 
+      'labyrinth', 
+      'arctic',
+      'mountain_ridge',
+      'central_peaks',
+      'valley_defense',
+      'highland_stronghold',
+      'twin_peaks',
+      'test_water_setup' // Legacy test map
+    ];
+    if (!validMapIds.includes(mapId)) {
+      return res.status(400).json({ message: 'Invalid map ID' });
+    }
+
+    await User.update(
+      { currentMap: mapId },
+      { where: { id: req.user.id } }
+    );
+
+    res.json({ success: true, currentMap: mapId });
+  } catch (error) {
+    console.error('Update current map error:', error);
+    res.status(500).json({ message: 'Server error updating current map' });
+  }
+});
+
+// Get user's current map selection
+router.get('/me/current-map', auth, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: ['currentMap']
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({ currentMap: user.currentMap || 'classic' });
+  } catch (error) {
+    console.error('Get current map error:', error);
+    res.status(500).json({ message: 'Server error fetching current map' });
+  }
+});
+
 module.exports = router;

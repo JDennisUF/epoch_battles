@@ -9,7 +9,7 @@ const HeaderContainer = styled.header`
   top: 0;
   left: 0;
   right: 0;
-  height: 60px;
+  height: 70px;
   background: rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -18,6 +18,10 @@ const HeaderContainer = styled.header`
   justify-content: space-between;
   padding: 0 20px;
   z-index: 1000;
+
+  @media (max-width: 768px) {
+    height: 60px;
+  }
 `;
 
 const Logo = styled(Link)`
@@ -65,16 +69,21 @@ const NavLink = styled(Link)`
 const UserInfo = styled.div`
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 20px;
 
   @media (max-width: 768px) {
-    gap: 10px;
+    gap: 15px;
   }
 `;
 
 const Username = styled.span`
   color: white;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 1.4rem;
+
+  @media (max-width: 768px) {
+    font-size: 1.2rem;
+  }
 
   @media (max-width: 480px) {
     display: none;
@@ -84,30 +93,50 @@ const Username = styled.span`
 const ConnectionStatus = styled.div`
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.9rem;
+  gap: 8px;
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: white;
+
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
 `;
 
 const StatusDot = styled.div.withConfig({
   shouldForwardProp: (prop) => prop !== 'connected'
 })`
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: ${props => props.connected ? '#4ade80' : '#ef4444'};
+  box-shadow: 0 0 8px ${props => props.connected ? 'rgba(74, 222, 128, 0.5)' : 'rgba(239, 68, 68, 0.5)'};
+
+  @media (max-width: 768px) {
+    width: 10px;
+    height: 10px;
+  }
 `;
 
 const LogoutButton = styled.button`
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
-  padding: 8px 16px;
-  border-radius: 6px;
+  padding: 10px 20px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-size: 1.1rem;
+  font-weight: 500;
 
   &:hover {
     background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 768px) {
+    padding: 8px 16px;
+    font-size: 1rem;
   }
 
   @media (max-width: 480px) {
@@ -117,10 +146,16 @@ const LogoutButton = styled.button`
 `;
 
 const StatsDisplay = styled.div`
-  font-size: 0.9rem;
-  opacity: 0.9;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #4ade80;
+  opacity: 1;
 
   @media (max-width: 768px) {
+    font-size: 1.1rem;
+  }
+
+  @media (max-width: 600px) {
     display: none;
   }
 `;
@@ -167,10 +202,10 @@ function Header() {
         
         {user && (
           <>
+            <Username>{user.username}</Username>
             <StatsDisplay>
               {user.stats.wins}W - {user.stats.losses}L
             </StatsDisplay>
-            <Username>{user.username}</Username>
           </>
         )}
         

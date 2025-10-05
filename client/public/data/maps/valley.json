@@ -29,5 +29,6 @@
     ]
   },
   "theme": "mountain",
-  "difficulty": "medium"
+  "difficulty": "medium",
+  "numStartingPositions": 38
 }

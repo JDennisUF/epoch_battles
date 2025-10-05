@@ -73,17 +73,19 @@ Game.prototype.getGameStateForPlayer = function(playerId) {
     throw new Error('Player not found in game');
   }
 
-  // Use the game's stored map data, fallback to default if not set
-  const gameLogic = require('../services/gameLogic');
-  let mapData = this.mapData || gameLogic.mapData;
+  // Parse the game's stored map data
+  let mapData = this.mapData;
+  
+  if (!mapData) {
+    throw new Error('No map data stored for this game');
+  }
   
   // Handle case where mapData is stored as string (SQLite JSONB issue)
   if (typeof mapData === 'string') {
     try {
       mapData = JSON.parse(mapData);
     } catch (error) {
-      console.error('Failed to parse mapData JSON string:', error);
-      mapData = gameLogic.mapData;
+      throw new Error(`Failed to parse mapData JSON string: ${error.message}`);
     }
   }
   

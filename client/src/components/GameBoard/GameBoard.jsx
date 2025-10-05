@@ -5,10 +5,11 @@ import { useAuth } from '../../hooks/useAuth';
 import GameSquare from './GameSquare';
 import PieceSelector from './PieceSelector';
 import PlacementSelector from './PlacementSelector';
-import { GAME_CONFIG, getTerrainType, canMoveTo, generateArmy, loadTerrainData } from '../../utils/gameLogic';
+import { GAME_CONFIG, getTerrainType, canMoveTo, generateArmy, loadTerrainData, isTerrainPassable } from '../../utils/gameLogic';
 import ArmySelector from './ArmySelector';
 import CombatModal from './CombatModal';
 import GameResultModal from './GameResultModal';
+import ChatBox from '../UI/ChatBox';
 
 const BoardContainer = styled.div`
   display: flex;
@@ -38,12 +39,12 @@ const Board = styled.div`
   background: rgba(255, 255, 255, 0.1);
   padding: 15px;
   border-radius: 10px;
-  width: 900px;
-  height: 900px;
+  width: 1050px;
+  height: 1050px;
 
   @media (max-width: 768px) {
-    width: 640px;
-    height: 640px;
+    width: 750px;
+    height: 750px;
   }
 `;
 
@@ -51,8 +52,14 @@ const GameInfo = styled.div`
   background: rgba(255, 255, 255, 0.1);
   padding: 20px;
   border-radius: 10px;
-  min-width: 300px;
+  min-width: 400px;
+  width: 400px;
   height: fit-content;
+  
+  @media (max-width: 768px) {
+    min-width: 100%;
+    width: 100%;
+  }
 `;
 
 const InfoSection = styled.div`
@@ -166,6 +173,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
   const [gameResult, setGameResult] = useState(null);
   const [draggedPiece, setDraggedPiece] = useState(null);
   const [draggedFromPosition, setDraggedFromPosition] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
   const { socket } = useSocket();
   const { user } = useAuth();
 
@@ -198,12 +206,77 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     });
   }, []);
 
+  // Chat message handler with deduplication
+  const handleChatMessage = React.useCallback((data) => {
+    console.log('Chat message received:', data);
+    
+    const newMessage = {
+      userId: data.userId,
+      text: data.message,
+      timestamp: data.timestamp || new Date().toISOString()
+    };
+    
+    setChatMessages(prev => {
+      // Check for duplicate messages (same user, text, and within 1 second)
+      const isDuplicate = prev.some(msg => 
+        msg.userId === newMessage.userId && 
+        msg.text === newMessage.text &&
+        Math.abs(new Date(msg.timestamp) - new Date(newMessage.timestamp)) < 1000
+      );
+      
+      if (isDuplicate) {
+        console.log('Duplicate chat message detected, ignoring');
+        return prev;
+      }
+      
+      return [...prev, newMessage];
+    });
+    
+    // Play notification sound (only for messages from other players)
+    if (data.userId !== user.id) {
+      playNotificationSound();
+    }
+  }, [user.id]);
+
+  const playNotificationSound = () => {
+    try {
+      // Try to load and play notification sound file first
+      const audio = new Audio('/sounds/message-notification.mp3');
+      audio.volume = 0.3;
+      audio.play().catch(() => {
+        // Fallback to programmatic sound if file doesn't exist
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.1);
+      });
+    } catch (e) {
+      console.log('Could not play notification sound:', e);
+    }
+  };
+
   useEffect(() => {
     if (!socket) return;
 
     const handlePiecesPlaced = (data) => {
       console.log('Pieces placed event received:', data);
       setGameState(data.gameState);
+      
+      // Only automatically confirm setup if this player placed the pieces
+      if (data.playerId === user.id) {
+        setTimeout(() => {
+          socket.emit('confirm_setup', { gameId });
+        }, 100);
+      }
     };
 
     const handleSetupConfirmed = (data) => {
@@ -262,7 +335,8 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
       console.log('Pieces with positions:', piecesWithPositions.length, '/', data.pieces.length);
       
       // If all pieces have positions, auto-confirm after a short delay
-      if (piecesWithPositions.length === 40) {
+      const expectedPieceCount = data.pieces.length;
+      if (piecesWithPositions.length === expectedPieceCount) {
         console.log('All pieces positioned, auto-confirming random setup');
         setTimeout(() => {
           const placements = data.pieces
@@ -313,6 +387,11 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     socket.on('setup_error', handleSetupError);
     socket.on('army_selected', handleArmySelected);
     socket.on('army_selection_error', handleArmySelectionError);
+    socket.on('chat_message', handleChatMessage);
+    socket.on('chat_error', (data) => {
+      console.error('Chat error:', data);
+      alert(`Chat error: ${data.message}`);
+    });
 
     return () => {
       socket.off('pieces_placed', handlePiecesPlaced);
@@ -324,6 +403,8 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
       socket.off('setup_error', handleSetupError);
       socket.off('army_selected', handleArmySelected);
       socket.off('army_selection_error', handleArmySelectionError);
+      socket.off('chat_message', handleChatMessage);
+      socket.off('chat_error');
     };
   }, [socket]);
 
@@ -365,8 +446,9 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
       return;
     }
 
-    // Check if target is water
-    if (getTerrainType(targetX, targetY, mapData) === 'water') {
+    // Check if target terrain is passable
+    const targetTerrainType = getTerrainType(targetX, targetY, mapData);
+    if (!isTerrainPassable(targetTerrainType)) {
       setDraggedPiece(null);
       setDraggedFromPosition(null);
       return;
@@ -406,7 +488,10 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     // Check if it's a valid setup position
     if (!mapData.setupRows?.[playerSide]?.includes(y)) return;
     if (gameState.board[y][x]) return; // Square occupied
-    if (getTerrainType(x, y, mapData) === 'water') return;
+    
+    // Check if terrain is passable
+    const terrainType = getTerrainType(x, y, mapData);
+    if (!isTerrainPassable(terrainType)) return;
 
     // Add piece to setup
     const piece = setupPieces.find(p => p.type === selectedPieceType && !p.position);
@@ -456,8 +541,10 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     // Calculate valid moves
     const moves = [];
     if (gameState?.board) {
-      for (let toY = 0; toY < 10; toY++) {
-        for (let toX = 0; toX < 10; toX++) {
+      const boardHeight = mapData?.boardSize?.height || 10;
+      const boardWidth = mapData?.boardSize?.width || 10;
+      for (let toY = 0; toY < boardHeight; toY++) {
+        for (let toX = 0; toX < boardWidth; toX++) {
           if (canMoveTo(x, y, toX, toY, gameState.board, playerSide, mapData)) {
             moves.push({ x: toX, y: toY });
           }
@@ -478,15 +565,16 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
   const handleConfirmSetup = () => {
     // Check if pieces are placed manually
     const placedPieces = setupPieces.filter(piece => piece.position);
+    const expectedPieceCount = setupPieces.length;
     
-    if (placedPieces.length > 0 && placedPieces.length < 40) {
-      alert(`Please place all 40 pieces before confirming setup! You have placed ${placedPieces.length}/40 pieces.`);
+    if (placedPieces.length > 0 && placedPieces.length < expectedPieceCount) {
+      alert(`Please place all ${expectedPieceCount} pieces before confirming setup! You have placed ${placedPieces.length}/${expectedPieceCount} pieces.`);
       return;
     }
     
     // If no pieces are placed, we need to show the confirmation dialog
     // If pieces are already placed, we can confirm directly
-    if (placedPieces.length === 40) {
+    if (placedPieces.length === expectedPieceCount) {
       // Pieces already placed manually, just confirm
       finalizeSetup(false);
     } else {
@@ -562,11 +650,8 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
       });
     }
 
-    // Then confirm setup
-    setTimeout(() => {
-      socket.emit('confirm_setup', { gameId });
-      setShowConfirmDialog(false);
-    }, 100);
+    // Don't automatically confirm - wait for pieces_placed event
+    setShowConfirmDialog(false);
   };
 
 
@@ -603,8 +688,11 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
       playerSide 
     });
     
-    for (let y = 0; y < 10; y++) {
-      for (let x = 0; x < 10; x++) {
+    const boardHeight = mapData?.boardSize?.height || 10;
+    const boardWidth = mapData?.boardSize?.width || 10;
+    
+    for (let y = 0; y < boardHeight; y++) {
+      for (let x = 0; x < boardWidth; x++) {
         let piece = null;
         
         if (gamePhase === 'setup') {
@@ -639,7 +727,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
             isSelected={isSelected}
             isValidMove={isValidMove}
             isSetupArea={isSetupArea}
-            isDragTarget={draggedPiece && isSetupArea && getTerrainType(x, y, mapData) !== 'water'}
+            isDragTarget={draggedPiece && isSetupArea && isTerrainPassable(getTerrainType(x, y, mapData))}
             onClick={() => handleSquareClick(x, y)}
             onDragStart={() => piece && handleDragStart(piece, x, y)}
             onDragOver={handleDragOver}
@@ -683,6 +771,15 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     window.location.href = '/lobby';
   };
 
+  const handleSendChatMessage = (message) => {
+    if (socket && message.trim()) {
+      socket.emit('chat_message', {
+        gameId,
+        message: message.trim()
+      });
+    }
+  };
+
   // Show army selector if needed
   if (showArmySelector) {
     return (
@@ -710,7 +807,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
               {setupPieces.every(p => p.position) ? 'Confirm Setup' : 'Confirm Random'}
             </ActionButton>
             <div style={{ marginTop: '10px', fontSize: '0.9rem', textAlign: 'center' }}>
-              Pieces placed: {setupPieces.filter(p => p.position).length}/40
+              Pieces placed: {setupPieces.filter(p => p.position).length}/{setupPieces.length}
             </div>
           </div>
         )}
@@ -802,10 +899,6 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
           gameResult={gameResult}
           playerSide={playerSide}
           players={localPlayers}
-          onRematch={() => {
-            // TODO: Implement rematch functionality
-            setGameResult(null);
-          }}
           onExit={() => {
             setGameResult(null);
             // TODO: Navigate back to lobby/home
@@ -829,7 +922,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
                   Confirm Setup
                 </ActionButton>
                 <div style={{ marginTop: '10px', fontSize: '0.9rem', textAlign: 'center' }}>
-                  Pieces placed: {setupPieces.filter(p => p.position).length}/40
+                  Pieces placed: {setupPieces.filter(p => p.position).length}/{setupPieces.length}
                 </div>
               </>
             )}
@@ -884,6 +977,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
               onLoadPlacement={handleLoadPlacement}
               onSavePlacement={handleSavePlacement}
               disabled={!hasSelectedArmy || !armyData}
+              expectedPieceCount={setupPieces.length}
             />
             <PieceSelector
               pieces={setupPieces}
@@ -906,6 +1000,15 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
             )}
           </InfoSection>
         )}
+
+        <InfoSection>
+          <ChatBox
+            messages={chatMessages}
+            onSendMessage={handleSendChatMessage}
+            currentUserId={user.id}
+            players={localPlayers}
+          />
+        </InfoSection>
       </GameInfo>
     </BoardContainer>
     </>

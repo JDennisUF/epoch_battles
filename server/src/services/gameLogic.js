@@ -32,8 +32,12 @@ class GameLogic {
   }
 
   // Get terrain type at specific coordinates
-  getTerrainType(x, y, mapData = null) {
-    const currentMapData = this.isValidMapData(mapData) ? mapData : this.mapData;
+  getTerrainType(x, y, mapData) {
+    if (!this.isValidMapData(mapData)) {
+      throw new Error(`Invalid or missing map data provided for getTerrainType. Received: ${JSON.stringify(mapData)}`);
+    }
+    
+    const currentMapData = mapData;
     
     if (!currentMapData || !currentMapData.terrainOverrides) {
       return currentMapData?.defaultTerrain || 'grassland';
@@ -57,15 +61,21 @@ class GameLogic {
   }
 
   // Count impassable terrain tiles in player's setup area
-  countImpassableTerrainInSetupArea(side, mapData = null) {
-    const currentMapData = this.isValidMapData(mapData) ? mapData : this.mapData;
+  countImpassableTerrainInSetupArea(side, mapData) {
+    if (!this.isValidMapData(mapData)) {
+      throw new Error(`Invalid or missing map data provided for countImpassableTerrainInSetupArea. Received: ${JSON.stringify(mapData)}`);
+    }
+    
+    const currentMapData = mapData;
     
     if (!currentMapData || !currentMapData.setupRows) {
       return 0;
     }
     
     const setupRows = currentMapData.setupRows[side];
-    if (!setupRows) return 0;
+    if (!setupRows) {
+      return 0;
+    }
     
     let impassableCount = 0;
     
@@ -73,24 +83,31 @@ class GameLogic {
     for (const row of setupRows) {
       for (let col = 0; col < currentMapData.boardSize.width; col++) {
         const terrainType = this.getTerrainType(col, row, currentMapData);
-        if (!this.isTerrainPassable(terrainType)) {
+        const isPassable = this.isTerrainPassable(terrainType);
+        if (!isPassable) {
+          console.log(`🚫 Found impassable terrain at (${col}, ${row}): ${terrainType}`);
           impassableCount++;
         }
       }
     }
     
+    console.log(`📊 Impassable terrain tiles in ${side} setup area: ${impassableCount}`);
     return impassableCount;
   }
 
   // Legacy function for backward compatibility - now calls the new function
-  countWaterTilesInSetupArea(side, mapData = null) {
+  countWaterTilesInSetupArea(side, mapData) {
     return this.countImpassableTerrainInSetupArea(side, mapData);
   }
 
   // Generate starting army for a player
-  generateArmy(side, armyId = 'fantasy', mapData = null) {
+  generateArmy(side, armyId = 'fantasy', mapData) {
     if (!armyId) {
       throw new Error('Army ID is required');
+    }
+    
+    if (!this.isValidMapData(mapData)) {
+      throw new Error(`Invalid or missing map data provided for generateArmy. Received: ${JSON.stringify(mapData)}`);
     }
     
     const armyData = this.loadArmyData(armyId);
@@ -132,8 +149,12 @@ class GameLogic {
   }
 
   // Create empty board with water squares
-  createBoard(mapData = null) {
-    const currentMapData = this.isValidMapData(mapData) ? mapData : this.mapData;
+  createBoard(mapData) {
+    if (!this.isValidMapData(mapData)) {
+      throw new Error(`Invalid or missing map data provided for createBoard. Received: ${JSON.stringify(mapData)}`);
+    }
+    
+    const currentMapData = mapData;
     const board = Array(currentMapData.boardSize.height)
       .fill(null)
       .map(() => Array(currentMapData.boardSize.width).fill(null));
@@ -146,20 +167,12 @@ class GameLogic {
   }
 
   // Validate piece placement during setup
-  validatePlacement(board, piece, x, y, side, mapData = null) {
-    // Use provided map data if valid, otherwise fall back to default
-    let currentMapData;
-    
-    if (this.isValidMapData(mapData)) {
-      currentMapData = mapData;
-    } else {
-      currentMapData = this.mapData;
+  validatePlacement(board, piece, x, y, side, mapData) {
+    if (!this.isValidMapData(mapData)) {
+      throw new Error(`Invalid or missing map data provided for validatePlacement. Received: ${JSON.stringify(mapData)}`);
     }
     
-    // Final safety check
-    if (!this.isValidMapData(currentMapData)) {
-      throw new Error('No valid map data available for validatePlacement');
-    }
+    const currentMapData = mapData;
     // Check bounds
     if (x < 0 || x >= currentMapData.boardSize.width || 
         y < 0 || y >= currentMapData.boardSize.height) {
@@ -187,8 +200,12 @@ class GameLogic {
   }
 
   // Validate move during gameplay
-  validateMove(board, fromX, fromY, toX, toY, side, mapData = null) {
-    const currentMapData = this.isValidMapData(mapData) ? mapData : this.mapData;
+  validateMove(board, fromX, fromY, toX, toY, side, mapData) {
+    if (!this.isValidMapData(mapData)) {
+      throw new Error(`Invalid or missing map data provided for validateMove. Received: ${JSON.stringify(mapData)}`);
+    }
+    
+    const currentMapData = mapData;
     // Check bounds
     if (toX < 0 || toX >= currentMapData.boardSize.width || 
         toY < 0 || toY >= currentMapData.boardSize.height) {
@@ -211,9 +228,10 @@ class GameLogic {
     // Check destination
     const targetSquare = board[toY][toX];
     
-    // Check if destination is water
-    if (this.getTerrainType(toX, toY, currentMapData) === 'water') {
-      return { valid: false, reason: 'Cannot move to water' };
+    // Check if destination is impassable terrain
+    const terrainType = this.getTerrainType(toX, toY, currentMapData);
+    if (!this.isTerrainPassable(terrainType)) {
+      return { valid: false, reason: `Cannot move to ${terrainType}` };
     }
 
     if (targetSquare && targetSquare.side === side) {
@@ -277,34 +295,50 @@ class GameLogic {
   }
 
   // Resolve combat between two pieces
-  resolveCombat(attacker, defender) {
+  resolveCombat(attacker, defender, defenderTerrain = null) {
     // Check special cases first
     for (const specialCase of this.combatRules.specialCases) {
       if (this.matchesSpecialCase(attacker, defender, specialCase)) {
-        return this.applySpecialCaseResult(attacker, defender, specialCase);
+        return this.applySpecialCaseResult(attacker, defender, specialCase, defenderTerrain);
       }
     }
 
-    // Apply normal combat rules
-    if (attacker.rank < defender.rank) {
+    // Calculate effective ranks with terrain bonuses
+    let attackerRank = attacker.rank;
+    let defenderRank = defender.rank;
+    
+    // Apply mountain terrain defensive bonus
+    if (defenderTerrain === 'mountain') {
+      defenderRank = Math.max(1, defenderRank - 1); // Lower rank number = stronger
+      console.log(`🏔️ Mountain defensive bonus: ${defender.name} rank improved from ${defender.rank} to ${defenderRank}`);
+    }
+
+    // Apply normal combat rules with terrain-modified ranks
+    if (attackerRank < defenderRank) {
       return {
         result: 'attacker_wins',
         winner: attacker,
         loser: defender,
-        description: `${attacker.name} defeats ${defender.name}`
+        description: defenderTerrain === 'mountain' ? 
+          `${attacker.name} defeats ${defender.name} (mountain defense)` :
+          `${attacker.name} defeats ${defender.name}`
       };
-    } else if (attacker.rank > defender.rank) {
+    } else if (attackerRank > defenderRank) {
       return {
         result: 'defender_wins', 
         winner: defender,
         loser: attacker,
-        description: `${defender.name} defeats ${attacker.name}`
+        description: defenderTerrain === 'mountain' ? 
+          `${defender.name} defends from mountain and defeats ${attacker.name}` :
+          `${defender.name} defeats ${attacker.name}`
       };
     } else {
       return {
         result: 'both_destroyed',
         winner: null,
-        description: `${attacker.name} and ${defender.name} destroy each other`
+        description: defenderTerrain === 'mountain' ? 
+          `${attacker.name} and ${defender.name} destroy each other (mountain defense not enough)` :
+          `${attacker.name} and ${defender.name} destroy each other`
       };
     }
   }
@@ -313,46 +347,44 @@ class GameLogic {
   matchesSpecialCase(attacker, defender, specialCase) {
     let attackerMatch;
     if (specialCase.attacker === 'miner') {
-      // Match units that can defuse bombs/traps
-      attackerMatch = attacker.type === 'miner' || 
-                     attacker.class === 'miner' ||
-                     (attacker.special && (attacker.special.includes('can disable') || 
-                                         attacker.special.includes('can defuse') ||
-                                         attacker.special.includes('disable traps')));
+      // Match units that can defuse bombs/traps - only use class
+      attackerMatch = attacker.class === 'miner';
+    } else if (specialCase.attacker === 'spy') {
+      // Match spy units - only use class
+      attackerMatch = attacker.class === 'spy';
+    } else if (specialCase.attacker === 'marshal') {
+      // Match marshal units - only use class
+      attackerMatch = attacker.class === 'marshal';
     } else {
-      attackerMatch = specialCase.attacker === '*' || specialCase.attacker === attacker.type;
+      attackerMatch = specialCase.attacker === '*' || specialCase.attacker === attacker.class;
     }
     
-    // Handle special piece types dynamically based on their properties
+    // Handle special piece types dynamically based on their class only
     let defenderMatch;
     if (specialCase.defender === 'flag') {
-      defenderMatch = defender.class === 'flag' || defender.special === 'Must be captured to win';
+      defenderMatch = defender.class === 'flag';
     } else if (specialCase.defender === 'bomb') {
-      // Match pieces that destroy attackers (bombs/mines/traps)
-      defenderMatch = defender.type === 'bomb' || 
-                     defender.type === 'trap' ||
-                     defender.class === 'bomb' ||
-                     (defender.special && (defender.special.includes('Destroys any attacking unit') || 
-                                         defender.special.includes('Destroys any attacker')));
+      // Match pieces that destroy attackers (bombs/mines/traps) - only use class
+      defenderMatch = defender.class === 'bomb';
+    } else if (specialCase.defender === 'spy') {
+      // Match spy units - only use class
+      defenderMatch = defender.class === 'spy';
+    } else if (specialCase.defender === 'marshal') {
+      // Match marshal units - only use class
+      defenderMatch = defender.class === 'marshal';
     } else {
-      defenderMatch = specialCase.defender === '*' || specialCase.defender === defender.type;
+      defenderMatch = specialCase.defender === '*' || specialCase.defender === defender.class;
     }
     
     // Handle exceptions dynamically - check if attacker has the ability to handle this defender
     if (specialCase.exception) {
-      // For bombs/mines, check if attacker can defuse/disable them
-      if (specialCase.defender === 'bomb' && (defender.class === 'bomb' || (defender.special && (defender.special.includes('Destroys any attacking unit') || defender.special.includes('Destroys any attacker'))))) {
-        const canDefuse = attacker.type === specialCase.exception || 
-                         attacker.class === specialCase.exception ||
-                         (attacker.special && (
-                           attacker.special.includes('can disable') || 
-                           attacker.special.includes('can defuse') ||
-                           attacker.special.includes('disable acid pods')
-                         ));
+      // For bombs/mines, check if attacker can defuse/disable them - only use class
+      if (specialCase.defender === 'bomb' && defender.class === 'bomb') {
+        const canDefuse = attacker.class === specialCase.exception;
         if (canDefuse) {
           return false; // Exception applies, this special case doesn't match
         }
-      } else if (attacker.type === specialCase.exception) {
+      } else if (attacker.class === specialCase.exception) {
         return false;
       }
     }
@@ -361,7 +393,7 @@ class GameLogic {
   }
 
   // Apply special case combat result
-  applySpecialCaseResult(attacker, defender, specialCase) {
+  applySpecialCaseResult(attacker, defender, specialCase, defenderTerrain = null) {
     switch (specialCase.result) {
       case 'attacker_wins':
         return {
@@ -404,7 +436,7 @@ class GameLogic {
           description: `${attacker.side} captures the flag and wins!`
         };
       default:
-        return this.resolveCombat(attacker, defender);
+        return this.resolveCombat(attacker, defender, defenderTerrain);
     }
   }
 
@@ -443,34 +475,6 @@ class GameLogic {
     return { gameOver: false };
   }
 
-  // Get terrain type for a coordinate
-  getTerrainType(x, y, mapData = null) {
-    const currentMapData = this.isValidMapData(mapData) ? mapData : this.mapData;
-    // Use new terrain structure with defaultTerrain and terrainOverrides
-    if (currentMapData.terrainOverrides) {
-      for (const [terrainType, coordinates] of Object.entries(currentMapData.terrainOverrides)) {
-        if (coordinates.some(coord => coord.x === x && coord.y === y)) {
-          return terrainType;
-        }
-      }
-      return currentMapData.defaultTerrain || 'grassland';
-    }
-    
-    // Fallback to old terrain structure for backwards compatibility
-    const waterSquares = currentMapData.terrain?.waterSquares || currentMapData.waterSquares || [];
-    const isWaterSquare = waterSquares.some(square => square.x === x && square.y === y);
-    if (isWaterSquare) return 'water';
-    
-    const dirtSquares = currentMapData.terrain?.dirtSquares || [];
-    const isDirtSquare = dirtSquares.some(square => square.x === x && square.y === y);
-    if (isDirtSquare) return 'dirt';
-    
-    const grasslandSquares = currentMapData.terrain?.grasslandSquares || [];
-    const isGrasslandSquare = grasslandSquares.some(square => square.x === x && square.y === y);
-    if (isGrasslandSquare) return 'grassland';
-    
-    return 'default';
-  }
 
   // Validate that map data has the required structure
   isValidMapData(mapData) {
@@ -482,21 +486,12 @@ class GameLogic {
   }
 
   // Generate random piece placement for quick setup
-  generateRandomPlacement(side, armyId = 'fantasy', mapData = null) {
-    // Use provided map data if valid, otherwise fall back to default
-    let currentMapData;
-    
-    if (this.isValidMapData(mapData)) {
-      currentMapData = mapData;
-    } else {
-      console.log(`🎲 Using fallback map data (provided mapData was ${mapData ? 'invalid' : 'null'})`);
-      currentMapData = this.mapData;
+  generateRandomPlacement(side, armyId = 'fantasy', mapData) {
+    if (!this.isValidMapData(mapData)) {
+      throw new Error(`Invalid or missing map data provided for generateRandomPlacement. Received: ${JSON.stringify(mapData)}`);
     }
     
-    // Final safety check
-    if (!this.isValidMapData(currentMapData)) {
-      throw new Error('No valid map data available (both provided and default are invalid)');
-    }
+    const currentMapData = mapData;
     
     if (!currentMapData.setupRows[side]) {
       throw new Error(`No setup rows for side '${side}'. Available sides: ${Object.keys(currentMapData.setupRows).join(', ')}`);
@@ -510,7 +505,8 @@ class GameLogic {
     for (const row of setupRows) {
       for (let col = 0; col < currentMapData.boardSize.width; col++) {
         const terrainType = this.getTerrainType(col, row, currentMapData);
-        if (this.isTerrainPassable(terrainType)) {
+        const isPassable = this.isTerrainPassable(terrainType);
+        if (isPassable) {
           positions.push({ x: col, y: row });
         } else {
           console.log(`🚫 Skipping impassable terrain at (${col}, ${row}): ${terrainType}`);

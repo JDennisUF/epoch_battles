@@ -28,5 +28,6 @@
     ]
   },
   "theme": "natural",
-  "difficulty": "standard"
+  "difficulty": "standard",
+  "numStartingPositions": 40
 }
