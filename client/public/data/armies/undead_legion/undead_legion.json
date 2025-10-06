@@ -32,7 +32,10 @@
       "canAttack": true,
       "symbol": "⚔️",
       "description": "Dark champion of necromantic power",
-      "class": "colonel"
+      "class": "colonel",
+      "abilities": [
+        "fear"
+      ]
     },
     "necromancer": {
       "id": "necromancer",
@@ -41,10 +44,12 @@
       "count": 2,
       "moveable": true,
       "canAttack": true,
-      "special": "Can resurrect 1 captured unit once per game",
       "symbol": "📜",
       "description": "Dark mage of the dead",
-      "class": "major"
+      "class": "major",
+      "abilities": [
+        "curse"
+      ]
     },
     "bone_captain": {
       "id": "bone_captain",
@@ -56,7 +61,10 @@
       "special": null,
       "symbol": "🦴",
       "description": "Elite skeletal commander",
-      "class": "captain"
+      "class": "captain",
+      "abilities": [
+        "charge"
+      ]
     },
     "skeleton_warrior": {
       "id": "skeleton_warrior",
@@ -67,7 +75,10 @@
       "canAttack": true,
       "symbol": "💀",
       "description": "Basic rank-and-file undead",
-      "class": "lieutenant"
+      "class": "lieutenant",
+      "abilities": [
+        "veteran"
+      ]
     },
     "zombie_horde": {
       "id": "zombie_horde",
@@ -91,7 +102,10 @@
       "special": "Can move through any terrain",
       "symbol": "👻",
       "description": "Ethereal scouts of the undead",
-      "class": "miner"
+      "class": "miner",
+      "abilities": [
+        "trap_sense"
+      ]
     },
     "shadow_wraith": {
       "id": "shadow_wraith",
@@ -103,7 +117,14 @@
       "special": "Can move multiple spaces in a straight line",
       "symbol": "🌫️",
       "description": "Swift shadow that glides across the battlefield",
-      "class": "scout"
+      "class": "scout",
+      "abilities": [
+        {
+          "id": "fleet",
+          "spaces": 9
+        },
+        "flying"
+      ]
     },
     "vampire_slayer": {
       "id": "vampire_slayer",

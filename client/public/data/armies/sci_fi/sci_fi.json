@@ -46,7 +46,8 @@
       "special": null,
       "symbol": "\ud83d\udee1",
       "description": "Pilots a battle mech",
-      "class": "major"
+      "class": "major",
+      "abilities": ["charge"]
     },
     "star_captain": {
       "id": "star_captain",
@@ -58,7 +59,8 @@
       "special": null,
       "symbol": "\ud83d\ude80",
       "description": "Commands starship crews",
-      "class": "captain"
+      "class": "captain",
+      "abilities": ["veteran"]
     },
     "lieutenant_droid": {
       "id": "lieutenant_droid",
@@ -94,7 +96,8 @@
       "special": "Only unit that can disable energy mines",
       "symbol": "\ud83d\udee0",
       "description": "Maintains and disables mines",
-      "class": "miner"
+      "class": "miner",
+      "abilities": ["trap_sense"]
     },
     "recon_drone": {
       "id": "recon_drone",
@@ -106,7 +109,8 @@
       "special": "Can move multiple spaces in a straight line",
       "symbol": "\ud83d\udce1",
       "description": "Fast surveillance unit",
-      "class": "scout"
+      "class": "scout",
+      "abilities": [ { "id": "fleet", "spaces": 9 } ]
     },
     "hacker": {
       "id": "hacker",

@@ -144,7 +144,7 @@ export const GAME_CONFIG = {
 
 
 export const getTerrainType = (x, y, mapData) => {
-  console.log('🗺️ getTerrainType called:', { x, y, mapData: mapData ? { id: mapData.id, hasTerrainOverrides: !!mapData.terrainOverrides } : null });
+  // console.log('🗺️ getTerrainType called:', { x, y, mapData: mapData ? { id: mapData.id, hasTerrainOverrides: !!mapData.terrainOverrides } : null });
   
   if (!mapData) {
     console.error('❌ getTerrainType called with no mapData');
@@ -201,22 +201,25 @@ export const canMoveTo = (fromX, fromY, toX, toY, board, playerSide, mapData = n
   // Can't attack own pieces
   const target = board[toY]?.[toX];
   if (target && target.side === playerSide) return false;
+  
+  const isAttack = target !== null;
 
   // Must move in straight line
   const dx = Math.abs(toX - fromX);
   const dy = Math.abs(toY - fromY);
   if (dx > 0 && dy > 0) return false;
 
-  // Distance check
+  // Distance check using Fleet ability
   const distance = Math.max(dx, dy);
-  const canMoveMultipleSpaces = piece.type === 'scout' || 
-                                piece.class === 'scout' ||
-                                (piece.special && (piece.special.includes('move multiple spaces') || 
-                                                 piece.special.includes('Moves multiple spaces')));
-  const maxDistance = canMoveMultipleSpaces ? 9 : 1;
-  if (distance > maxDistance) return false;
+  const movementRange = getFleetMovementRange(piece);
+  const canMoveMultipleSpaces = movementRange > 1;
+  if (distance > movementRange) return false;
 
-  // For multi-space movers, check path is clear
+  // Check if destination is water and piece cannot fly
+  const hasFlying = hasAbility(piece, 'flying');
+  if (terrainType === 'water' && !hasFlying) return false;
+
+  // For multi-space movers, check path is clear and no water blocking
   if (canMoveMultipleSpaces && distance > 1) {
     const stepX = toX > fromX ? 1 : toX < fromX ? -1 : 0;
     const stepY = toY > fromY ? 1 : toY < fromY ? -1 : 0;
@@ -224,16 +227,28 @@ export const canMoveTo = (fromX, fromY, toX, toY, board, playerSide, mapData = n
     for (let i = 1; i < distance; i++) {
       const checkX = fromX + stepX * i;
       const checkY = fromY + stepY * i;
+      
+      // Check if square is occupied
       if (board[checkY]?.[checkX]) return false;
+      
+      // Check if path goes through water (only allowed with Flying)
+      const pathTerrain = getTerrainType(checkX, checkY, currentMapData);
+      if (pathTerrain === 'water' && !hasFlying) return false;
     }
+  }
+
+  // Fleet restriction: cannot attack after moving more than 1 space
+  if (isAttack && distance > 1 && hasAbility(piece, 'fleet')) {
+    return false;
   }
 
   return true;
 };
 
 // Count water tiles in player's setup area
-// Load terrain data (this would normally be loaded asynchronously)
+// Load terrain data and abilities data (this would normally be loaded asynchronously)
 let terrainData = null;
+let abilitiesData = null;
 
 export const loadTerrainData = async () => {
   if (!terrainData) {
@@ -255,6 +270,70 @@ export const loadTerrainData = async () => {
     }
   }
   return terrainData;
+};
+
+export const loadAbilitiesData = async () => {
+  if (!abilitiesData) {
+    try {
+      const response = await fetch('/data/abilities/abilities.json');
+      abilitiesData = await response.json();
+    } catch (error) {
+      console.error('Failed to load abilities data:', error);
+      // Fallback abilities data
+      abilitiesData = {
+        abilities: {
+          fleet: {
+            parameters: {
+              spaces: { default: 2 }
+            }
+          }
+        }
+      };
+    }
+  }
+  return abilitiesData;
+};
+
+// Check if piece has a specific ability
+export const hasAbility = (piece, abilityName) => {
+  if (!piece.abilities) return false;
+  
+  return piece.abilities.some(ability => {
+    if (typeof ability === 'string') {
+      return ability === abilityName;
+    } else if (typeof ability === 'object') {
+      return ability.id === abilityName;
+    }
+    return false;
+  });
+};
+
+// Get Fleet movement range for a piece
+export const getFleetMovementRange = (piece) => {
+  if (!hasAbility(piece, 'fleet')) {
+    return 1; // Default movement
+  }
+  
+  // Find the Fleet ability in the piece's abilities array
+  const fleetAbility = piece.abilities.find(ability => {
+    if (typeof ability === 'object') {
+      return ability.id === 'fleet';
+    }
+    return ability === 'fleet';
+  });
+  
+  // If Fleet ability has custom spaces parameter, use it
+  if (fleetAbility && typeof fleetAbility === 'object' && fleetAbility.spaces) {
+    return fleetAbility.spaces;
+  }
+  
+  // Default Fleet movement from abilities.json
+  if (abilitiesData && abilitiesData.abilities.fleet) {
+    return abilitiesData.abilities.fleet.parameters.spaces.default;
+  }
+  
+  // Final fallback
+  return 2;
 };
 
 // Check if terrain is passable
@@ -324,6 +403,7 @@ export const generateArmy = (side, armyData = null, mapData = null) => {
         moveable: pieceInfo.moveable,
         canAttack: pieceInfo.canAttack,
         special: pieceInfo.special,
+        abilities: pieceInfo.abilities || [], // Copy abilities from army data
         revealed: false
       });
     }

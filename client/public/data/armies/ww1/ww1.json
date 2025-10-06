@@ -1,152 +1,171 @@
 {
-  "id": "ww1",
-  "name": "World War I Army",
-  "description": "A gritty trench-warfare force featuring engineers, snipers, medics, and early tanks — reflecting the dawn of modern mechanized combat.",
-  "pieces": {
-    "field_marshal": {
-      "id": "field_marshal",
-      "name": "Field Marshal",
-      "rank": 1,
-      "count": 1,
-      "moveable": true,
-      "canAttack": true,
-      "special": "Strongest unit, defeated only by the Spy when attacked.",
-      "symbol": "🎖️",
-      "description": "Supreme commander overseeing the front lines.",
-      "class": "marshal"
+    "id": "ww1",
+    "name": "World War I Army",
+    "description": "A gritty trench-warfare force featuring engineers, snipers, medics, and early tanks — reflecting the dawn of modern mechanized combat.",
+    "pieces": {
+        "field_marshal": {
+            "id": "field_marshal",
+            "name": "Field Marshal",
+            "rank": 1,
+            "count": 1,
+            "moveable": true,
+            "canAttack": true,
+            "special": "Strongest unit, defeated only by the Spy when attacked.",
+            "symbol": "🎖️",
+            "description": "Supreme commander overseeing the front lines.",
+            "class": "marshal"
+        },
+        "tank_commander": {
+            "id": "tank_commander",
+            "name": "Tank Commander",
+            "rank": 2,
+            "count": 1,
+            "moveable": true,
+            "canAttack": true,
+            "special": "Can move two spaces forward through any terrain.",
+            "symbol": "🪖",
+            "description": "Leads armored units through the mud of battlefields.",
+            "class": "general",
+            "abilities": [
+                "charge"
+            ]
+        },
+        "artillery_officer": {
+            "id": "artillery_officer",
+            "name": "Artillery Officer",
+            "rank": 3,
+            "count": 2,
+            "moveable": true,
+            "canAttack": true,
+            "special": "Can attack over one obstacle tile if an enemy is adjacent behind it.",
+            "symbol": "💥",
+            "description": "Commands long-range bombardments supporting infantry advances.",
+            "class": "colonel"
+        },
+        "gas_specialist": {
+            "id": "gas_specialist",
+            "name": "Gas Specialist",
+            "rank": 4,
+            "count": 2,
+            "moveable": true,
+            "canAttack": true,
+            "special": "When defeated, both attacker and defender are removed (gas exposure).",
+            "symbol": "☣️",
+            "description": "Deploys chemical weapons to disrupt entrenched enemies.",
+            "class": "major"
+        },
+        "sniper": {
+            "id": "sniper",
+            "name": "Sniper",
+            "rank": 5,
+            "count": 3,
+            "moveable": true,
+            "canAttack": true,
+            "special": "Can target adjacent enemies without moving.",
+            "symbol": "🎯",
+            "description": "Eliminates exposed enemies with deadly precision.",
+            "class": "captain",
+            "abilities": [
+                "sniper"
+            ]
+        },
+        "trench_gunner": {
+            "id": "trench_gunner",
+            "name": "Trench Gunner",
+            "rank": 6,
+            "count": 4,
+            "moveable": true,
+            "canAttack": true,
+            "special": null,
+            "symbol": "🔫",
+            "description": "Frontline soldier with a shotgun or machine gun for trench assaults.",
+            "class": "lieutenant",
+            "abilities": [
+                "veteran"
+            ]
+        },
+        "rifleman": {
+            "id": "rifleman",
+            "name": "Rifleman",
+            "rank": 7,
+            "count": 4,
+            "moveable": true,
+            "canAttack": true,
+            "special": null,
+            "symbol": "⚔️",
+            "description": "Standard infantry soldier trained for prolonged trench combat.",
+            "class": "sergeant"
+        },
+        "combat_engineer": {
+            "id": "combat_engineer",
+            "name": "Combat Engineer",
+            "rank": 8,
+            "count": 5,
+            "moveable": true,
+            "canAttack": true,
+            "special": "Can defuse land mines and repair obstacles.",
+            "symbol": "⛏️",
+            "description": "Expert in clearing mines, repairing trenches, and demolitions.",
+            "class": "miner",
+            "abilities": [
+                "trap_sense"
+            ]
+        },
+        "recon_pilot": {
+            "id": "recon_pilot",
+            "name": "Recon Pilot",
+            "rank": 9,
+            "count": 8,
+            "moveable": true,
+            "canAttack": true,
+            "special": "Can move multiple spaces in a straight line like a scout.",
+            "symbol": "✈️",
+            "description": "Performs aerial reconnaissance and disrupts enemy lines.",
+            "class": "scout",
+            "abilities": [
+                {
+                    "id": "fleet",
+                    "spaces": 9
+                },
+                "flying"
+            ]
+        },
+        "spy": {
+            "id": "spy",
+            "name": "Spy",
+            "rank": 10,
+            "count": 1,
+            "moveable": true,
+            "canAttack": true,
+            "special": "Can defeat the Field Marshal when attacking, weakest otherwise.",
+            "symbol": "🕵️‍♂️",
+            "description": "A covert saboteur capable of assassinating officers.",
+            "class": "spy"
+        },
+        "field_hq": {
+            "id": "field_hq",
+            "name": "Field HQ",
+            "rank": null,
+            "count": 1,
+            "moveable": false,
+            "canAttack": false,
+            "special": "Must be captured to win.",
+            "symbol": "🏳️",
+            "description": "The nerve center of army command; losing it means defeat.",
+            "class": "flag"
+        },
+        "land_mine": {
+            "id": "land_mine",
+            "name": "Land Mine",
+            "rank": null,
+            "count": 6,
+            "moveable": false,
+            "canAttack": false,
+            "special": "Destroys any attacking unit except Combat Engineers.",
+            "symbol": "💣",
+            "description": "Buried explosive trap designed to protect trenches.",
+            "class": "bomb"
+        }
     },
-    "tank_commander": {
-      "id": "tank_commander",
-      "name": "Tank Commander",
-      "rank": 2,
-      "count": 1,
-      "moveable": true,
-      "canAttack": true,
-      "special": "Can move two spaces forward through any terrain.",
-      "symbol": "🪖",
-      "description": "Leads armored units through the mud of battlefields.",
-      "class": "general"
-    },
-    "artillery_officer": {
-      "id": "artillery_officer",
-      "name": "Artillery Officer",
-      "rank": 3,
-      "count": 2,
-      "moveable": true,
-      "canAttack": true,
-      "special": "Can attack over one obstacle tile if an enemy is adjacent behind it.",
-      "symbol": "💥",
-      "description": "Commands long-range bombardments supporting infantry advances.",
-      "class": "colonel"
-    },
-    "gas_specialist": {
-      "id": "gas_specialist",
-      "name": "Gas Specialist",
-      "rank": 4,
-      "count": 2,
-      "moveable": true,
-      "canAttack": true,
-      "special": "When defeated, both attacker and defender are removed (gas exposure).",
-      "symbol": "☣️",
-      "description": "Deploys chemical weapons to disrupt entrenched enemies.",
-      "class": "major"
-    },
-    "sniper": {
-      "id": "sniper",
-      "name": "Sniper",
-      "rank": 5,
-      "count": 3,
-      "moveable": true,
-      "canAttack": true,
-      "special": "Can target adjacent enemies without moving.",
-      "symbol": "🎯",
-      "description": "Eliminates exposed enemies with deadly precision.",
-      "class": "captain"
-    },
-    "trench_gunner": {
-      "id": "trench_gunner",
-      "name": "Trench Gunner",
-      "rank": 6,
-      "count": 4,
-      "moveable": true,
-      "canAttack": true,
-      "special": null,
-      "symbol": "🔫",
-      "description": "Frontline soldier with a shotgun or machine gun for trench assaults.",
-      "class": "lieutenant"
-    },
-    "rifleman": {
-      "id": "rifleman",
-      "name": "Rifleman",
-      "rank": 7,
-      "count": 4,
-      "moveable": true,
-      "canAttack": true,
-      "special": null,
-      "symbol": "⚔️",
-      "description": "Standard infantry soldier trained for prolonged trench combat.",
-      "class": "sergeant"
-    },
-    "combat_engineer": {
-      "id": "combat_engineer",
-      "name": "Combat Engineer",
-      "rank": 8,
-      "count": 5,
-      "moveable": true,
-      "canAttack": true,
-      "special": "Can defuse land mines and repair obstacles.",
-      "symbol": "⛏️",
-      "description": "Expert in clearing mines, repairing trenches, and demolitions.",
-      "class": "miner"
-    },
-    "recon_pilot": {
-      "id": "recon_pilot",
-      "name": "Recon Pilot",
-      "rank": 9,
-      "count": 8,
-      "moveable": true,
-      "canAttack": true,
-      "special": "Can move multiple spaces in a straight line like a scout.",
-      "symbol": "✈️",
-      "description": "Performs aerial reconnaissance and disrupts enemy lines.",
-      "class": "scout"
-    },
-    "spy": {
-      "id": "spy",
-      "name": "Spy",
-      "rank": 10,
-      "count": 1,
-      "moveable": true,
-      "canAttack": true,
-      "special": "Can defeat the Field Marshal when attacking, weakest otherwise.",
-      "symbol": "🕵️‍♂️",
-      "description": "A covert saboteur capable of assassinating officers.",
-      "class": "spy"
-    },
-    "field_hq": {
-      "id": "field_hq",
-      "name": "Field HQ",
-      "rank": null,
-      "count": 1,
-      "moveable": false,
-      "canAttack": false,
-      "special": "Must be captured to win.",
-      "symbol": "🏳️",
-      "description": "The nerve center of army command; losing it means defeat.",
-      "class": "flag"
-    },
-    "land_mine": {
-      "id": "land_mine",
-      "name": "Land Mine",
-      "rank": null,
-      "count": 6,
-      "moveable": false,
-      "canAttack": false,
-      "special": "Destroys any attacking unit except Combat Engineers.",
-      "symbol": "💣",
-      "description": "Buried explosive trap designed to protect trenches.",
-      "class": "bomb"
-    }
-  },
-  "totalPieces": 40
+    "totalPieces": 40
 }

@@ -2,7 +2,7 @@
   "name": "WWII Army",
   "theme": "World War II",
   "description": "World War II military forces.",
-  "units": {
+  "pieces": {
     "supreme_commander": {
       "id": "supreme_commander",
       "name": "Supreme Commander",
@@ -42,7 +42,10 @@
       "count": 3,
       "moveable": true,
       "canAttack": true,
-      "description": "Leads battalions and coordinates tactical maneuvers."
+      "description": "Leads battalions and coordinates tactical maneuvers.",
+      "abilities": [
+        "charge"
+      ]
     },
     "captain": {
       "id": "captain",
@@ -52,7 +55,10 @@
       "count": 4,
       "moveable": true,
       "canAttack": true,
-      "description": "Company commander skilled at leading infantry units into combat."
+      "description": "Company commander skilled at leading infantry units into combat.",
+      "abilities": [
+        "veteran"
+      ]
     },
     "lieutenant": {
       "id": "lieutenant",
@@ -83,7 +89,10 @@
       "moveable": true,
       "canAttack": true,
       "special": "Can defuse mines safely.",
-      "description": "Carries specialized tools for clearing explosives and fortifications."
+      "description": "Carries specialized tools for clearing explosives and fortifications.",
+      "abilities": [
+        "trap_sense"
+      ]
     },
     "recon_scout": {
       "id": "recon_scout",
@@ -94,7 +103,13 @@
       "moveable": true,
       "canAttack": true,
       "special": "Can move multiple spaces in a straight line.",
-      "description": "Fast-moving reconnaissance unit skilled at spotting enemy positions."
+      "description": "Fast-moving reconnaissance unit skilled at spotting enemy positions.",
+      "abilities": [
+        {
+          "id": "fleet",
+          "spaces": 9
+        }
+      ]
     },
     "field_spy": {
       "id": "field_spy",

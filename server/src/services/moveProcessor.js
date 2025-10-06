@@ -548,6 +548,7 @@ class MoveProcessor {
         canAttack: pieceInfo.canAttack,
         special: pieceInfo.special,
         class: pieceInfo.class,
+        abilities: pieceInfo.abilities || [], // Copy abilities from army data
         revealed: false,
         position: { x: placement.x, y: placement.y }
       };

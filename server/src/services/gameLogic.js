@@ -6,6 +6,7 @@ const fantasyArmy = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../cl
 const classicMap = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../client/public/data/maps/classic.json'), 'utf8'));
 const combatData = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/combat.json'), 'utf8'));
 const terrainData = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../client/public/data/maps/terrain/terrain.json'), 'utf8'));
+const abilitiesData = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../client/public/data/abilities/abilities.json'), 'utf8'));
 
 class GameLogic {
   constructor() {
@@ -15,8 +16,45 @@ class GameLogic {
     this.movementRules = combatData.movementRules;
     this.gamePhases = combatData.gamePhases;
     this.terrainTypes = terrainData.terrainTypes;
+    this.abilities = abilitiesData.abilities;
   }
 
+  // Check if piece has a specific ability
+  hasAbility(piece, abilityName) {
+    if (!piece.abilities) return false;
+    
+    return piece.abilities.some(ability => {
+      if (typeof ability === 'string') {
+        return ability === abilityName;
+      } else if (typeof ability === 'object') {
+        return ability.id === abilityName;
+      }
+      return false;
+    });
+  }
+
+  // Get Fleet movement range for a piece
+  getFleetMovementRange(piece) {
+    if (!this.hasAbility(piece, 'fleet')) {
+      return 1; // Default movement
+    }
+    
+    // Find the Fleet ability in the piece's abilities array
+    const fleetAbility = piece.abilities.find(ability => {
+      if (typeof ability === 'object') {
+        return ability.id === 'fleet';
+      }
+      return ability === 'fleet';
+    });
+    
+    // If Fleet ability has custom spaces parameter, use it
+    if (fleetAbility && typeof fleetAbility === 'object' && fleetAbility.spaces) {
+      return fleetAbility.spaces;
+    }
+    
+    // Default Fleet movement from abilities.json
+    return this.abilities.fleet.parameters.spaces.default;
+  }
 
   // Load army data by ID
   loadArmyData(armyId) {
@@ -138,6 +176,7 @@ class GameLogic {
           canAttack: pieceInfo.canAttack,
           special: pieceInfo.special,
           class: pieceInfo.class,
+          abilities: pieceInfo.abilities || [], // Copy abilities from army data
           revealed: false,
           position: null // Will be set during setup
         });
@@ -233,19 +272,20 @@ class GameLogic {
     if (!this.isTerrainPassable(terrainType)) {
       return { valid: false, reason: `Cannot move to ${terrainType}` };
     }
+    
+    // Check if destination is water and piece cannot fly
+    const hasFlying = this.hasAbility(piece, 'flying');
+    if (terrainType === 'water' && !hasFlying) {
+      return { valid: false, reason: 'Cannot land on water' };
+    }
 
     if (targetSquare && targetSquare.side === side) {
       return { valid: false, reason: 'Cannot attack own piece' };
     }
 
-    // Get movement rules for this piece type
-    // Check if piece can move multiple spaces based on type, class, or special ability
-    const canMoveMultipleSpaces = piece.type === 'scout' || 
-                                  piece.class === 'scout' ||
-                                  (piece.special && (piece.special.includes('move multiple spaces') || 
-                                                   piece.special.includes('Moves multiple spaces')));
-    const moveRules = canMoveMultipleSpaces ? this.movementRules.scout : 
-                      (this.movementRules[piece.type] || this.movementRules.default);
+    // Get movement range for this piece
+    const movementRange = this.getFleetMovementRange(piece);
+    const canMoveMultipleSpaces = movementRange > 1;
     
     // Check movement distance and direction
     const dx = Math.abs(toX - fromX);
@@ -258,23 +298,30 @@ class GameLogic {
     }
 
     // Check distance limits
-    if (distance > moveRules.maxDistance) {
+    if (distance > movementRange) {
       return { valid: false, reason: 'Move too far' };
     }
 
     // For pieces moving multiple spaces, check path is clear
     if (canMoveMultipleSpaces && distance > 1) {
-      const pathClear = this.isPathClear(board, fromX, fromY, toX, toY);
-      if (!pathClear) {
-        return { valid: false, reason: 'Path blocked' };
+      const pathClear = this.isPathClear(board, fromX, fromY, toX, toY, mapData, piece);
+      if (!pathClear.valid) {
+        return { valid: false, reason: pathClear.reason };
       }
     }
 
-    return { valid: true, isAttack: targetSquare !== null };
+    const isAttack = targetSquare !== null;
+    
+    // Fleet restriction: cannot attack after moving more than 1 space
+    if (isAttack && distance > 1 && this.hasAbility(piece, 'fleet')) {
+      return { valid: false, reason: 'Cannot attack after moving multiple spaces' };
+    }
+    
+    return { valid: true, isAttack };
   }
 
-  // Check if path is clear for scout movement
-  isPathClear(board, fromX, fromY, toX, toY) {
+  // Check if path is clear for Fleet movement
+  isPathClear(board, fromX, fromY, toX, toY, mapData, piece) {
     const dx = toX - fromX;
     const dy = toY - fromY;
     const steps = Math.max(Math.abs(dx), Math.abs(dy));
@@ -282,16 +329,25 @@ class GameLogic {
     const stepX = dx === 0 ? 0 : dx / Math.abs(dx);
     const stepY = dy === 0 ? 0 : dy / Math.abs(dy);
 
+    const hasFlying = this.hasAbility(piece, 'flying');
+
     for (let i = 1; i < steps; i++) {
       const checkX = fromX + (stepX * i);
       const checkY = fromY + (stepY * i);
       
+      // Check if square is occupied by another piece
       if (board[checkY][checkX] !== null) {
-        return false;
+        return { valid: false, reason: 'Path blocked' };
+      }
+      
+      // Check if square has water terrain
+      const terrainType = this.getTerrainType(checkX, checkY, mapData);
+      if (terrainType === 'water' && !hasFlying) {
+        return { valid: false, reason: 'Cannot fly over water' };
       }
     }
 
-    return true;
+    return { valid: true };
   }
 
   // Resolve combat between two pieces

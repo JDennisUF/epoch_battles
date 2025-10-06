@@ -34,7 +34,8 @@
       "special": null,
       "symbol": "\u2656",
       "description": "Leader of knights",
-      "class": "colonel"
+      "class": "colonel",
+      "abilities": ["fear"]
     },
     "knight": {
       "id": "knight",
@@ -46,7 +47,8 @@
       "special": null,
       "symbol": "\u2658",
       "description": "Armored warrior",
-      "class": "major"
+      "class": "major",
+      "abilities": ["charge"]
     },
     "captain_of_arms": {
       "id": "captain_of_arms",
@@ -94,7 +96,8 @@
       "special": "Only unit that can disable traps",
       "symbol": "\u26cf",
       "description": "Specialist at removing traps",
-      "class": "miner"
+      "class": "miner",
+      "abilities": ["trap_sense"]
     },
     "scout_rider": {
       "id": "scout_rider",
@@ -106,7 +109,8 @@
       "special": "Can move multiple spaces in a straight line",
       "symbol": "\ud83d\udc0e",
       "description": "Fast mounted messenger",
-      "class": "scout"
+      "class": "scout",
+      "abilities": [ { "id": "fleet", "spaces": 9 } ]
     },
     "assassin": {
       "id": "assassin",

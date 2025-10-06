@@ -34,7 +34,8 @@
       "special": null,
       "symbol": "\ud83d\ude9c",
       "description": "Controls heavy armored vehicles",
-      "class": "colonel"
+      "class": "colonel",
+      "abilities": ["charge"]
     },
     "sniper": {
       "id": "sniper",
@@ -46,7 +47,8 @@
       "special": null,
       "symbol": "\ud83c\udfaf",
       "description": "Long-range marksman",
-      "class": "major"
+      "class": "major",
+      "abilities": ["sniper"]
     },
     "gunner": {
       "id": "gunner",
@@ -70,7 +72,8 @@
       "special": null,
       "symbol": "\ud83e\udd4a",
       "description": "Close combat fighter",
-      "class": "lieutenant"
+      "class": "lieutenant",
+      "abilities": ["veteran"]
     },
     "scavenger": {
       "id": "scavenger",
@@ -94,7 +97,8 @@
       "special": "Only unit that can defuse explosives",
       "symbol": "\ud83d\udca3",
       "description": "Expert at handling explosives",
-      "class": "miner"
+      "class": "miner",
+      "abilities": ["trap_sense"]
     },
     "motor_scout": {
       "id": "motor_scout",
@@ -106,7 +110,8 @@
       "special": "Can move multiple spaces in a straight line",
       "symbol": "\ud83c\udfcd",
       "description": "Fast biker for recon",
-      "class": "scout"
+      "class": "scout",
+      "abilities": [ { "id": "fleet", "spaces": 9 } ]
     },
     "saboteur": {
       "id": "saboteur",

@@ -10,7 +10,8 @@
       "special": "Supreme alien, defeated only by Brain Leech when attacked",
       "symbol": "👑",
       "description": "Mother of the hive",
-      "class": "marshal"
+      "class": "marshal",
+      "abilities": ["fear"]
     },
     "broodlord": {
       "id": "broodlord",
@@ -33,7 +34,8 @@
       "special": null,
       "symbol": "🦂",
       "description": "Elite battle-tested warrior caste",
-      "class": "colonel"
+      "class": "colonel",
+      "abilities": ["veteran"]
     },
     "hunter_killer": {
       "id": "hunter_killer",
@@ -45,7 +47,8 @@
       "special": null,
       "symbol": "🕷️",
       "description": "Specialized predator bio-form",
-      "class": "major"
+      "class": "major",
+      "abilities": ["charge"]
     },
     "drone_warrior": {
       "id": "drone_warrior",
@@ -80,7 +83,8 @@
       "special": "Destroys both itself and target when attacking",
       "symbol": "🦠",
       "description": "Acidic ranged beast",
-      "class": "sergeant"
+      "class": "sergeant",
+      "abilities": ["sniper"]
     },
     "drone_engineer": {
       "id": "drone_engineer",
@@ -92,7 +96,8 @@
       "special": "Only unit that can disable acid pods",
       "symbol": "🔧",
       "description": "Bio-mechanic caste that neutralizes traps",
-      "class": "miner"
+      "class": "miner",
+      "abilities": ["trap_sense"]
     },
     "creeper": {
       "id": "creeper",
@@ -104,7 +109,10 @@
       "special": "Moves multiple spaces in straight line",
       "symbol": "👣",
       "description": "Fast-moving swarm units",
-      "class": "scout"
+      "class": "scout",
+      "abilities": [
+        { "id": "fleet", "spaces": 9 }
+      ]
     },
     "brain_leech": {
       "id": "brain_leech",

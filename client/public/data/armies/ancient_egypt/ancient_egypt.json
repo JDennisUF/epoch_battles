@@ -13,7 +13,10 @@
       "special": "Strongest warrior; only defeated by the Assassin when attacked",
       "symbol": "👑",
       "description": "Supreme ruler of Egypt, commands divine power.",
-      "class": "marshal"
+      "class": "marshal",
+      "abilities": [
+        "fear"
+      ]
     },
     "vizier": {
       "id": "vizier",
@@ -37,7 +40,10 @@
       "special": "Can bless nearby allies, granting protection from one attack.",
       "symbol": "☥",
       "description": "Keeper of sacred rituals and protector of the gods' favor.",
-      "class": "colonel"
+      "class": "colonel",
+      "abilities": [
+        "curse"
+      ]
     },
     "chariot_commander": {
       "id": "chariot-commander",
@@ -49,7 +55,10 @@
       "special": null,
       "symbol": "🏹",
       "description": "Master of swift and deadly chariot assaults.",
-      "class": "major"
+      "class": "major",
+      "abilities": [
+        "charge"
+      ]
     },
     "royal_guard": {
       "id": "royal_guard",
@@ -61,7 +70,10 @@
       "special": null,
       "symbol": "🛡️",
       "description": "Elite protectors sworn to defend the Pharaoh.",
-      "class": "captain"
+      "class": "captain",
+      "abilities": [
+        "veteran"
+      ]
     },
     "archer": {
       "id": "archer",
@@ -73,7 +85,10 @@
       "special": null,
       "symbol": "🏹",
       "description": "Expert ranged attacker, precise and swift.",
-      "class": "lieutenant"
+      "class": "lieutenant",
+      "abilities": [
+        "sniper"
+      ]
     },
     "spearman": {
       "id": "spearman",
@@ -97,7 +112,10 @@
       "special": "Can disarm cursed relics (acts as Miner).",
       "symbol": "🔱",
       "description": "Specialized in defusing ancient traps and relics.",
-      "class": "miner"
+      "class": "miner",
+      "abilities": [
+        "trap_sense"
+      ]
     },
     "scout_rider": {
       "id": "scout_rider",
@@ -109,7 +127,13 @@
       "special": "Can move multiple spaces in straight lines across the desert.",
       "symbol": "🐎",
       "description": "Fast desert messenger and tracker.",
-      "class": "scout"
+      "class": "scout",
+      "abilities": [
+        {
+          "id": "fleet",
+          "spaces": 9
+        }
+      ]
     },
     "assassin": {
       "id": "assassin",

@@ -10,7 +10,10 @@
       "special": "Strongest unit, defeated only by Shadow Stalker when attacked",
       "symbol": "🪶",
       "description": "Respected leader adorned with feathers and bone staff",
-      "class": "marshal"
+      "class": "marshal",
+      "abilities": [
+        "fear"
+      ]
     },
     "warchief": {
       "id": "warchief",
@@ -46,7 +49,10 @@
       "special": "Can bless nearby allies with spirit energy",
       "symbol": "🔮",
       "description": "Mystic warrior using charms and ancestral magic",
-      "class": "major"
+      "class": "major",
+      "abilities": [
+        "curse"
+      ]
     },
     "warrior_captain": {
       "id": "warrior_captain",
@@ -58,7 +64,10 @@
       "special": null,
       "symbol": "🪓",
       "description": "Fearless commander of warriors in the tribe",
-      "class": "captain"
+      "class": "captain",
+      "abilities": [
+        "charge"
+      ]
     },
     "young_warrior": {
       "id": "young_warrior",
@@ -82,7 +91,10 @@
       "special": null,
       "symbol": "🛡️",
       "description": "Battle-scarred warrior with shield and spear",
-      "class": "sergeant"
+      "class": "sergeant",
+      "abilities": [
+        "veteran"
+      ]
     },
     "trap_setter": {
       "id": "trap_setter",
@@ -94,7 +106,10 @@
       "special": "Only unit that can disarm Fire Pots",
       "symbol": "⛏️",
       "description": "Expert in setting and defusing tribal traps",
-      "class": "miner"
+      "class": "miner",
+      "abilities": [
+        "trap_sense"
+      ]
     },
     "hunter": {
       "id": "hunter",
@@ -106,7 +121,13 @@
       "special": "Can move multiple spaces in a straight line",
       "symbol": "🐾",
       "description": "Swift tracker skilled with bow and spear",
-      "class": "scout"
+      "class": "scout",
+      "abilities": [
+        {
+          "id": "fleet",
+          "spaces": 9
+        }
+      ]
     },
     "shadow_stalker": {
       "id": "shadow_stalker",

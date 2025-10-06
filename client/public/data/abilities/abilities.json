@@ -17,9 +17,19 @@
     "fleet": {
       "name": "Fleet",
       "category": "movement",
-      "description": "Can move up to two spaces per turn instead of one.",
-      "effect": "May move 1 or 2 tiles each turn but cannot attack after moving 2 tiles.",
-      "tags": ["mobility", "speed"]
+      "description": "Can move multiple spaces per turn instead of one.",
+      "effect": "May move 1..N tiles each turn (N default 2) but cannot attack after moving more than 1 space.",
+      "tags": ["mobility", "speed"],
+      "configurable": true,
+      "parameters": {
+        "spaces": {
+          "type": "integer",
+          "min": 2,
+          "max": 99,
+          "default": 2,
+          "description": "Maximum tiles this unit may move in a single turn."
+        }
+      }
     },
     "sniper": {
       "name": "Sniper",
@@ -32,7 +42,7 @@
       "name": "Fear",
       "category": "aura",
       "description": "Reduces the combat strength of adjacent enemies.",
-      "effect": "All enemy units adjacent to this unit suffer -1 rank during combat.",
+      "effect": "All enemy units adjacent to this unit are demoted 1 rank during combat.",
       "tags": ["aura", "psychological"]
     },
     "trap_sense": {

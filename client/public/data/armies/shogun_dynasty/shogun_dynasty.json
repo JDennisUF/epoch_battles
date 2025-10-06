@@ -37,7 +37,10 @@
       "special": null,
       "symbol": "⚔️",
       "description": "Leader of disciplined samurai legions",
-      "class": "colonel"
+      "class": "colonel",
+      "abilities": [
+        "veteran"
+      ]
     },
     "ronin_captain": {
       "id": "ronin_captain",
@@ -49,7 +52,10 @@
       "special": null,
       "symbol": "🗡️",
       "description": "Masterless samurai fighting for honor and fortune",
-      "class": "major"
+      "class": "major",
+      "abilities": [
+        "charge"
+      ]
     },
     "archer_captain": {
       "id": "archer_captain",
@@ -61,7 +67,10 @@
       "special": null,
       "symbol": "🏹",
       "description": "Commands bowmen who rain arrows upon enemies from afar",
-      "class": "captain"
+      "class": "captain",
+      "abilities": [
+        "sniper"
+      ]
     },
     "ashigaru": {
       "id": "ashigaru",
@@ -97,7 +106,10 @@
       "special": "Only unit that can safely dismantle Explosive Barrels",
       "symbol": "⛏️",
       "description": "Engineers skilled in setting and defusing explosive traps",
-      "class": "miner"
+      "class": "miner",
+      "abilities": [
+        "trap_sense"
+      ]
     },
     "scout_rider": {
       "id": "scout_rider",
@@ -109,7 +121,13 @@
       "special": "Can move multiple spaces in a straight line",
       "symbol": "🐎",
       "description": "Mounted scouts swiftly surveying the battlefield",
-      "class": "scout"
+      "class": "scout",
+      "abilities": [
+        {
+          "id": "fleet",
+          "spaces": 9
+        }
+      ]
     },
     "ninja": {
       "id": "ninja",

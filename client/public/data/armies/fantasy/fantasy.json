@@ -58,7 +58,8 @@
       "special": null,
       "symbol": "\ud83c\udff9",
       "description": "Archer and woodsman",
-      "class": "captain"
+      "class": "captain",
+      "abilities": ["sniper"]
     },
     "apprentice": {
       "id": "apprentice",
@@ -94,7 +95,8 @@
       "special": "Only unit that can disable cursed rune stones",
       "symbol": "\u26cf",
       "description": "Dwarven trap breaker",
-      "class": "miner"
+      "class": "miner",
+      "abilities": ["trap_sense"]
     },
     "scout_hawk": {
       "id": "scout_hawk",
@@ -106,7 +108,11 @@
       "special": "Can move multiple spaces in a straight line",
       "symbol": "\ud83e\udd85",
       "description": "Fast flying reconnaissance bird",
-      "class": "scout"
+      "class": "scout",
+      "abilities": [
+        { "id": "fleet", "spaces": 9 },
+        "flying"
+      ]
     },
     "thief": {
       "id": "thief",

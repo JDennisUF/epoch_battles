@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import GameSquare from './GameSquare';
 import PieceSelector from './PieceSelector';
 import PlacementSelector from './PlacementSelector';
-import { GAME_CONFIG, getTerrainType, canMoveTo, generateArmy, loadTerrainData, isTerrainPassable } from '../../utils/gameLogic';
+import { GAME_CONFIG, getTerrainType, canMoveTo, generateArmy, loadTerrainData, loadAbilitiesData, isTerrainPassable } from '../../utils/gameLogic';
 import ArmySelector from './ArmySelector';
 import CombatModal from './CombatModal';
 import GameResultModal from './GameResultModal';
@@ -199,10 +199,13 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     console.error('❌ Full gameState:', gameState);
   }
 
-  // Load terrain data on component mount
+  // Load terrain and abilities data on component mount
   useEffect(() => {
     loadTerrainData().catch(error => {
       console.error('Failed to load terrain data:', error);
+    });
+    loadAbilitiesData().catch(error => {
+      console.error('Failed to load abilities data:', error);
     });
   }, []);
 
@@ -315,15 +318,9 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
 
     const handleGameFinished = (data) => {
       console.log('Game finished:', data);
-      // Store the game result but don't show it immediately if there's combat happening
-      if (!combatData) {
-        setGameResult({ winner: data.winner, reason: data.reason });
-      } else {
-        // If combat is happening, delay showing the result
-        setTimeout(() => {
-          setGameResult({ winner: data.winner, reason: data.reason });
-        }, 100);
-      }
+      // Don't show the game result immediately - let it be shown when combat modal closes
+      // The combat modal's onClose handler will check for finished games and show the result
+      console.log('Game finished event received, result will be shown after combat modal closes');
     };
 
     const handleRandomPlacement = (data) => {
@@ -901,8 +898,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
           players={localPlayers}
           onExit={() => {
             setGameResult(null);
-            // TODO: Navigate back to lobby/home
-            window.location.href = '/';
+            // Keep player at the completed game map
           }}
         />
       )}

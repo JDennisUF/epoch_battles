@@ -16,7 +16,7 @@
       "class": "marshal"
     },
     "general": {
-      "id": "general", 
+      "id": "general",
       "name": "General",
       "rank": 2,
       "count": 1,
@@ -29,7 +29,7 @@
     },
     "colonel": {
       "id": "colonel",
-      "name": "Colonel", 
+      "name": "Colonel",
       "rank": 3,
       "count": 2,
       "moveable": true,
@@ -42,7 +42,7 @@
     "major": {
       "id": "major",
       "name": "Major",
-      "rank": 4, 
+      "rank": 4,
       "count": 3,
       "moveable": true,
       "canAttack": true,
@@ -65,7 +65,7 @@
     },
     "lieutenant": {
       "id": "lieutenant",
-      "name": "Lieutenant", 
+      "name": "Lieutenant",
       "rank": 6,
       "count": 4,
       "moveable": true,
@@ -97,7 +97,10 @@
       "special": "Only unit that can defuse bombs",
       "symbol": "⛏",
       "description": "Can defuse bombs safely",
-      "class": "miner"
+      "class": "miner",
+      "abilities": [
+        "trap_sense"
+      ]
     },
     "scout": {
       "id": "scout",
@@ -109,7 +112,13 @@
       "special": "Can move multiple spaces in a straight line",
       "symbol": "👁",
       "description": "Fast moving reconnaissance unit",
-      "class": "scout"
+      "class": "scout",
+      "abilities": [
+        {
+          "id": "fleet",
+          "spaces": 9
+        }
+      ]
     },
     "spy": {
       "id": "spy",

@@ -206,6 +206,30 @@ const ARMIES = [
     name: 'Alien Hive',
     description: 'Hive queens, bio-forms, and extraterrestrial swarms',
     theme: 'alien'
+  },
+  {
+    id: 'ancient_egypt',
+    name: 'Ancient Egypt',
+    description: 'Pharaohs, priests, and the mysteries of the pyramids',
+    theme: 'ancient'
+  },
+  {
+    id: 'shogun_dynasty',
+    name: 'Shogun Dynasty',
+    description: 'Samurai, ninja, and the honor of feudal Japan',
+    theme: 'samurai'
+  },
+  {
+    id: 'ww1',
+    name: 'Great War',
+    description: 'Trenches, gas, and the first mechanized warfare',
+    theme: 'ww1'
+  },
+  {
+    id: 'ww2',
+    name: 'World War II',
+    description: 'Commanders, tanks, and the fight for freedom',
+    theme: 'ww2'
   }
 ];
 

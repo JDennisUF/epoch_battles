@@ -170,7 +170,7 @@ function GameResultModal({ gameResult, playerSide, players, onExit }) {
 
         <ButtonGroup>
           <ExitButton onClick={onExit}>
-            Exit Game
+            Close
           </ExitButton>
         </ButtonGroup>
       </ModalContent>
