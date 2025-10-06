@@ -1,4 +1,6 @@
 {
+  "id": "tribal",
+  "name": "Tribal",
   "pieces": {
     "tribal_chief": {
       "id": "tribal_chief",
@@ -139,7 +141,8 @@
       "special": "Defeats Tribal Chief when attacking, weakest otherwise",
       "symbol": "🌑",
       "description": "Stealthy assassin hidden in the night",
-      "class": "spy"
+      "class": "spy",
+      "abilities": [ { "id": "fleet", "spaces": 2 } ]
     },
     "tribal_totem": {
       "id": "tribal_totem",

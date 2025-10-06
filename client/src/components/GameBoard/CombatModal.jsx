@@ -342,7 +342,12 @@ function CombatModal({ combatData, onClose }) {
             />
             <UnitInfo>
               <UnitName color="#3b82f6">{attacker.unit.name}</UnitName>
-              <UnitRank>Rank {attacker.unit.rank}</UnitRank>
+              <UnitRank>
+                Rank {attacker.unit.originalRank || attacker.unit.rank}
+                {attacker.unit.effectiveRank && attacker.unit.effectiveRank !== (attacker.unit.originalRank || attacker.unit.rank) && 
+                  ` (${attacker.unit.effectiveRank})`
+                }
+              </UnitRank>
             </UnitInfo>
           </UnitDisplay>
 
@@ -360,7 +365,12 @@ function CombatModal({ combatData, onClose }) {
             />
             <UnitInfo>
               <UnitName color="#ef4444">{defender.unit.name}</UnitName>
-              <UnitRank>Rank {defender.unit.rank}</UnitRank>
+              <UnitRank>
+                Rank {defender.unit.originalRank || defender.unit.rank}
+                {defender.unit.effectiveRank && defender.unit.effectiveRank !== (defender.unit.originalRank || defender.unit.rank) && 
+                  ` (${defender.unit.effectiveRank})`
+                }
+              </UnitRank>
             </UnitInfo>
           </UnitDisplay>
         </CombatArena>

@@ -1,6 +1,6 @@
 {
   "id": "ancient_egypt",
-  "name": "Ancient Egypt Army",
+  "name": "Ancient Egypt",
   "description": "A mighty civilization led by Pharaohs and protected by divine warriors, desert soldiers, and sacred relics.",
   "pieces": {
     "pharaoh": {

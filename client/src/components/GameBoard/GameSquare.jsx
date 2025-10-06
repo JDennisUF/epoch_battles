@@ -1,6 +1,112 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { getPieceSymbol, getPieceColor, getTerrainType } from '../../utils/gameLogic';
+
+// Helper function to check if piece has a specific ability
+const hasAbility = (piece, abilityName) => {
+  if (!piece?.abilities) return false;
+  
+  return piece.abilities.some(ability => {
+    if (typeof ability === 'string') {
+      return ability === abilityName;
+    } else if (typeof ability === 'object') {
+      return ability.id === abilityName;
+    }
+    return false;
+  });
+};
+
+// Helper function to render ability indicators
+const renderAbilityIndicators = (piece) => {
+  const indicators = [];
+  
+  if (hasAbility(piece, 'flying')) {
+    indicators.push(
+      <AbilityIndicator 
+        key="flying" 
+        position="topLeft"
+      >
+        <AbilityIcon 
+          src="/data/icons/abilities/flying.png"
+          alt="Flying"
+          title="Flying: Can move over water terrain"
+          onError={(e) => {
+            // Fallback to emoji if PNG fails to load
+            e.target.style.display = 'none';
+            e.target.parentNode.innerHTML = '🪽';
+          }}
+        />
+      </AbilityIndicator>
+    );
+  }
+  
+  if (hasAbility(piece, 'fleet')) {
+    indicators.push(
+      <AbilityIndicator 
+        key="fleet" 
+        position="bottomRight"
+      >
+        <AbilityIcon 
+          src="/data/icons/abilities/fleet.png"
+          alt="Fleet"
+          title="Fleet: Can move multiple spaces"
+          onError={(e) => {
+            // Fallback to emoji if PNG fails to load
+            e.target.style.display = 'none';
+            e.target.parentNode.innerHTML = '⚡';
+          }}
+        />
+      </AbilityIndicator>
+    );
+  }
+  
+  if (hasAbility(piece, 'charge')) {
+    indicators.push(
+      <AbilityIndicator 
+        key="charge" 
+        position="topLeft"
+      >
+        <AbilityIcon 
+          src="/data/icons/abilities/charge.png"
+          alt="Charge"
+          title="Charge: Can attack units 2 squares away"
+        />
+      </AbilityIndicator>
+    );
+  }
+  
+  if (hasAbility(piece, 'sniper')) {
+    indicators.push(
+      <AbilityIndicator 
+        key="sniper" 
+        position="topLeft"
+      >
+        <AbilityIcon 
+          src="/data/icons/abilities/sniper.png"
+          alt="Sniper"
+          title="Sniper: Can attack units 2 squares away, shoots over water"
+        />
+      </AbilityIndicator>
+    );
+  }
+  
+  if (hasAbility(piece, 'fear')) {
+    indicators.push(
+      <AbilityIndicator 
+        key="fear" 
+        position="topLeft"
+      >
+        <AbilityIcon 
+          src="/data/icons/abilities/fear.png"
+          alt="Fear"
+          title="Fear: Adjacent enemies lose 1 rank in combat"
+        />
+      </AbilityIndicator>
+    );
+  }
+  
+  return indicators;
+};
 
 const Square = styled.div.withConfig({
   shouldForwardProp: (prop) => !['clickable', 'terrainType', 'isSetupArea', 'isSelected', 'isValidMove', 'isDragTarget'].includes(prop)
@@ -111,6 +217,28 @@ const DefensiveBonusIndicator = styled.div`
   text-shadow: 0 0 3px rgba(0, 0, 0, 0.8), 0 0 6px rgba(0, 0, 0, 0.6);
 `;
 
+const AbilityIndicator = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['position'].includes(prop)
+})`
+  position: absolute;
+  ${props => props.position === 'topLeft' ? 'top: 2px; left: 2px;' : ''}
+  ${props => props.position === 'topRight' ? 'top: 2px; right: 26px;' : ''}
+  ${props => props.position === 'bottomLeft' ? 'bottom: 2px; left: 2px;' : ''}
+  ${props => props.position === 'bottomRight' ? 'bottom: 2px; right: 2px;' : ''}
+  background: transparent;
+  z-index: 3;
+  line-height: 1;
+`;
+
+const AbilityIcon = styled.img`
+  width: 24px;
+  height: 24px;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8));
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+`;
+
 const PieceSymbol = styled.div`
   font-size: 2.2rem;
   line-height: 1;
@@ -162,6 +290,26 @@ function GameSquare({
   onDrop,
   onDragEnd
 }) {
+  const [opponentArmyName, setOpponentArmyName] = useState(null);
+
+  // Load opponent army data to get the display name
+  useEffect(() => {
+    if (opponentArmy && !opponentArmyName) {
+      const loadOpponentArmyName = async () => {
+        try {
+          const response = await fetch(`/data/armies/${opponentArmy}/${opponentArmy}.json`);
+          if (response.ok) {
+            const armyData = await response.json();
+            setOpponentArmyName(armyData.name || opponentArmy);
+          }
+        } catch (error) {
+          console.log(`Failed to load opponent army name for ${opponentArmy}:`, error);
+          setOpponentArmyName(opponentArmy); // Fallback to ID
+        }
+      };
+      loadOpponentArmyName();
+    }
+  }, [opponentArmy, opponentArmyName]);
   const terrainType = getTerrainType(x, y, mapData);
   const isWater = terrainType === 'water';
   const clickable = !isWater && (isSetupArea || isValidMove || (piece && piece.side === playerSide));
@@ -218,6 +366,7 @@ function GameSquare({
                 🛡️
               </DefensiveBonusIndicator>
             )}
+            {renderAbilityIndicators(piece)}
             {(piece.revealed || piece.side === playerSide) && piece.rank && (
               <PieceRank>{piece.rank}</PieceRank>
             )}
@@ -260,6 +409,7 @@ function GameSquare({
                 🛡️
               </DefensiveBonusIndicator>
             )}
+            {renderAbilityIndicators(piece)}
             {piece.rank && <PieceRank>{piece.rank}</PieceRank>}
           </div>
         </PieceContainer>
@@ -329,6 +479,7 @@ function GameSquare({
               🛡️
             </DefensiveBonusIndicator>
           )}
+          {renderAbilityIndicators(piece)}
           {(piece.revealed || piece.side === playerSide) && piece.rank && (
             <PieceRank>{piece.rank}</PieceRank>
           )}
@@ -348,7 +499,11 @@ function GameSquare({
       onClick={clickable ? onClick : undefined}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      title={isWater ? 'Water' : piece ? `${piece.name} (${piece.side})` : `${terrainType} terrain (${x}, ${y})`}
+      title={isWater ? 'Water' : piece ? 
+        (piece.name ? `${piece.name} (${piece.side})` : 
+         piece.side === playerSide ? `Your ${piece.type}` : 
+         `${opponentArmyName || opponentArmy || 'Enemy'} army unit`) : 
+        `${terrainType} terrain (${x}, ${y})`}
     >
       {renderPiece()}
     </Square>

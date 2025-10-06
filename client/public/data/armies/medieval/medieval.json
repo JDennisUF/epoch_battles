@@ -1,4 +1,6 @@
 {
+  "id": "medieval",
+  "name": "Medieval",
   "pieces": {
     "king": {
       "id": "king",
@@ -122,7 +124,8 @@
       "special": "Defeats King when attacking, weakest otherwise",
       "symbol": "\ud83d\udde1",
       "description": "Secret killer trained for high-profile targets",
-      "class": "spy"
+      "class": "spy",
+      "abilities": [ { "id": "fleet", "spaces": 2 } ]
     },
     "banner": {
       "id": "banner",

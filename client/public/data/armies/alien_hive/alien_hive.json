@@ -1,4 +1,6 @@
 {
+  "id": "alien_hive",
+  "name": "Alien Hive",
   "pieces": {
     "hive_queen": {
       "id": "hive_queen",
@@ -124,7 +126,8 @@
       "special": "Defeats Hive Queen when attacking, weakest otherwise",
       "symbol": "🧠",
       "description": "Parasitic psychic assassin",
-      "class": "spy"
+      "class": "spy",
+      "abilities": [ { "id": "fleet", "spaces": 2 } ]
     },
     "egg_cluster": {
       "id": "egg_cluster",

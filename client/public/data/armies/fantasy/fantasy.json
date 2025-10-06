@@ -1,4 +1,6 @@
 {
+  "id": "fantasy",
+  "name": "Fantasy",
   "pieces": {
     "dragon_lord": {
       "id": "dragon_lord",
@@ -124,7 +126,8 @@
       "special": "Defeats Dragon Lord when attacking, weakest otherwise",
       "symbol": "\ud83d\udde1",
       "description": "Stealthy rogue skilled in assassination",
-      "class": "spy"
+      "class": "spy",
+      "abilities": [ { "id": "fleet", "spaces": 2 } ]
     },
     "sacred_relic": {
       "id": "sacred_relic",

@@ -1,6 +1,6 @@
 {
     "id": "ww1",
-    "name": "World War I Army",
+    "name": "World War I",
     "description": "A gritty trench-warfare force featuring engineers, snipers, medics, and early tanks — reflecting the dawn of modern mechanized combat.",
     "pieces": {
         "field_marshal": {
@@ -140,7 +140,8 @@
             "special": "Can defeat the Field Marshal when attacking, weakest otherwise.",
             "symbol": "🕵️‍♂️",
             "description": "A covert saboteur capable of assassinating officers.",
-            "class": "spy"
+            "class": "spy",
+            "abilities": [ { "id": "fleet", "spaces": 2 } ]
         },
         "field_hq": {
             "id": "field_hq",

@@ -156,6 +156,66 @@ const LastMoveInfo = styled.div`
   margin-top: 10px;
 `;
 
+const SelectedUnitPanel = styled.div`
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+  text-align: center;
+`;
+
+const UnitImageContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+`;
+
+const UnitImage = styled.img`
+  width: 256px;
+  height: 256px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+`;
+
+const UnitName = styled.h4`
+  margin: 8px 0 4px 0;
+  color: #4ade80;
+  font-size: 1.1rem;
+  font-weight: 600;
+`;
+
+const UnitRank = styled.div`
+  color: #9ca3af;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+`;
+
+const AbilitiesList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+`;
+
+const AbilityItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #e5e7eb;
+  padding: 2px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+`;
+
+const AbilityIconSmall = styled.img`
+  width: 16px;
+  height: 16px;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.8));
+`;
+
 function GameBoard({ gameId, gameState: initialGameState, players }) {
   const [gameState, setGameState] = useState(initialGameState);
   const [selectedSquare, setSelectedSquare] = useState(null);
@@ -677,6 +737,107 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     }
   }, [gamePhase, hasSelectedArmy, setupPieces.length, playerSide, armyData, mapData]);
 
+  // Get the currently selected piece
+  const getSelectedPiece = () => {
+    if (!selectedSquare) return null;
+    
+    if (gamePhase === 'setup') {
+      return setupPieces.find(p => p.position?.x === selectedSquare.x && p.position?.y === selectedSquare.y);
+    } else {
+      return gameState.board[selectedSquare.y]?.[selectedSquare.x];
+    }
+  };
+
+  // Helper to check if piece has a specific ability
+  const hasAbility = (piece, abilityName) => {
+    if (!piece?.abilities) return false;
+    
+    return piece.abilities.some(ability => {
+      if (typeof ability === 'string') {
+        return ability === abilityName;
+      } else if (typeof ability === 'object') {
+        return ability.id === abilityName;
+      }
+      return false;
+    });
+  };
+
+  // Get ability display name and description
+  const getAbilityInfo = (ability) => {
+    if (typeof ability === 'string') {
+      switch (ability) {
+        case 'flying':
+          return { name: 'Flying', description: 'Can move over water terrain', icon: '/data/icons/abilities/flying.png' };
+        case 'fleet':
+          return { name: 'Fleet', description: 'Can move multiple spaces', icon: '/data/icons/abilities/fleet.png' };
+        case 'trap_sense':
+          return { name: 'Trap Sense', description: 'Can safely defuse bombs/traps', icon: null };
+        case 'veteran':
+          return { name: 'Veteran', description: 'Combat experience bonus', icon: null };
+        case 'charge':
+          return { name: 'Charge', description: 'Can attack units 2 squares away', icon: '/data/icons/abilities/charge.png' };
+        case 'sniper':
+          return { name: 'Sniper', description: 'Can attack units 2 squares away, shoots over water', icon: '/data/icons/abilities/sniper.png' };
+        case 'fear':
+          return { name: 'Fear', description: 'Adjacent enemies lose 1 rank in combat', icon: '/data/icons/abilities/fear.png' };
+        default:
+          return { name: ability, description: 'Special ability', icon: null };
+      }
+    } else if (typeof ability === 'object') {
+      const baseInfo = getAbilityInfo(ability.id);
+      if (ability.id === 'fleet' && ability.spaces) {
+        return { ...baseInfo, description: `Can move up to ${ability.spaces} spaces` };
+      }
+      return baseInfo;
+    }
+    return { name: 'Unknown', description: 'Special ability', icon: null };
+  };
+
+  // Render the selected unit panel
+  const renderSelectedUnitPanel = () => {
+    const piece = getSelectedPiece();
+    if (!piece || piece.side !== playerSide) return null;
+
+    const playerArmy = player?.army || selectedArmy;
+    if (!playerArmy) return null;
+
+    const imagePath = `/data/armies/${playerArmy}/256x256/${piece.type}.png`;
+
+    return (
+      <SelectedUnitPanel>
+        <UnitImageContainer>
+          <UnitImage 
+            src={imagePath} 
+            alt={piece.name || piece.type}
+          />
+        </UnitImageContainer>
+        <UnitName>{piece.name || piece.type}</UnitName>
+        {piece.rank && <UnitRank>Rank {piece.rank}</UnitRank>}
+        
+        {piece.abilities && piece.abilities.length > 0 && (
+          <AbilitiesList>
+            {piece.abilities.map((ability, index) => {
+              const abilityInfo = getAbilityInfo(ability);
+              return (
+                <AbilityItem key={index}>
+                  {abilityInfo.icon && (
+                    <AbilityIconSmall 
+                      src={abilityInfo.icon} 
+                      alt={abilityInfo.name}
+                      onError={(e) => e.target.style.display = 'none'}
+                    />
+                  )}
+                  <span>{abilityInfo.name}</span>
+                  <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>- {abilityInfo.description}</span>
+                </AbilityItem>
+              );
+            })}
+          </AbilitiesList>
+        )}
+      </SelectedUnitPanel>
+    );
+  };
+
   const renderBoard = () => {
     const squares = [];
     console.log('🎮 Rendering board with gameState:', { 
@@ -996,6 +1157,8 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
             )}
           </InfoSection>
         )}
+
+        {gamePhase === 'playing' && renderSelectedUnitPanel()}
 
         <InfoSection>
           <ChatBox

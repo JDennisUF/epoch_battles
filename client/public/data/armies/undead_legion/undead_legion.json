@@ -1,4 +1,6 @@
 {
+  "id": "undead_legion",
+  "name": "Undead Legion",
   "pieces": {
     "lich_king": {
       "id": "lich_king",
@@ -136,7 +138,8 @@
       "special": "Defeats Lich King when attacking, weakest otherwise",
       "symbol": "🗡️",
       "description": "Holy warrior trained to kill the Lich",
-      "class": "spy"
+      "class": "spy",
+      "abilities": [ { "id": "fleet", "spaces": 2 } ]
     },
     "crypt_relic": {
       "id": "crypt_relic",

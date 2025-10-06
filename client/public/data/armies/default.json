@@ -130,7 +130,8 @@
       "special": "Defeats Marshal when attacking, weakest otherwise",
       "symbol": "🕵",
       "description": "Can defeat the Marshal when attacking",
-      "class": "spy"
+      "class": "spy",
+      "abilities": [ { "id": "fleet", "spaces": 2 } ]
     },
     "flag": {
       "id": "flag",

@@ -94,7 +94,14 @@ class MoveProcessor {
       // Get defender's terrain for combat bonuses
       const defenderTerrain = mapDataToUse ? gameLogic.getTerrainType(toX, toY, mapDataToUse) : null;
       
-      const combatResult = gameLogic.resolveCombat(movingPiece, targetPiece, defenderTerrain);
+      const combatResult = gameLogic.resolveCombat(
+        movingPiece, 
+        targetPiece, 
+        defenderTerrain, 
+        board, 
+        { x: fromX, y: fromY }, // attacker position
+        { x: toX, y: toY }      // defender position
+      );
       moveResult.type = 'attack';
       moveResult.combat = combatResult;
       
@@ -104,7 +111,9 @@ class MoveProcessor {
           unit: {
             id: movingPiece.type,
             name: movingPiece.name,
-            rank: movingPiece.rank
+            rank: movingPiece.rank,
+            originalRank: combatResult.attackerOriginalRank,
+            effectiveRank: combatResult.attackerEffectiveRank
           },
           army: game.players.find(p => p.side === movingPiece.side)?.army || 'default'
         },
@@ -112,7 +121,9 @@ class MoveProcessor {
           unit: {
             id: targetPiece.type,
             name: targetPiece.name,
-            rank: targetPiece.rank
+            rank: targetPiece.rank,
+            originalRank: combatResult.defenderOriginalRank,
+            effectiveRank: combatResult.defenderEffectiveRank
           },
           army: game.players.find(p => p.side === targetPiece.side)?.army || 'default'
         },
@@ -127,9 +138,19 @@ class MoveProcessor {
       targetPiece.revealed = true;
 
       if (combatResult.result === 'attacker_wins') {
-        // Attacker wins, moves to target square
-        board[toY][toX] = movingPiece;
-        board[fromY][fromX] = null;
+        // Check if this was a sniper attack from distance
+        const distance = Math.max(Math.abs(toX - fromX), Math.abs(toY - fromY));
+        const isSniper = this.hasAbility(movingPiece, 'sniper');
+        
+        if (isSniper && distance > 1) {
+          // Sniper stays in place, target is destroyed
+          board[toY][toX] = null;
+          // movingPiece stays at fromX, fromY
+        } else {
+          // Normal attack: attacker moves to target square
+          board[toY][toX] = movingPiece;
+          board[fromY][fromX] = null;
+        }
 
       } else if (combatResult.result === 'defender_wins') {
         // Defender wins, attacker is destroyed
@@ -147,9 +168,12 @@ class MoveProcessor {
       board[fromY][fromX] = null;
     }
 
-    // Update piece position
+    // Update piece position (only if piece actually moved)
     if (board[toY][toX] === movingPiece) {
       movingPiece.position = { x: toX, y: toY };
+    } else if (board[fromY][fromX] === movingPiece) {
+      // Piece stayed in original position (sniper attack)
+      movingPiece.position = { x: fromX, y: fromY };
     }
 
     // Apply visibility rules for reconnaissance
@@ -557,6 +581,20 @@ class MoveProcessor {
     return { valid: true, pieces };
   }
 
+  // Helper method to check if a piece has a specific ability
+  hasAbility(piece, abilityName) {
+    if (!piece.abilities) return false;
+    
+    return piece.abilities.some(ability => {
+      if (typeof ability === 'string') {
+        return ability === abilityName;
+      } else if (typeof ability === 'object') {
+        return ability.id === abilityName;
+      }
+      return false;
+    });
+  }
+
   // Helper method to check if a piece is a flag
   isFlagPiece(piece) {
     return piece.class === 'flag' || 
@@ -566,14 +604,6 @@ class MoveProcessor {
   // Apply reconnaissance rules for visibility
   applyReconnaissanceRules(game, fromX, fromY, toX, toY, movingPiece) {
     const board = game.gameState.board;
-    
-    // Rule #2: Multi-space movement detection
-    // If a piece moves more than 1 space, it's revealed as a scout-type unit
-    const distance = Math.max(Math.abs(toX - fromX), Math.abs(toY - fromY));
-    if (distance > 1 && !movingPiece.revealed) {
-      movingPiece.revealed = true;
-      console.log(`🔍 Unit revealed due to multi-space movement: ${movingPiece.name} at (${toX},${toY})`);
-    }
 
     // Rule #3: Scout adjacency detection
     // Any enemy unit beside a scout at the end of a turn is revealed

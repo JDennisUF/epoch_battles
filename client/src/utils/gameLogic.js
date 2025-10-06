@@ -209,18 +209,28 @@ export const canMoveTo = (fromX, fromY, toX, toY, board, playerSide, mapData = n
   const dy = Math.abs(toY - fromY);
   if (dx > 0 && dy > 0) return false;
 
-  // Distance check using Fleet ability
+  // Distance check - handle Charge attacks and Fleet movement separately
   const distance = Math.max(dx, dy);
   const movementRange = getFleetMovementRange(piece);
   const canMoveMultipleSpaces = movementRange > 1;
-  if (distance > movementRange) return false;
+  const hasCharge = hasAbility(piece, 'charge');
+  const hasSniper = hasAbility(piece, 'sniper');
+  
+  // Check distance limits based on action type
+  if (isAttack && (hasCharge || hasSniper)) {
+    // Charge or Sniper allows attacks up to 2 squares away
+    if (distance > 2) return false;
+  } else {
+    // Normal movement/attack uses Fleet range (or 1 if no Fleet)
+    if (distance > movementRange) return false;
+  }
 
   // Check if destination is water and piece cannot fly
   const hasFlying = hasAbility(piece, 'flying');
   if (terrainType === 'water' && !hasFlying) return false;
 
-  // For multi-space movers, check path is clear and no water blocking
-  if (canMoveMultipleSpaces && distance > 1) {
+  // Check path for multi-space movement or ranged attacks (Charge/Sniper)
+  if ((canMoveMultipleSpaces && distance > 1) || (isAttack && (hasCharge || hasSniper) && distance > 1)) {
     const stepX = toX > fromX ? 1 : toX < fromX ? -1 : 0;
     const stepY = toY > fromY ? 1 : toY < fromY ? -1 : 0;
     
@@ -231,9 +241,9 @@ export const canMoveTo = (fromX, fromY, toX, toY, board, playerSide, mapData = n
       // Check if square is occupied
       if (board[checkY]?.[checkX]) return false;
       
-      // Check if path goes through water (only allowed with Flying)
+      // Check if path goes through water (only allowed with Flying or Sniper attacks)
       const pathTerrain = getTerrainType(checkX, checkY, currentMapData);
-      if (pathTerrain === 'water' && !hasFlying) return false;
+      if (pathTerrain === 'water' && !hasFlying && !(isAttack && hasSniper)) return false;
     }
   }
 

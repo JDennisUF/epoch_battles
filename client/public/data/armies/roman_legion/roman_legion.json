@@ -1,4 +1,6 @@
 {
+  "id": "roman_legion",
+  "name": "Roman Legion",
   "pieces": {
     "caesar": {
       "id": "caesar",
@@ -117,7 +119,8 @@
       "special": "Defeats Caesar when attacking, weakest otherwise",
       "symbol": "🤺",
       "description": "Backstabber who can slay even Caesar",
-      "class": "spy"
+      "class": "spy",
+      "abilities": [ { "id": "fleet", "spaces": 2 } ]
     },
     "eagle_standard": {
       "id": "eagle_standard",

@@ -1,5 +1,6 @@
 {
-  "name": "WWII Army",
+  "id": "ww2",
+  "name": "WWII",
   "theme": "World War II",
   "description": "World War II military forces.",
   "pieces": {
@@ -120,7 +121,8 @@
       "moveable": true,
       "canAttack": true,
       "special": "Defeats the Supreme Commander when attacking.",
-      "description": "A covert agent capable of taking down the top brass when striking first."
+      "description": "A covert agent capable of taking down the top brass when striking first.",
+      "abilities": [ { "id": "fleet", "spaces": 2 } ]
     },
     "command_flag": {
       "id": "command_flag",

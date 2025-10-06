@@ -139,7 +139,8 @@
       "special": "Defeats Shogun when attacking, weakest otherwise",
       "symbol": "🕶️",
       "description": "Stealth assassin striking unseen from the shadows",
-      "class": "spy"
+      "class": "spy",
+      "abilities": [ { "id": "fleet", "spaces": 2 } ]
     },
     "dynasty_banner": {
       "id": "dynasty_banner",

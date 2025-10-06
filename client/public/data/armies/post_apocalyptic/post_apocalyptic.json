@@ -1,4 +1,6 @@
 {
+  "id": "post_apocalyptic",
+  "name": "Post-Apocalyptic",
   "pieces": {
     "warlord": {
       "id": "warlord",
@@ -123,7 +125,8 @@
       "special": "Defeats Warlord when attacking, weakest otherwise",
       "symbol": "\ud83d\udde1",
       "description": "Specialist in surprise attacks",
-      "class": "spy"
+      "class": "spy",
+      "abilities": [ { "id": "fleet", "spaces": 2 } ]
     },
     "survivor_camp": {
       "id": "survivor_camp",

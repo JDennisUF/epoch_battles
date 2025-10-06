@@ -297,20 +297,31 @@ class GameLogic {
       return { valid: false, reason: 'Must move in straight line' };
     }
 
-    // Check distance limits
-    if (distance > movementRange) {
-      return { valid: false, reason: 'Move too far' };
+    const isAttack = targetSquare !== null;
+    const hasCharge = this.hasAbility(piece, 'charge');
+    const hasSniper = this.hasAbility(piece, 'sniper');
+    
+    // Check distance limits based on action type
+    if (isAttack && (hasCharge || hasSniper)) {
+      // Charge or Sniper allows attacks up to 2 squares away
+      if (distance > 2) {
+        const abilityName = hasCharge ? 'Charge' : 'Sniper';
+        return { valid: false, reason: `${abilityName} attack too far (max 2 squares)` };
+      }
+    } else {
+      // Normal movement/attack uses Fleet range (or 1 if no Fleet)
+      if (distance > movementRange) {
+        return { valid: false, reason: 'Move too far' };
+      }
     }
 
-    // For pieces moving multiple spaces, check path is clear
-    if (canMoveMultipleSpaces && distance > 1) {
+    // Check path for multi-space movement or ranged attacks (Charge/Sniper)
+    if ((canMoveMultipleSpaces && distance > 1) || (isAttack && (hasCharge || hasSniper) && distance > 1)) {
       const pathClear = this.isPathClear(board, fromX, fromY, toX, toY, mapData, piece);
       if (!pathClear.valid) {
         return { valid: false, reason: pathClear.reason };
       }
     }
-
-    const isAttack = targetSquare !== null;
     
     // Fleet restriction: cannot attack after moving more than 1 space
     if (isAttack && distance > 1 && this.hasAbility(piece, 'fleet')) {
@@ -342,7 +353,7 @@ class GameLogic {
       
       // Check if square has water terrain
       const terrainType = this.getTerrainType(checkX, checkY, mapData);
-      if (terrainType === 'water' && !hasFlying) {
+      if (terrainType === 'water' && !hasFlying && !this.hasAbility(piece, 'sniper')) {
         return { valid: false, reason: 'Cannot fly over water' };
       }
     }
@@ -350,8 +361,40 @@ class GameLogic {
     return { valid: true };
   }
 
+  // Check if a unit is adjacent to enemies with Fear ability
+  checkFearEffect(piece, board, x, y) {
+    if (!piece) return 0;
+    
+    let fearPenalty = 0;
+    const directions = [
+      [-1, -1], [-1, 0], [-1, 1],
+      [0, -1],           [0, 1],
+      [1, -1],  [1, 0],  [1, 1]
+    ];
+    
+    for (const [dx, dy] of directions) {
+      const adjacentX = x + dx;
+      const adjacentY = y + dy;
+      
+      // Check bounds
+      if (adjacentX >= 0 && adjacentX < board[0].length && 
+          adjacentY >= 0 && adjacentY < board.length) {
+        const adjacentPiece = board[adjacentY][adjacentX];
+        
+        // Check if adjacent piece is an enemy with Fear ability
+        if (adjacentPiece && 
+            adjacentPiece.side !== piece.side && 
+            this.hasAbility(adjacentPiece, 'fear')) {
+          fearPenalty++;
+        }
+      }
+    }
+    
+    return fearPenalty;
+  }
+
   // Resolve combat between two pieces
-  resolveCombat(attacker, defender, defenderTerrain = null) {
+  resolveCombat(attacker, defender, defenderTerrain = null, board = null, attackerPos = null, defenderPos = null) {
     // Check special cases first
     for (const specialCase of this.combatRules.specialCases) {
       if (this.matchesSpecialCase(attacker, defender, specialCase)) {
@@ -363,6 +406,22 @@ class GameLogic {
     let attackerRank = attacker.rank;
     let defenderRank = defender.rank;
     
+    // Apply Fear effect if board position data is available
+    if (board && attackerPos && defenderPos) {
+      const attackerFearPenalty = this.checkFearEffect(attacker, board, attackerPos.x, attackerPos.y);
+      const defenderFearPenalty = this.checkFearEffect(defender, board, defenderPos.x, defenderPos.y);
+      
+      if (attackerFearPenalty > 0) {
+        attackerRank += attackerFearPenalty; // Higher rank number = weaker
+        console.log(`😨 Fear effect: ${attacker.name} rank weakened from ${attacker.rank} to ${attackerRank} (${attackerFearPenalty} Fear units adjacent)`);
+      }
+      
+      if (defenderFearPenalty > 0) {
+        defenderRank += defenderFearPenalty; // Higher rank number = weaker
+        console.log(`😨 Fear effect: ${defender.name} rank weakened from ${defender.rank} to ${defenderRank} (${defenderFearPenalty} Fear units adjacent)`);
+      }
+    }
+    
     // Apply mountain terrain defensive bonus
     if (defenderTerrain === 'mountain') {
       defenderRank = Math.max(1, defenderRank - 1); // Lower rank number = stronger
@@ -370,6 +429,13 @@ class GameLogic {
     }
 
     // Apply normal combat rules with terrain-modified ranks
+    const result = {
+      attackerOriginalRank: attacker.rank,
+      attackerEffectiveRank: attackerRank,
+      defenderOriginalRank: defender.rank,
+      defenderEffectiveRank: defenderRank
+    };
+    
     if (attackerRank < defenderRank) {
       return {
         result: 'attacker_wins',
@@ -377,7 +443,8 @@ class GameLogic {
         loser: defender,
         description: defenderTerrain === 'mountain' ? 
           `${attacker.name} defeats ${defender.name} (mountain defense)` :
-          `${attacker.name} defeats ${defender.name}`
+          `${attacker.name} defeats ${defender.name}`,
+        ...result
       };
     } else if (attackerRank > defenderRank) {
       return {
@@ -386,7 +453,8 @@ class GameLogic {
         loser: attacker,
         description: defenderTerrain === 'mountain' ? 
           `${defender.name} defends from mountain and defeats ${attacker.name}` :
-          `${defender.name} defeats ${attacker.name}`
+          `${defender.name} defeats ${attacker.name}`,
+        ...result
       };
     } else {
       return {
@@ -394,7 +462,8 @@ class GameLogic {
         winner: null,
         description: defenderTerrain === 'mountain' ? 
           `${attacker.name} and ${defender.name} destroy each other (mountain defense not enough)` :
-          `${attacker.name} and ${defender.name} destroy each other`
+          `${attacker.name} and ${defender.name} destroy each other`,
+        ...result
       };
     }
   }
@@ -450,46 +519,60 @@ class GameLogic {
 
   // Apply special case combat result
   applySpecialCaseResult(attacker, defender, specialCase, defenderTerrain = null) {
+    // Special cases use original ranks (no modifiers apply)
+    const rankInfo = {
+      attackerOriginalRank: attacker.rank,
+      attackerEffectiveRank: attacker.rank,
+      defenderOriginalRank: defender.rank,
+      defenderEffectiveRank: defender.rank
+    };
+    
     switch (specialCase.result) {
       case 'attacker_wins':
         return {
           result: 'attacker_wins',
           winner: attacker,
           loser: defender,
-          description: specialCase.description
+          description: specialCase.description,
+          ...rankInfo
         };
       case 'defender_wins':
         return {
           result: 'defender_wins',
           winner: defender,
           loser: attacker,
-          description: specialCase.description
+          description: specialCase.description,
+          ...rankInfo
         };
       case 'attacker_destroyed':
         return {
           result: 'defender_wins',
           winner: defender,
           loser: attacker,
-          description: specialCase.description
+          description: specialCase.description,
+          ...rankInfo
         };
       case 'defender_destroyed':
         return {
           result: 'attacker_wins',
           winner: attacker,
           loser: defender,
-          description: specialCase.description
+          description: specialCase.description,
+          ...rankInfo
         };
       case 'both_destroyed_bomb':
         return {
           result: 'both_destroyed',
           winner: null,
-          description: specialCase.description
+          description: specialCase.description,
+          ...rankInfo
         };
       case 'game_won':
         return {
           result: 'game_won',
           winner: attacker,
-          description: `${attacker.side} captures the flag and wins!`
+          description: `${attacker.side} captures the flag and wins!`,
+          ...rankInfo
         };
       default:
         return this.resolveCombat(attacker, defender, defenderTerrain);
