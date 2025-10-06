@@ -173,6 +173,112 @@ function CombatModal({ combatData, onClose }) {
   const [showDefenderShake, setShowDefenderShake] = useState(false);
   const [showLoser, setShowLoser] = useState(false);
 
+  // Generate combat sounds programmatically
+  const playCombatSound = (outcome) => {
+    try {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      
+      const playTone = (frequency, duration, volume = 0.3, type = 'sine') => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+        oscillator.type = type;
+        
+        gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + duration);
+        
+        return duration;
+      };
+
+      const playSequence = async (notes) => {
+        let time = 0;
+        for (const note of notes) {
+          setTimeout(() => {
+            playTone(note.freq, note.duration, note.volume, note.type);
+          }, time * 1000);
+          time += note.duration * 0.8; // Slight overlap
+        }
+      };
+
+      // Different sound patterns for each outcome
+      if (outcome === 'win') {
+        const winPatterns = [
+          // Victory fanfare
+          [
+            { freq: 440, duration: 0.15, volume: 0.3, type: 'triangle' },
+            { freq: 554, duration: 0.15, volume: 0.3, type: 'triangle' },
+            { freq: 659, duration: 0.3, volume: 0.4, type: 'triangle' }
+          ],
+          // Sword clash victory
+          [
+            { freq: 800, duration: 0.1, volume: 0.2, type: 'sawtooth' },
+            { freq: 600, duration: 0.1, volume: 0.2, type: 'sawtooth' },
+            { freq: 880, duration: 0.4, volume: 0.3, type: 'triangle' }
+          ],
+          // Rising victory
+          [
+            { freq: 330, duration: 0.1, volume: 0.3, type: 'square' },
+            { freq: 440, duration: 0.1, volume: 0.3, type: 'square' },
+            { freq: 550, duration: 0.2, volume: 0.4, type: 'triangle' }
+          ]
+        ];
+        const pattern = winPatterns[Math.floor(Math.random() * winPatterns.length)];
+        playSequence(pattern);
+        
+      } else if (outcome === 'loss') {
+        const lossPatterns = [
+          // Descending defeat
+          [
+            { freq: 659, duration: 0.2, volume: 0.3, type: 'triangle' },
+            { freq: 440, duration: 0.2, volume: 0.3, type: 'triangle' },
+            { freq: 330, duration: 0.4, volume: 0.2, type: 'sine' }
+          ],
+          // Heavy thud
+          [
+            { freq: 200, duration: 0.1, volume: 0.4, type: 'sawtooth' },
+            { freq: 150, duration: 0.3, volume: 0.3, type: 'sine' }
+          ],
+          // Sword clang defeat
+          [
+            { freq: 700, duration: 0.05, volume: 0.2, type: 'sawtooth' },
+            { freq: 400, duration: 0.05, volume: 0.2, type: 'sawtooth' },
+            { freq: 250, duration: 0.4, volume: 0.2, type: 'sine' }
+          ]
+        ];
+        const pattern = lossPatterns[Math.floor(Math.random() * lossPatterns.length)];
+        playSequence(pattern);
+        
+      } else if (outcome === 'draw') {
+        const drawPatterns = [
+          // Mutual destruction
+          [
+            { freq: 500, duration: 0.15, volume: 0.3, type: 'sawtooth' },
+            { freq: 500, duration: 0.15, volume: 0.3, type: 'sawtooth' },
+            { freq: 300, duration: 0.3, volume: 0.2, type: 'sine' }
+          ],
+          // Double clash
+          [
+            { freq: 600, duration: 0.1, volume: 0.3, type: 'square' },
+            { freq: 400, duration: 0.1, volume: 0.3, type: 'square' },
+            { freq: 500, duration: 0.2, volume: 0.2, type: 'triangle' }
+          ]
+        ];
+        const pattern = drawPatterns[Math.floor(Math.random() * drawPatterns.length)];
+        playSequence(pattern);
+      }
+      
+    } catch (err) {
+      console.log('Combat sound generation failed:', err);
+    }
+  };
+
   useEffect(() => {
     if (!combatData) return;
 
@@ -191,6 +297,20 @@ function CombatModal({ combatData, onClose }) {
       
       // Show result
       setShowResult(true);
+      
+      // Determine combat outcome and play sound
+      let soundOutcome;
+      if (result === 'both_destroyed') {
+        soundOutcome = 'draw';
+      } else if (result === 'attacker_wins') {
+        soundOutcome = 'win';
+      } else if (result === 'defender_wins') {
+        soundOutcome = 'loss';
+      }
+      
+      if (soundOutcome) {
+        playCombatSound(soundOutcome);
+      }
       
       // Wait a moment then make loser disappear
       await new Promise(resolve => setTimeout(resolve, 500));

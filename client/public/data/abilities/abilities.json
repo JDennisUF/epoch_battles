@@ -1,0 +1,67 @@
+{
+  "abilities": {
+    "flying": {
+      "name": "Flying",
+      "category": "movement",
+      "description": "Can move over water and obstacles but cannot end its turn on them.",
+      "effect": "Ignores terrain movement restrictions except for landing zones.",
+      "tags": ["mobility", "terrain"]
+    },
+    "charge": {
+      "name": "Charge",
+      "category": "movement_combat",
+      "description": "Can move two tiles in a straight line to initiate an attack.",
+      "effect": "Must move exactly 2 tiles in a straight line and attack the destination tile if occupied by an enemy.",
+      "tags": ["mobility", "aggressive"]
+    },
+    "fleet": {
+      "name": "Fleet",
+      "category": "movement",
+      "description": "Can move up to two spaces per turn instead of one.",
+      "effect": "May move 1 or 2 tiles each turn but cannot attack after moving 2 tiles.",
+      "tags": ["mobility", "speed"]
+    },
+    "sniper": {
+      "name": "Sniper",
+      "category": "combat",
+      "description": "Can attack enemy units up to two tiles away in a straight line.",
+      "effect": "May target a visible enemy unit within 2 tiles without moving.",
+      "tags": ["ranged", "precision"]
+    },
+    "fear": {
+      "name": "Fear",
+      "category": "aura",
+      "description": "Reduces the combat strength of adjacent enemies.",
+      "effect": "All enemy units adjacent to this unit suffer -1 rank during combat.",
+      "tags": ["aura", "psychological"]
+    },
+    "trap_sense": {
+      "name": "Trap Sense",
+      "category": "utility",
+      "description": "Can detect hidden traps or bombs nearby.",
+      "effect": "Reveals any traps or hidden hazards within a 1-tile radius.",
+      "tags": ["detection", "utility"]
+    },
+    "curse": {
+      "name": "Curse",
+      "category": "death_effect",
+      "description": "Afflicts enemies that defeat this unit.",
+      "effect": "The unit that defeats this is demoted 1 rank permanently.",
+      "tags": ["revenge", "magic"]
+    },
+    "veteran": {
+      "name": "Veteran",
+      "category": "combat_growth",
+      "description": "Grows stronger through battle.",
+      "effect": "When this unit defeats an enemy, it gets promoted one rank maximum.",
+      "tags": ["growth", "experience"]
+    },
+    "highlander": {
+      "name": "Highlander",
+      "category": "terrain_bonus",
+      "description": "Fights with advantage on elevated terrain.",
+      "effect": "Unit's rank is promoted when fighting from a mountain tile.",
+      "tags": ["terrain", "combat_bonus"]
+    }
+  }
+}

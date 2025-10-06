@@ -12,83 +12,76 @@ const SelectorTitle = styled.h3`
   color: #ffffff;
 `;
 
-const MapSelectorContent = styled.div`
-  display: flex;
+const MapGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
   @media (max-width: 768px) {
-    flex-direction: column;
+    grid-template-columns: 1fr;
   }
 `;
 
-const MapListContainer = styled.div`
-  flex: 1;
-  min-width: 250px;
-`;
-
-const MapList = styled.div`
-  max-height: 420px;
-  overflow-y: auto;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.2);
-  
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 3px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 3px;
-  }
-`;
-
-const MapOption = styled.div`
-  background: ${props => props.selected ? 'rgba(102, 126, 234, 0.3)' : 'transparent'};
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  padding: 12px 15px;
+const MapCard = styled.div`
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid ${props => props.selected ? '#4ade80' : 'rgba(255, 255, 255, 0.1)'};
+  border-radius: 10px;
+  padding: 15px;
   cursor: pointer;
   transition: all 0.2s ease;
 
   &:hover {
-    background: ${props => props.selected ? 'rgba(102, 126, 234, 0.4)' : 'rgba(255, 255, 255, 0.05)'};
+    border-color: ${props => props.selected ? '#4ade80' : 'rgba(255, 255, 255, 0.3)'};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   }
   
-  &:last-child {
-    border-bottom: none;
-  }
+  ${props => props.disabled && `
+    opacity: 0.6;
+    cursor: not-allowed;
+    &:hover {
+      transform: none;
+      box-shadow: none;
+    }
+  `}
 `;
 
-const MapName = styled.div`
+const CardTitle = styled.h4`
+  margin: 0 0 10px 0;
+  color: ${props => props.selected ? '#4ade80' : '#ffffff'};
+  font-size: 1rem;
+  text-align: center;
   font-weight: 600;
-  font-size: 0.95rem;
-  margin-bottom: 4px;
-  color: ${props => props.selected ? '#ffffff' : '#e5e7eb'};
 `;
 
-const MapMeta = styled.div`
+const CardDescription = styled.p`
+  margin: 0 0 15px 0;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  line-height: 1.3;
+  text-align: center;
+`;
+
+const CardDetails = styled.div`
   display: flex;
+  justify-content: center;
   gap: 8px;
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 10px;
 `;
 
 const MetaTag = styled.span`
   background: ${props => {
     if (props.type === 'size') return 'rgba(255, 255, 255, 0.1)';
-    if (props.type === 'theme') return 'rgba(102, 126, 234, 0.2)';
     if (props.type === 'difficulty-easy') return 'rgba(34, 197, 94, 0.4)';
     if (props.type === 'difficulty-medium') return 'rgba(245, 158, 11, 0.4)';
     if (props.type === 'difficulty-hard') return 'rgba(239, 68, 68, 0.4)';
     return 'rgba(156, 163, 175, 0.2)';
   }};
   color: ${props => {
-    if (props.type === 'theme') return 'rgba(102, 126, 234, 1)';
     if (props.type === 'difficulty-easy') return '#ffffff';
     if (props.type === 'difficulty-medium') return '#ffffff';
     if (props.type === 'difficulty-hard') return '#ffffff';
@@ -98,14 +91,7 @@ const MetaTag = styled.span`
   border-radius: 3px;
   text-transform: capitalize;
   font-weight: ${props => props.type.startsWith('difficulty-') ? '600' : 'normal'};
-`;
-
-const MapPreviewContainer = styled.div`
-  flex: 0 0 280px;
-  
-  @media (max-width: 768px) {
-    flex: none;
-  }
+  font-size: 0.75rem;
 `;
 
 const PreviewCard = styled.div`
@@ -228,10 +214,6 @@ function MapSelector({ selectedMap, onMapSelect, disabled = false }) {
   const [maps, setMaps] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const mapListRef = useRef(null);
-  const mapOptionRefs = useRef({});
-  const userHasInteracted = useRef(false);
-  const lastSelectedMapId = useRef(null);
 
   useEffect(() => {
     const fetchMaps = async () => {
@@ -293,97 +275,79 @@ function MapSelector({ selectedMap, onMapSelect, disabled = false }) {
     fetchMaps();
   }, [selectedMap, onMapSelect]);
 
-  // Scroll to selected map when it changes (only after user interaction)
-  useEffect(() => {
-    // Only auto-scroll if:
-    // 1. User has interacted with the component
-    // 2. The selected map actually changed
-    // 3. We have the necessary refs
-    if (
-      userHasInteracted.current &&
-      selectedMap && 
-      selectedMap.id !== lastSelectedMapId.current &&
-      mapOptionRefs.current[selectedMap.id] && 
-      mapListRef.current
-    ) {
-      const selectedElement = mapOptionRefs.current[selectedMap.id];
-      const container = mapListRef.current;
-      
-      // Small delay to ensure the selection state has updated
-      setTimeout(() => {
-        // Get the position of the selected element relative to the container
-        const elementTop = selectedElement.offsetTop;
-        const elementHeight = selectedElement.offsetHeight;
-        const containerTop = container.scrollTop;
-        const containerHeight = container.clientHeight;
-        
-        // Check if element is fully visible
-        const isAboveViewport = elementTop < containerTop;
-        const isBelowViewport = elementTop + elementHeight > containerTop + containerHeight;
-        
-        if (isAboveViewport || isBelowViewport) {
-          // Scroll to center the selected element
-          const scrollTo = elementTop - (containerHeight / 2) + (elementHeight / 2);
-          container.scrollTo({
-            top: Math.max(0, scrollTo),
-            behavior: 'smooth'
-          });
-        }
-      }, 50);
-    }
-    
-    // Update the last selected map ID
-    if (selectedMap) {
-      lastSelectedMapId.current = selectedMap.id;
-    }
-  }, [selectedMap]);
+  // Remove scroll effect since we're now using a grid
 
   const handleMapSelect = (map) => {
     if (!disabled) {
-      // Mark that user has interacted with the component
-      userHasInteracted.current = true;
       onMapSelect(map);
     }
   };
 
-  // Memoized terrain data calculation
-  const terrainData = useMemo(() => {
-    if (!selectedMap) return { squares: [], terrainTypes: [] };
+  // Memoized terrain data for all maps
+  const allMapTerrainData = useMemo(() => {
+    const mapDataCache = {};
     
-    const squares = [];
-    const terrainSet = new Set();
-    
-    // Calculate terrain for all squares once
-    for (let y = 0; y < 10; y++) {
-      for (let x = 0; x < 10; x++) {
-        const terrain = getTerrainType(x, y, selectedMap);
-        const isHomeSetup = selectedMap.setupRows?.home?.includes(y);
-        const isAwaySetup = selectedMap.setupRows?.away?.includes(y);
-        const isSetupArea = isHomeSetup || isAwaySetup;
-        
-        squares.push({
-          key: `${x}-${y}`,
-          terrain,
-          isSetupArea
-        });
-        
-        terrainSet.add(terrain);
+    maps.forEach(map => {
+      const squares = [];
+      const terrainSet = new Set();
+      
+      for (let y = 0; y < 10; y++) {
+        for (let x = 0; x < 10; x++) {
+          const terrain = getTerrainType(x, y, map);
+          const isHomeSetup = map.setupRows?.home?.includes(y);
+          const isAwaySetup = map.setupRows?.away?.includes(y);
+          const isSetupArea = isHomeSetup || isAwaySetup;
+          
+          squares.push({
+            key: `${x}-${y}`,
+            terrain,
+            isSetupArea
+          });
+          
+          terrainSet.add(terrain);
+        }
       }
-    }
+      
+      mapDataCache[map.id] = {
+        squares,
+        terrainTypes: Array.from(terrainSet)
+      };
+    });
     
-    return {
-      squares,
-      terrainTypes: Array.from(terrainSet)
-    };
-  }, [selectedMap?.id]); // Only recalculate when map ID changes
+    return mapDataCache;
+  }, [maps]);
 
-  const renderMiniMap = () => {
+  const renderMiniMapForMap = (map) => {
+    const terrainData = allMapTerrainData[map.id];
+    if (!terrainData) return null;
+    
     return terrainData.squares.map(square => (
       <MiniMapSquare
         key={square.key}
         terrain={square.terrain}
         isSetupArea={square.isSetupArea}
       />
+    ));
+  };
+
+  const renderMapLegend = (map) => {
+    const terrainData = allMapTerrainData[map.id];
+    if (!terrainData) return null;
+    
+    return terrainData.terrainTypes.map(terrain => (
+      <LegendItem key={terrain}>
+        <LegendColor color={(() => {
+          switch(terrain) {
+            case 'water': return '#3b82f6';
+            case 'dirt': return '#a3a3a3';
+            case 'grassland': return '#22c55e';
+            case 'mountain': return '#6b7280';
+            case 'sand': return '#fbbf24';
+            default: return '#22c55e';
+          }
+        })()} />
+        <span>{terrain}</span>
+      </LegendItem>
     ));
   };
 
@@ -408,71 +372,40 @@ function MapSelector({ selectedMap, onMapSelect, disabled = false }) {
   return (
     <MapSelectorContainer>
       <SelectorTitle>Select Map</SelectorTitle>
-      <MapSelectorContent>
-        <MapListContainer>
-          <MapList ref={mapListRef}>
-            {maps.map((map) => (
-              <MapOption
-                key={map.id}
-                ref={el => mapOptionRefs.current[map.id] = el}
-                selected={selectedMap?.id === map.id}
-                onClick={() => handleMapSelect(map)}
-                style={{ opacity: disabled ? 0.6 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}
-              >
-                <MapName selected={selectedMap?.id === map.id}>{map.name}</MapName>
-                <MapMeta>
-                  <MetaTag type="size">
-                    {map.boardSize?.width || 10}×{map.boardSize?.height || 10}
-                  </MetaTag>
-                  <MetaTag type={`difficulty-${map.difficulty || 'standard'}`}>
-                    {map.difficulty || 'standard'}
-                  </MetaTag>
-                </MapMeta>
-              </MapOption>
-            ))}
-          </MapList>
-        </MapListContainer>
-        
-        <MapPreviewContainer>
-          {selectedMap && (
-            <PreviewCard>
-              <PreviewTitle>{selectedMap.name}</PreviewTitle>
-              <PreviewDescription>{selectedMap.description}</PreviewDescription>
-              
-              <MiniMapGrid>
-                {renderMiniMap()}
-              </MiniMapGrid>
-              
-              <PreviewDetails>
-                <MetaTag type="size">
-                  {selectedMap.boardSize?.width || 10}×{selectedMap.boardSize?.height || 10}
-                </MetaTag>
-                <MetaTag type={`difficulty-${selectedMap.difficulty || 'standard'}`}>
-                  {selectedMap.difficulty || 'standard'}
-                </MetaTag>
-              </PreviewDetails>
-              
-              <PreviewLegend>
-                {terrainData.terrainTypes.map(terrain => (
-                  <LegendItem key={terrain}>
-                    <LegendColor color={(() => {
-                      switch(terrain) {
-                        case 'water': return '#3b82f6';
-                        case 'dirt': return '#a3a3a3';
-                        case 'grassland': return '#22c55e';
-                        case 'mountain': return '#6b7280';
-                        case 'sand': return '#fbbf24';
-                        default: return '#22c55e';
-                      }
-                    })()} />
-                    <span>{terrain}</span>
-                  </LegendItem>
-                ))}
-              </PreviewLegend>
-            </PreviewCard>
-          )}
-        </MapPreviewContainer>
-      </MapSelectorContent>
+      <MapGrid>
+        {maps.map((map) => (
+          <MapCard
+            key={map.id}
+            selected={selectedMap?.id === map.id}
+            disabled={disabled}
+            onClick={() => handleMapSelect(map)}
+          >
+            <CardTitle selected={selectedMap?.id === map.id}>
+              {map.name}
+            </CardTitle>
+            <CardDescription>
+              {map.description}
+            </CardDescription>
+            
+            <MiniMapGrid>
+              {renderMiniMapForMap(map)}
+            </MiniMapGrid>
+            
+            <CardDetails>
+              <MetaTag type="size">
+                {map.boardSize?.width || 10}×{map.boardSize?.height || 10}
+              </MetaTag>
+              <MetaTag type={`difficulty-${map.difficulty || 'standard'}`}>
+                {map.difficulty || 'standard'}
+              </MetaTag>
+            </CardDetails>
+            
+            <PreviewLegend>
+              {renderMapLegend(map)}
+            </PreviewLegend>
+          </MapCard>
+        ))}
+      </MapGrid>
     </MapSelectorContainer>
   );
 }
