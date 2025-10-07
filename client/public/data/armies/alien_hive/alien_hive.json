@@ -12,8 +12,7 @@
       "special": "Supreme alien, defeated only by Brain Leech when attacked",
       "symbol": "👑",
       "description": "Mother of the hive",
-      "class": "marshal",
-      "abilities": ["fear"]
+      "class": "marshal"
     },
     "broodlord": {
       "id": "broodlord",
@@ -37,7 +36,7 @@
       "symbol": "🦂",
       "description": "Elite battle-tested warrior caste",
       "class": "colonel",
-      "abilities": ["veteran"]
+      "abilities": ["fear"]
     },
     "hunter_killer": {
       "id": "hunter_killer",
@@ -61,7 +60,8 @@
       "canAttack": true,
       "symbol": "🐜",
       "description": "Core soldiers of the hive",
-      "class": "captain"
+      "class": "captain",
+      "abilities": ["veteran"]
     },
     "swarm_officer": {
       "id": "swarm_officer",
@@ -127,7 +127,7 @@
       "symbol": "🧠",
       "description": "Parasitic psychic assassin",
       "class": "spy",
-      "abilities": [ { "id": "fleet", "spaces": 2 } ]
+      "abilities": [ { "id": "fleet", "spaces": 2 }, "assassin" ]
     },
     "egg_cluster": {
       "id": "egg_cluster",

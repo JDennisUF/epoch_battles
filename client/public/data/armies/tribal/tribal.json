@@ -142,7 +142,7 @@
       "symbol": "🌑",
       "description": "Stealthy assassin hidden in the night",
       "class": "spy",
-      "abilities": [ { "id": "fleet", "spaces": 2 } ]
+      "abilities": [ { "id": "fleet", "spaces": 2 }, "assassin" ]
     },
     "tribal_totem": {
       "id": "tribal_totem",

@@ -1,77 +1,114 @@
 {
-  "abilities": {
-    "flying": {
-      "name": "Flying",
-      "category": "movement",
-      "description": "Can move over water and obstacles but cannot end its turn on them.",
-      "effect": "Ignores terrain movement restrictions except for landing zones.",
-      "tags": ["mobility", "terrain"]
-    },
-    "charge": {
-      "name": "Charge",
-      "category": "movement_combat",
-      "description": "Can move two tiles in a straight line to initiate an attack.",
-      "effect": "Must move exactly 2 tiles in a straight line and attack the destination tile if occupied by an enemy.",
-      "tags": ["mobility", "aggressive"]
-    },
-    "fleet": {
-      "name": "Fleet",
-      "category": "movement",
-      "description": "Can move multiple spaces per turn instead of one.",
-      "effect": "May move 1..N tiles each turn (N default 2) but cannot attack after moving more than 1 space.",
-      "tags": ["mobility", "speed"],
-      "configurable": true,
-      "parameters": {
-        "spaces": {
-          "type": "integer",
-          "min": 2,
-          "max": 99,
-          "default": 2,
-          "description": "Maximum tiles this unit may move in a single turn."
+    "abilities": {
+        "flying": {
+            "name": "Flying",
+            "category": "movement",
+            "description": "Can move over water and obstacles but cannot end its turn on them.",
+            "effect": "Ignores terrain movement restrictions except for landing zones.",
+            "tags": [
+                "mobility",
+                "terrain"
+            ]
+        },
+        "charge": {
+            "name": "Charge",
+            "category": "movement_combat",
+            "description": "Can move two tiles in a straight line to initiate an attack.",
+            "effect": "Must move exactly 2 tiles in a straight line and attack the destination tile if occupied by an enemy.",
+            "tags": [
+                "mobility",
+                "aggressive"
+            ]
+        },
+        "fleet": {
+            "name": "Fleet",
+            "category": "movement",
+            "description": "Can move multiple spaces per turn instead of one.",
+            "effect": "May move 1..N tiles each turn (N default 2) but cannot attack after moving more than 1 space.",
+            "tags": [
+                "mobility",
+                "speed"
+            ],
+            "configurable": true,
+            "parameters": {
+                "spaces": {
+                    "type": "integer",
+                    "min": 2,
+                    "max": 99,
+                    "default": 2,
+                    "description": "Maximum tiles this unit may move in a single turn."
+                }
+            }
+        },
+        "sniper": {
+            "name": "Sniper",
+            "category": "combat",
+            "description": "Can attack enemy units up to two tiles away in a straight line.",
+            "effect": "May target a visible enemy unit within 2 tiles without moving.",
+            "tags": [
+                "ranged",
+                "precision"
+            ]
+        },
+        "fear": {
+            "name": "Fear",
+            "category": "aura",
+            "description": "Reduces the combat strength of adjacent enemies.",
+            "effect": "All enemy units adjacent to this unit are demoted 1 rank during combat.",
+            "tags": [
+                "aura",
+                "psychological"
+            ]
+        },
+        "trap_sense": {
+            "name": "Trap Sense",
+            "category": "utility",
+            "description": "Can detect hidden traps or bombs nearby.",
+            "effect": "Reveals any traps or hidden hazards within a 1-tile radius.",
+            "tags": [
+                "detection",
+                "utility"
+            ]
+        },
+        "curse": {
+            "name": "Curse",
+            "category": "death_effect",
+            "description": "Afflicts enemies that defeat this unit.",
+            "effect": "The unit that defeats this is demoted 1 rank permanently.",
+            "tags": [
+                "revenge",
+                "magic"
+            ]
+        },
+        "veteran": {
+            "name": "Veteran",
+            "category": "combat_growth",
+            "description": "Grows stronger through battle.",
+            "effect": "When this unit defeats an enemy, it gets promoted one rank maximum.",
+            "tags": [
+                "growth",
+                "experience"
+            ]
+        },
+        "highlander": {
+            "name": "Highlander",
+            "category": "terrain_bonus",
+            "description": "Fights with advantage on elevated terrain.",
+            "effect": "Unit's rank is promoted when fighting from a mountain tile.",
+            "tags": [
+                "terrain",
+                "combat_bonus"
+            ]
+        },
+        "assassin": {
+            "name": "Assassin",
+            "category": "combat_special",
+            "description": "Defeats the strongest enemy unit when attacking.",
+            "effect": "When attacking the strongest enemy unit, this unit wins.",
+            "tags": [
+                "special",
+                "tactical"
+            ]
         }
-      }
-    },
-    "sniper": {
-      "name": "Sniper",
-      "category": "combat",
-      "description": "Can attack enemy units up to two tiles away in a straight line.",
-      "effect": "May target a visible enemy unit within 2 tiles without moving.",
-      "tags": ["ranged", "precision"]
-    },
-    "fear": {
-      "name": "Fear",
-      "category": "aura",
-      "description": "Reduces the combat strength of adjacent enemies.",
-      "effect": "All enemy units adjacent to this unit are demoted 1 rank during combat.",
-      "tags": ["aura", "psychological"]
-    },
-    "trap_sense": {
-      "name": "Trap Sense",
-      "category": "utility",
-      "description": "Can detect hidden traps or bombs nearby.",
-      "effect": "Reveals any traps or hidden hazards within a 1-tile radius.",
-      "tags": ["detection", "utility"]
-    },
-    "curse": {
-      "name": "Curse",
-      "category": "death_effect",
-      "description": "Afflicts enemies that defeat this unit.",
-      "effect": "The unit that defeats this is demoted 1 rank permanently.",
-      "tags": ["revenge", "magic"]
-    },
-    "veteran": {
-      "name": "Veteran",
-      "category": "combat_growth",
-      "description": "Grows stronger through battle.",
-      "effect": "When this unit defeats an enemy, it gets promoted one rank maximum.",
-      "tags": ["growth", "experience"]
-    },
-    "highlander": {
-      "name": "Highlander",
-      "category": "terrain_bonus",
-      "description": "Fights with advantage on elevated terrain.",
-      "effect": "Unit's rank is promoted when fighting from a mountain tile.",
-      "tags": ["terrain", "combat_bonus"]
     }
-  }
 }

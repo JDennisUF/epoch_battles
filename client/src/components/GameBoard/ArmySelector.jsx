@@ -18,9 +18,9 @@ const SelectorContainer = styled.div`
 const SelectorModal = styled.div`
   background: linear-gradient(135deg, #1e1e2e 0%, #2d2d44 100%);
   border-radius: 20px;
-  padding: 40px;
-  max-width: 1000px;
-  max-height: 90vh;
+  padding: 30px;
+  max-width: 1400px;
+  max-height: 95vh;
   overflow-y: auto;
   border: 2px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
@@ -28,8 +28,8 @@ const SelectorModal = styled.div`
 
 const Title = styled.h2`
   text-align: center;
-  margin-bottom: 30px;
-  font-size: 2rem;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
   background: linear-gradient(45deg, #4ade80, #22d3ee);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -38,9 +38,9 @@ const Title = styled.h2`
 
 const ArmyGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  margin-bottom: 30px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 20px;
 `;
 
 const ArmyCard = styled.div.withConfig({
@@ -52,8 +52,8 @@ const ArmyCard = styled.div.withConfig({
   border: 2px solid ${props => props.selected 
     ? 'transparent' 
     : 'rgba(255, 255, 255, 0.1)'};
-  border-radius: 15px;
-  padding: 20px;
+  border-radius: 12px;
+  padding: 15px;
   cursor: pointer;
   transition: all 0.3s ease;
   position: relative;
@@ -67,29 +67,30 @@ const ArmyCard = styled.div.withConfig({
 `;
 
 const ArmyName = styled.h3`
-  margin-bottom: 10px;
-  font-size: 1.3rem;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
   text-align: center;
 `;
 
 const ArmyDescription = styled.p`
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   text-align: center;
   opacity: 0.8;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  line-height: 1.3;
 `;
 
 const UnitsPreview = styled.div`
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8px;
-  margin-bottom: 15px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
 `;
 
 const UnitPreview = styled.div`
   position: relative;
   aspect-ratio: 1;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.1);
   display: flex;
@@ -322,17 +323,17 @@ function ArmySelector({ onSelectArmy, onCancel, playerSide }) {
     // Get any additional interesting units to fill out preview
     const previewUnits = [highestRank, flag, bomb, scout, spy].filter(Boolean);
     
-    // If we don't have 5 units yet, add more high-value or interesting units
-    if (previewUnits.length < 5) {
+    // If we don't have 3 units yet, add more high-value or interesting units
+    if (previewUnits.length < 3) {
       const additionalUnits = units
         .filter(u => !previewUnits.includes(u))
         .filter(u => u.rank && u.rank <= 5) // High-ranking units
         .sort((a, b) => a.rank - b.rank); // Sort by rank
       
-      previewUnits.push(...additionalUnits.slice(0, 5 - previewUnits.length));
+      previewUnits.push(...additionalUnits.slice(0, 3 - previewUnits.length));
     }
 
-    return previewUnits.slice(0, 5);
+    return previewUnits.slice(0, 3);
   };
 
   const getImagePath = (armyId, unitId) => {
@@ -384,12 +385,6 @@ function ArmySelector({ onSelectArmy, onCancel, playerSide }) {
                     </UnitPreview>
                   ))}
                 </UnitsPreview>
-                
-                {armyData[army.id] && (
-                  <div style={{ textAlign: 'center', fontSize: '0.8rem', opacity: 0.7 }}>
-                    {Object.keys(armyData[army.id].pieces || {}).length} unit types
-                  </div>
-                )}
               </ArmyCard>
             );
           })}

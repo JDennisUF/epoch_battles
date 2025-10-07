@@ -137,7 +137,7 @@
       "symbol": "\ud83d\udcbb",
       "description": "Cyber warrior specialized in AI disruption",
       "class": "spy",
-      "abilities": [ { "id": "fleet", "spaces": 2 } ]
+      "abilities": [ { "id": "fleet", "spaces": 2 }, "assassin" ]
     },
     "data_core": {
       "id": "data_core",

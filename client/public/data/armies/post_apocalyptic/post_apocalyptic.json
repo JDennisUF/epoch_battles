@@ -126,7 +126,7 @@
       "symbol": "\ud83d\udde1",
       "description": "Specialist in surprise attacks",
       "class": "spy",
-      "abilities": [ { "id": "fleet", "spaces": 2 } ]
+      "abilities": [ { "id": "fleet", "spaces": 2 }, "assassin" ]
     },
     "survivor_camp": {
       "id": "survivor_camp",

@@ -139,7 +139,7 @@
       "symbol": "🗡️",
       "description": "Holy warrior trained to kill the Lich",
       "class": "spy",
-      "abilities": [ { "id": "fleet", "spaces": 2 } ]
+      "abilities": [ { "id": "fleet", "spaces": 2 }, "assassin" ]
     },
     "crypt_relic": {
       "id": "crypt_relic",

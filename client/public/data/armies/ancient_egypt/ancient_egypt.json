@@ -13,10 +13,7 @@
       "special": "Strongest warrior; only defeated by the Assassin when attacked",
       "symbol": "👑",
       "description": "Supreme ruler of Egypt, commands divine power.",
-      "class": "marshal",
-      "abilities": [
-        "fear"
-      ]
+      "class": "marshal"
     },
     "vizier": {
       "id": "vizier",
@@ -28,7 +25,10 @@
       "special": null,
       "symbol": "📜",
       "description": "Royal advisor and second in command to the Pharaoh.",
-      "class": "general"
+      "class": "general",
+      "abilities": [
+        "fear"
+      ]
     },
     "high_priest": {
       "id": "high_priest",

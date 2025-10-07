@@ -367,9 +367,10 @@ class GameLogic {
     
     let fearPenalty = 0;
     const directions = [
-      [-1, -1], [-1, 0], [-1, 1],
-      [0, -1],           [0, 1],
-      [1, -1],  [1, 0],  [1, 1]
+      [0, -1],  // North
+      [1, 0],   // East
+      [0, 1],   // South
+      [-1, 0]   // West
     ];
     
     for (const [dx, dy] of directions) {
@@ -391,6 +392,47 @@ class GameLogic {
     }
     
     return fearPenalty;
+  }
+
+  // Apply curse effect to winning unit
+  applyCurseEffect(winner, loser) {
+    if (this.hasAbility(loser, 'curse')) {
+      // Permanently weaken the winner (increase rank by 1)
+      const originalRank = winner.rank;
+      winner.rank = Math.min(10, winner.rank + 1); // Cap at rank 10
+      
+      // Track the original rank for display purposes
+      if (!winner.originalRank) {
+        winner.originalRank = originalRank;
+      }
+      winner.cursed = true;
+      
+      console.log(`😈 Curse effect: ${winner.name} permanently weakened from rank ${originalRank} to ${winner.rank} for defeating cursed ${loser.name}`);
+      return true;
+    }
+    return false;
+  }
+
+  // Apply veteran effect to winning unit
+  applyVeteranEffect(winner, loser) {
+    if (this.hasAbility(winner, 'veteran') && !winner.veteranUsed) {
+      // Track the original rank for display purposes
+      if (!winner.originalRank) {
+        winner.originalRank = winner.rank;
+      }
+      
+      // Permanently strengthen the winner (decrease rank by 1)
+      const originalRank = winner.rank;
+      winner.rank = Math.max(1, winner.rank - 1); // Cap at rank 1
+      
+      // Mark veteran ability as used and track the victory
+      winner.veteranUsed = true;
+      winner.veteranWins = 1; // Only one veteran bonus per unit
+      
+      console.log(`🎖️ Veteran effect: ${winner.name} permanently strengthened from rank ${originalRank} to ${winner.rank} (veteran ability used)`);
+      return true;
+    }
+    return false;
   }
 
   // Resolve combat between two pieces
@@ -437,6 +479,9 @@ class GameLogic {
     };
     
     if (attackerRank < defenderRank) {
+      // Attacker wins - apply curse and veteran effects
+      const cursed = this.applyCurseEffect(attacker, defender);
+      const veteran = this.applyVeteranEffect(attacker, defender);
       return {
         result: 'attacker_wins',
         winner: attacker,
@@ -444,9 +489,14 @@ class GameLogic {
         description: defenderTerrain === 'mountain' ? 
           `${attacker.name} defeats ${defender.name} (mountain defense)` :
           `${attacker.name} defeats ${defender.name}`,
+        cursed: cursed,
+        veteran: veteran,
         ...result
       };
     } else if (attackerRank > defenderRank) {
+      // Defender wins - apply curse and veteran effects
+      const cursed = this.applyCurseEffect(defender, attacker);
+      const veteran = this.applyVeteranEffect(defender, attacker);
       return {
         result: 'defender_wins', 
         winner: defender,
@@ -454,6 +504,8 @@ class GameLogic {
         description: defenderTerrain === 'mountain' ? 
           `${defender.name} defends from mountain and defeats ${attacker.name}` :
           `${defender.name} defeats ${attacker.name}`,
+        cursed: cursed,
+        veteran: veteran,
         ...result
       };
     } else {
@@ -463,6 +515,8 @@ class GameLogic {
         description: defenderTerrain === 'mountain' ? 
           `${attacker.name} and ${defender.name} destroy each other (mountain defense not enough)` :
           `${attacker.name} and ${defender.name} destroy each other`,
+        cursed: false,
+        veteran: false,
         ...result
       };
     }
@@ -529,35 +583,51 @@ class GameLogic {
     
     switch (specialCase.result) {
       case 'attacker_wins':
+        const cursed1 = this.applyCurseEffect(attacker, defender);
+        const veteran1 = this.applyVeteranEffect(attacker, defender);
         return {
           result: 'attacker_wins',
           winner: attacker,
           loser: defender,
           description: specialCase.description,
+          cursed: cursed1,
+          veteran: veteran1,
           ...rankInfo
         };
       case 'defender_wins':
+        const cursed2 = this.applyCurseEffect(defender, attacker);
+        const veteran2 = this.applyVeteranEffect(defender, attacker);
         return {
           result: 'defender_wins',
           winner: defender,
           loser: attacker,
           description: specialCase.description,
+          cursed: cursed2,
+          veteran: veteran2,
           ...rankInfo
         };
       case 'attacker_destroyed':
+        const cursed3 = this.applyCurseEffect(defender, attacker);
+        const veteran3 = this.applyVeteranEffect(defender, attacker);
         return {
           result: 'defender_wins',
           winner: defender,
           loser: attacker,
           description: specialCase.description,
+          cursed: cursed3,
+          veteran: veteran3,
           ...rankInfo
         };
       case 'defender_destroyed':
+        const cursed4 = this.applyCurseEffect(attacker, defender);
+        const veteran4 = this.applyVeteranEffect(attacker, defender);
         return {
           result: 'attacker_wins',
           winner: attacker,
           loser: defender,
           description: specialCase.description,
+          cursed: cursed4,
+          veteran: veteran4,
           ...rankInfo
         };
       case 'both_destroyed_bomb':
@@ -565,13 +635,19 @@ class GameLogic {
           result: 'both_destroyed',
           winner: null,
           description: specialCase.description,
+          cursed: false,
+          veteran: false,
           ...rankInfo
         };
       case 'game_won':
+        const cursed5 = this.applyCurseEffect(attacker, defender);
+        const veteran5 = this.applyVeteranEffect(attacker, defender);
         return {
           result: 'game_won',
           winner: attacker,
           description: `${attacker.side} captures the flag and wins!`,
+          cursed: cursed5,
+          veteran: veteran5,
           ...rankInfo
         };
       default:

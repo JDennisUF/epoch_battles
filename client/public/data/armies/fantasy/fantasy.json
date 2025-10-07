@@ -127,7 +127,7 @@
       "symbol": "\ud83d\udde1",
       "description": "Stealthy rogue skilled in assassination",
       "class": "spy",
-      "abilities": [ { "id": "fleet", "spaces": 2 } ]
+      "abilities": [ { "id": "fleet", "spaces": 2 }, "assassin" ]
     },
     "sacred_relic": {
       "id": "sacred_relic",

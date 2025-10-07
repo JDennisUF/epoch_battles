@@ -376,16 +376,24 @@ function CombatModal({ combatData, onClose }) {
         </CombatArena>
 
         {showResult && (
-          <ResultText victory={winner === 'attacker'}>
-            {combatData.description || (
-              <>
-                {result === 'attacker_wins' && `${attacker.unit.name} defeats ${defender.unit.name}!`}
-                {result === 'defender_wins' && `${defender.unit.name} defeats ${attacker.unit.name}!`}
-                {result === 'both_destroyed' && 'Both units destroyed!'}
-                {result === 'move_blocked' && 'Attack blocked!'}
-              </>
+          <>
+            <ResultText victory={winner === 'attacker'}>
+              {combatData.description || (
+                <>
+                  {result === 'attacker_wins' && `${attacker.unit.name} defeats ${defender.unit.name}!`}
+                  {result === 'defender_wins' && `${defender.unit.name} defeats ${attacker.unit.name}!`}
+                  {result === 'both_destroyed' && 'Both units destroyed!'}
+                  {result === 'move_blocked' && 'Attack blocked!'}
+                </>
+              )}
+            </ResultText>
+            
+            {combatData.cursed && (
+              <ResultText victory={false} style={{ marginTop: '10px', color: '#a855f7' }}>
+                💀 CURSE ACTIVATED! The winner has been permanently weakened!
+              </ResultText>
             )}
-          </ResultText>
+          </>
         )}
 
         <CloseButton onClick={onClose}>

@@ -130,7 +130,9 @@ class MoveProcessor {
         result: combatResult.result,
         winner: combatResult.result === 'attacker_wins' ? 'attacker' : 
                 combatResult.result === 'defender_wins' ? 'defender' : 'none',
-        description: combatResult.description
+        description: combatResult.description,
+        cursed: combatResult.cursed || false,
+        veteran: combatResult.veteran || false
       };
 
       // Reveal both pieces
@@ -160,6 +162,54 @@ class MoveProcessor {
         // Both pieces destroyed
         board[toY][toX] = null;
         board[fromY][fromX] = null;
+      }
+      
+      // Handle curse effects - update the winner's rank if they were cursed
+      if (combatResult.cursed && combatResult.winner) {
+        console.log(`💀 Curse effect applied in combat: ${combatResult.winner.name} has been permanently weakened`);
+        // The rank has already been modified in gameLogic, but we need to update the piece on the board
+        if (combatResult.result === 'attacker_wins') {
+          // Update the attacker piece on the board with new rank and curse status
+          const boardPiece = board[toY][toX] || board[fromY][fromX]; // Could be at either position depending on sniper
+          if (boardPiece && boardPiece.id === movingPiece.id) {
+            boardPiece.rank = movingPiece.rank; // Copy the cursed rank
+            boardPiece.originalRank = movingPiece.originalRank; // Copy original rank
+            boardPiece.cursed = movingPiece.cursed; // Copy cursed status
+          }
+        } else if (combatResult.result === 'defender_wins') {
+          // Update the defender piece on the board with new rank and curse status
+          const boardPiece = board[toY][toX];
+          if (boardPiece && boardPiece.id === targetPiece.id) {
+            boardPiece.rank = targetPiece.rank; // Copy the cursed rank
+            boardPiece.originalRank = targetPiece.originalRank; // Copy original rank
+            boardPiece.cursed = targetPiece.cursed; // Copy cursed status
+          }
+        }
+      }
+      
+      // Handle veteran effects - update the winner's rank if they gained experience
+      if (combatResult.veteran && combatResult.winner) {
+        console.log(`🎖️ Veteran effect applied in combat: ${combatResult.winner.name} has been permanently strengthened`);
+        // The rank has already been modified in gameLogic, but we need to update the piece on the board
+        if (combatResult.result === 'attacker_wins') {
+          // Update the attacker piece on the board with new rank and veteran status
+          const boardPiece = board[toY][toX] || board[fromY][fromX]; // Could be at either position depending on sniper
+          if (boardPiece && boardPiece.id === movingPiece.id) {
+            boardPiece.rank = movingPiece.rank; // Copy the improved rank
+            boardPiece.originalRank = movingPiece.originalRank; // Copy original rank
+            boardPiece.veteranWins = movingPiece.veteranWins; // Copy veteran wins count
+            boardPiece.veteranUsed = movingPiece.veteranUsed; // Copy veteran used flag
+          }
+        } else if (combatResult.result === 'defender_wins') {
+          // Update the defender piece on the board with new rank and veteran status
+          const boardPiece = board[toY][toX];
+          if (boardPiece && boardPiece.id === targetPiece.id) {
+            boardPiece.rank = targetPiece.rank; // Copy the improved rank
+            boardPiece.originalRank = targetPiece.originalRank; // Copy original rank
+            boardPiece.veteranWins = targetPiece.veteranWins; // Copy veteran wins count
+            boardPiece.veteranUsed = targetPiece.veteranUsed; // Copy veteran used flag
+          }
+        }
       }
 
     } else {

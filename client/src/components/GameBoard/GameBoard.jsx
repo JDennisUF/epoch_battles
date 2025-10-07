@@ -435,6 +435,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
       setShowArmySelector(true);
     };
 
+
     socket.on('pieces_placed', handlePiecesPlaced);
     socket.on('setup_confirmed', handleSetupConfirmed);
     socket.on('game_started', handleGameStarted);
@@ -780,6 +781,10 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
           return { name: 'Sniper', description: 'Can attack units 2 squares away, shoots over water', icon: '/data/icons/abilities/sniper.png' };
         case 'fear':
           return { name: 'Fear', description: 'Adjacent enemies lose 1 rank in combat', icon: '/data/icons/abilities/fear.png' };
+        case 'curse':
+          return { name: 'Curse', description: 'Units that defeat this unit are permanently weakened', icon: '/data/icons/abilities/curse.png' };
+        case 'veteran':
+          return { name: 'Veteran', description: 'Gets stronger when defeating enemies', icon: '/data/icons/abilities/veteran.png' };
         default:
           return { name: ability, description: 'Special ability', icon: null };
       }
@@ -882,6 +887,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
             opponentArmy={gameState?.opponentArmy}
             gamePhase={gamePhase}
             mapData={mapData}
+            board={gameState?.board}
             isSelected={isSelected}
             isValidMove={isValidMove}
             isSetupArea={isSetupArea}

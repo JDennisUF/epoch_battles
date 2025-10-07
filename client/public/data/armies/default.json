@@ -131,7 +131,7 @@
       "symbol": "🕵",
       "description": "Can defeat the Marshal when attacking",
       "class": "spy",
-      "abilities": [ { "id": "fleet", "spaces": 2 } ]
+      "abilities": [ { "id": "fleet", "spaces": 2 }, "assassin" ]
     },
     "flag": {
       "id": "flag",

@@ -125,7 +125,7 @@
       "symbol": "\ud83d\udde1",
       "description": "Secret killer trained for high-profile targets",
       "class": "spy",
-      "abilities": [ { "id": "fleet", "spaces": 2 } ]
+      "abilities": [ { "id": "fleet", "spaces": 2 }, "assassin" ]
     },
     "banner": {
       "id": "banner",

@@ -120,7 +120,7 @@
       "symbol": "🤺",
       "description": "Backstabber who can slay even Caesar",
       "class": "spy",
-      "abilities": [ { "id": "fleet", "spaces": 2 } ]
+      "abilities": [ { "id": "fleet", "spaces": 2 }, "assassin" ]
     },
     "eagle_standard": {
       "id": "eagle_standard",

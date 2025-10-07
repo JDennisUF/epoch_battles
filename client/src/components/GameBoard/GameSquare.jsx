@@ -16,6 +16,64 @@ const hasAbility = (piece, abilityName) => {
   });
 };
 
+// Helper function to check if a piece is adjacent to enemies with Fear
+const getFearPenalty = (piece, x, y, board) => {
+  if (!piece || !board) return 0;
+  
+  let fearPenalty = 0;
+  const directions = [
+    [0, -1],  // North
+    [1, 0],   // East
+    [0, 1],   // South
+    [-1, 0]   // West
+  ];
+  
+  for (const [dx, dy] of directions) {
+    const adjacentX = x + dx;
+    const adjacentY = y + dy;
+    
+    // Check bounds
+    if (adjacentX >= 0 && adjacentX < board[0].length && 
+        adjacentY >= 0 && adjacentY < board.length) {
+      const adjacentPiece = board[adjacentY][adjacentX];
+      
+      // Check if adjacent piece is an enemy with Fear ability
+      if (adjacentPiece && 
+          adjacentPiece.side !== piece.side && 
+          hasAbility(adjacentPiece, 'fear')) {
+        fearPenalty++;
+      }
+    }
+  }
+  
+  return fearPenalty;
+};
+
+// Helper function to calculate rank display and color
+const getRankDisplay = (piece, x, y, board) => {
+  if (!piece.rank) return { rank: '', colorType: 'normal' };
+  
+  let currentRank = piece.rank;
+  const originalRank = piece.originalRank || piece.rank;
+  
+  // Add fear modifier (temporary rank increase when adjacent to fear units)
+  const fearPenalty = getFearPenalty(piece, x, y, board);
+  currentRank += fearPenalty;
+  
+  // Determine color based on rank comparison
+  let colorType = 'normal';
+  if (currentRank < originalRank) {
+    colorType = 'better'; // Lower rank number = stronger = green
+  } else if (currentRank > originalRank) {
+    colorType = 'worse'; // Higher rank number = weaker = red
+  }
+  
+  return { 
+    rank: currentRank.toString(), 
+    colorType: colorType 
+  };
+};
+
 // Helper function to render ability indicators
 const renderAbilityIndicators = (piece) => {
   const indicators = [];
@@ -100,6 +158,36 @@ const renderAbilityIndicators = (piece) => {
           src="/data/icons/abilities/fear.png"
           alt="Fear"
           title="Fear: Adjacent enemies lose 1 rank in combat"
+        />
+      </AbilityIndicator>
+    );
+  }
+  
+  if (hasAbility(piece, 'curse')) {
+    indicators.push(
+      <AbilityIndicator 
+        key="curse" 
+        position="topLeft"
+      >
+        <AbilityIcon 
+          src="/data/icons/abilities/curse.png"
+          alt="Curse"
+          title="Curse: Units that defeat this unit are permanently weakened"
+        />
+      </AbilityIndicator>
+    );
+  }
+  
+  if (hasAbility(piece, 'veteran')) {
+    indicators.push(
+      <AbilityIndicator 
+        key="veteran" 
+        position="topLeft"
+      >
+        <AbilityIcon 
+          src="/data/icons/abilities/veteran.png"
+          alt="Veteran"
+          title="Veteran: Gets stronger when defeating enemies"
         />
       </AbilityIndicator>
     );
@@ -244,13 +332,21 @@ const PieceSymbol = styled.div`
   line-height: 1;
 `;
 
-const PieceRank = styled.div`
+const PieceRank = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['colorType'].includes(prop)
+})`
   position: absolute;
   bottom: 2px;
   left: 2px;
   font-size: 0.8rem;
   font-weight: 700;
-  color: white;
+  color: ${props => {
+    switch (props.colorType) {
+      case 'better': return '#22c55e'; // Green for better ranks (lower numbers)
+      case 'worse': return '#ef4444';  // Red for worse ranks (higher numbers)
+      default: return 'white';         // White for unchanged ranks
+    }
+  }};
   background: rgba(0, 0, 0, 0.7);
   padding: 1px 4px;
   border-radius: 3px;
@@ -280,6 +376,7 @@ function GameSquare({
   opponentArmy,
   gamePhase,
   mapData,
+  board,
   isSelected, 
   isValidMove, 
   isSetupArea,
@@ -367,9 +464,10 @@ function GameSquare({
               </DefensiveBonusIndicator>
             )}
             {renderAbilityIndicators(piece)}
-            {(piece.revealed || piece.side === playerSide) && piece.rank && (
-              <PieceRank>{piece.rank}</PieceRank>
-            )}
+            {(piece.revealed || piece.side === playerSide) && piece.rank && (() => {
+              const rankInfo = getRankDisplay(piece, x, y, board);
+              return <PieceRank colorType={rankInfo.colorType}>{rankInfo.rank}</PieceRank>;
+            })()}
           </div>
         </PieceContainer>
       );
@@ -410,7 +508,10 @@ function GameSquare({
               </DefensiveBonusIndicator>
             )}
             {renderAbilityIndicators(piece)}
-            {piece.rank && <PieceRank>{piece.rank}</PieceRank>}
+            {piece.rank && (() => {
+              const rankInfo = getRankDisplay(piece, x, y, board);
+              return <PieceRank colorType={rankInfo.colorType}>{rankInfo.rank}</PieceRank>;
+            })()}
           </div>
         </PieceContainer>
       );
@@ -480,9 +581,10 @@ function GameSquare({
             </DefensiveBonusIndicator>
           )}
           {renderAbilityIndicators(piece)}
-          {(piece.revealed || piece.side === playerSide) && piece.rank && (
-            <PieceRank>{piece.rank}</PieceRank>
-          )}
+          {(piece.revealed || piece.side === playerSide) && piece.rank && (() => {
+            const rankInfo = getRankDisplay(piece, x, y, board);
+            return <PieceRank colorType={rankInfo.colorType}>{rankInfo.rank}</PieceRank>;
+          })()}
         </div>
       </PieceContainer>
     );

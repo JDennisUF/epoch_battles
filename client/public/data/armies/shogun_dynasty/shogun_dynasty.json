@@ -140,7 +140,7 @@
       "symbol": "🕶️",
       "description": "Stealth assassin striking unseen from the shadows",
       "class": "spy",
-      "abilities": [ { "id": "fleet", "spaces": 2 } ]
+      "abilities": [ { "id": "fleet", "spaces": 2 }, "assassin" ]
     },
     "dynasty_banner": {
       "id": "dynasty_banner",
