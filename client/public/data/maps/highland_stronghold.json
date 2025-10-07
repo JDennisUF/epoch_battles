@@ -1,7 +1,7 @@
 {
   "id": "highland_stronghold",
   "name": "Highland Stronghold",
-  "description": "Defensive mountain positions and obstacles throughout the battlefield",
+  "description": "Defensive mountain positions and obstacles",
   "boardSize": {
     "width": 10,
     "height": 10

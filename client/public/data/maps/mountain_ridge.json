@@ -1,7 +1,7 @@
 {
   "id": "mountain_ridge",
   "name": "Mountain Ridge",
-  "description": "Defensive mountain ranges and water obstacles create tactical challenges",
+  "description": "Defensive mountain ranges and water obstacles",
   "boardSize": {
     "width": 10,
     "height": 10

@@ -14,8 +14,8 @@ import Header from './components/UI/Header';
 
 const AppContainer = styled.div`
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+  color: #e8f4f8;
 `;
 
 const MainContent = styled.main`

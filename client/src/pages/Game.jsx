@@ -213,14 +213,11 @@ function Game() {
 
   return (
     <GameContainer>
-      <BackButton onClick={handleBackToLobby}>
-        ← Back to Lobby
-      </BackButton>
-      
       <GameBoard
         gameId={gameData.id}
         gameState={gameData.gameState}
         players={gameData.players}
+        onBackToLobby={handleBackToLobby}
       />
     </GameContainer>
   );

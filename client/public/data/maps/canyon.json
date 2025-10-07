@@ -1,7 +1,7 @@
 {
   "id": "canyon",
   "name": "Canyon Pass",
-  "description": "A narrow canyon with limited crossing points, forcing strategic bottlenecks",
+  "description": "A narrow canyon with strategic bottlenecks",
   "boardSize": {
     "width": 10,
     "height": 10

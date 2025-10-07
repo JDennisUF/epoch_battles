@@ -1,7 +1,7 @@
 {
   "id": "valley_defense",
   "name": "Valley Defense",
-  "description": "Mountain valleys create chokepoints and defensive positions",
+  "description": "Mountain valleys create chokepoints",
   "boardSize": {
     "width": 10,
     "height": 10

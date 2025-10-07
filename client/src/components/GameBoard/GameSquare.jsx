@@ -274,7 +274,7 @@ const Square = styled.div.withConfig({
     }
   }};
   
-  // Overlay colors for game states
+  // Overlay colors for game states - military themed
   &::before {
     content: '';
     position: absolute;
@@ -283,10 +283,10 @@ const Square = styled.div.withConfig({
     right: 0;
     bottom: 0;
     background: ${props => {
-      if (props.isDragTarget) return 'rgba(59, 130, 246, 0.4)';
-      if (props.isSetupArea) return 'rgba(34, 197, 94, 0.2)';
-      if (props.isSelected) return 'rgba(255, 255, 0, 0.4)';
-      if (props.isValidMove) return 'rgba(34, 197, 94, 0.4)';
+      if (props.isDragTarget) return 'rgba(139, 115, 85, 0.5)'; // Desert tan
+      if (props.isSetupArea) return 'rgba(107, 142, 35, 0.3)'; // Olive green
+      if (props.isSelected) return 'rgba(218, 165, 32, 0.5)'; // Military gold
+      if (props.isValidMove) return 'rgba(107, 142, 35, 0.5)'; // Olive green
       return 'transparent';
     }};
     pointer-events: none;
@@ -294,16 +294,16 @@ const Square = styled.div.withConfig({
   }
 
   border-color: ${props => {
-    if (props.isDragTarget) return '#3b82f6';
-    if (props.isSelected) return '#fbbf24';
-    if (props.isValidMove) return '#22c55e';
+    if (props.isDragTarget) return '#8b7355'; // Desert tan
+    if (props.isSelected) return '#daa520'; // Military gold
+    if (props.isValidMove) return '#6b8e23'; // Olive green
     return 'transparent';
   }};
 
   &:hover {
     ${props => props.clickable && `
       &::before {
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(218, 165, 32, 0.2);
       }
       transform: scale(1.02);
     `}
@@ -461,7 +461,7 @@ function GameSquare({
     if (!pieceToRender) return null;
 
     const symbol = getPieceSymbol(pieceToRender);
-    const color = pieceToRender.side === playerSide ? '#4ade80' : '#ef4444';
+    const color = pieceToRender.side === playerSide ? '#6b8e23' : '#8b4513';
     const isPlayerPiece = pieceToRender.side === playerSide;
     const isDraggable = gamePhase === 'setup' && isPlayerPiece && pieceToRender.position;
     

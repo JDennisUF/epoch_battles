@@ -17,6 +17,8 @@ const BoardContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
+  background: linear-gradient(135deg, #2d3436 0%, #636e72 100%);
+  min-height: 100vh;
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -36,9 +38,11 @@ const Board = styled.div`
   grid-template-columns: repeat(10, 1fr);
   grid-template-rows: repeat(10, 1fr);
   gap: 2px;
-  background: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(145deg, #5a6c57 0%, #3e4a3b 100%);
   padding: 15px;
   border-radius: 10px;
+  border: 3px solid #2d3436;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.1);
   width: 1050px;
   height: 1050px;
 
@@ -49,12 +53,15 @@ const Board = styled.div`
 `;
 
 const GameInfo = styled.div`
-  background: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(145deg, #4a5d4a 0%, #3e4a3b 100%);
   padding: 20px;
   border-radius: 10px;
+  border: 2px solid #2d3436;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   min-width: 400px;
   width: 400px;
   height: fit-content;
+  color: #e8f4f8;
   
   @media (max-width: 768px) {
     min-width: 100%;
@@ -68,7 +75,11 @@ const InfoSection = styled.div`
 
 const InfoTitle = styled.h3`
   margin-bottom: 10px;
-  color: #4ade80;
+  color: #c19a6b;
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  border-bottom: 2px solid #8b7355;
+  padding-bottom: 5px;
 `;
 
 const PlayerInfo = styled.div.withConfig({
@@ -77,92 +88,117 @@ const PlayerInfo = styled.div.withConfig({
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px;
-  margin: 5px 0;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 5px;
+  padding: 12px;
+  margin: 8px 0;
+  background: linear-gradient(135deg, #556b2f 0%, #3e4a3b 100%);
+  border-radius: 8px;
   border-left: 4px solid ${props => props.color};
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  color: #f1f3f4;
+  font-weight: 500;
 `;
 
 const PhaseIndicator = styled.div.withConfig({
   shouldForwardProp: (prop) => prop !== 'phase'
 })`
   text-align: center;
-  padding: 10px;
+  padding: 12px;
   background: ${props => {
     switch (props.phase) {
-      case 'setup': return 'rgba(255, 165, 0, 0.2)';
-      case 'playing': return 'rgba(34, 197, 94, 0.2)';
-      case 'finished': return 'rgba(239, 68, 68, 0.2)';
-      default: return 'rgba(156, 163, 175, 0.2)';
+      case 'setup': return 'linear-gradient(135deg, #b8860b 0%, #8b7355 100%)';
+      case 'playing': return 'linear-gradient(135deg, #6b8e23 0%, #556b2f 100%)';
+      case 'finished': return 'linear-gradient(135deg, #8b4513 0%, #654321 100%)';
+      default: return 'linear-gradient(135deg, #696969 0%, #2f4f4f 100%)';
     }
   }};
-  border-radius: 5px;
+  border-radius: 8px;
+  border: 2px solid #2d3436;
   font-weight: 600;
   margin-bottom: 20px;
+  color: #f1f3f4;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 `;
 
 const ActionButton = styled.button`
-  background: linear-gradient(45deg, #667eea, #764ba2);
-  border: none;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 5px;
+  background: linear-gradient(135deg, #8b7355 0%, #6b5b3c 100%);
+  border: 2px solid #5a4a3a;
+  color: #f1f3f4;
+  padding: 12px 24px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
-  margin: 5px;
+  margin: 6px;
   transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.9rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 
   &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #a0845a 0%, #7d6843 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
   }
 
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+    background: linear-gradient(135deg, #6a6a6a 0%, #4a4a4a 100%);
   }
 `;
 
 const CancelButton = styled.button`
-  background: linear-gradient(45deg, #ef4444, #dc2626);
-  border: none;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 5px;
+  background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
+  border: 2px solid #5a2d0c;
+  color: #f1f3f4;
+  padding: 12px 24px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
-  margin: 5px;
+  margin: 6px;
   transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.9rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 
   &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #a0522d 0%, #8b4513 100%);
     transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
   }
 
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+    background: linear-gradient(135deg, #6a6a6a 0%, #4a4a4a 100%);
   }
 `;
 
 const LastMoveInfo = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  padding: 10px;
-  border-radius: 5px;
+  background: linear-gradient(135deg, #3e4a3b 0%, #2d3436 100%);
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #5a6c57;
   font-size: 0.9rem;
   margin-top: 10px;
+  color: #c19a6b;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 `;
 
 const SelectedUnitPanel = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(145deg, #4a5d4a 0%, #3e4a3b 100%);
+  border: 2px solid #5a6c57;
   border-radius: 10px;
   padding: 15px;
   margin-bottom: 15px;
   text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 `;
 
 const UnitImageContainer = styled.div`
@@ -181,15 +217,17 @@ const UnitImage = styled.img`
 
 const UnitName = styled.h4`
   margin: 8px 0 4px 0;
-  color: #4ade80;
+  color: #c19a6b;
   font-size: 1.1rem;
   font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 `;
 
 const UnitRank = styled.div`
-  color: #9ca3af;
+  color: #a8b2a5;
   font-size: 0.9rem;
   margin-bottom: 8px;
+  font-weight: 500;
 `;
 
 const AbilitiesList = styled.div`
@@ -204,10 +242,12 @@ const AbilityItem = styled.div`
   align-items: center;
   justify-content: center;
   gap: 6px;
-  color: #e5e7eb;
-  padding: 2px 8px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 4px;
+  color: #e8f4f8;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, #3e4a3b 0%, #2d3436 100%);
+  border-radius: 6px;
+  border: 1px solid #5a6c57;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 `;
 
 const AbilityIconSmall = styled.img`
@@ -216,7 +256,37 @@ const AbilityIconSmall = styled.img`
   filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.8));
 `;
 
-function GameBoard({ gameId, gameState: initialGameState, players }) {
+const BackButton = styled.button`
+  background: linear-gradient(135deg, #8b7355 0%, #6b5b3c 100%);
+  border: 2px solid #5a4a3a;
+  color: #f1f3f4;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.9rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, #a0845a 0%, #7d6843 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    background: linear-gradient(135deg, #6a6a6a 0%, #4a4a4a 100%);
+  }
+`;
+
+function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby }) {
   const [gameState, setGameState] = useState(initialGameState);
   const [selectedSquare, setSelectedSquare] = useState(null);
   const [validMoves, setValidMoves] = useState([]);
@@ -1074,7 +1144,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
         <InfoSection>
           <InfoTitle>Players</InfoTitle>
           {localPlayers.map(player => (
-            <PlayerInfo key={player.userId} color={player.side === 'home' ? '#3b82f6' : '#ef4444'}>
+            <PlayerInfo key={player.userId} color={player.side === 'home' ? '#6b8e23' : '#8b4513'}>
               <span>
                 {player.username} ({player.side === 'home' ? 'Home' : 'Away'})
                 {gamePhase === 'setup' && player.isReady && ' ✓'}
@@ -1160,43 +1230,60 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
       <BoardContainer>
         <BoardWrapper>
           <Board>{renderBoard()}</Board>
-        
-        {gamePhase === 'setup' && (
-          <div>
-            {!isPlayerReady && !showConfirmDialog && (
-              <>
-                <ActionButton onClick={handleRandomSetup}>
-                  Random Setup
-                </ActionButton>
-                <ActionButton onClick={handleConfirmSetup}>
-                  Confirm Setup
-                </ActionButton>
-                <div style={{ marginTop: '10px', fontSize: '0.9rem', textAlign: 'center' }}>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px', gap: '20px' }}>
+            <div style={{ flex: '0 0 auto' }}>
+              {onBackToLobby && (
+                <BackButton onClick={onBackToLobby}>
+                  ← Back to Lobby
+                </BackButton>
+              )}
+            </div>
+            
+            <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {gamePhase === 'setup' && !isPlayerReady && !showConfirmDialog && (
+                <>
+                  <ActionButton onClick={handleRandomSetup}>
+                    Random Setup
+                  </ActionButton>
+                  <ActionButton onClick={handleConfirmSetup}>
+                    Confirm Setup
+                  </ActionButton>
+                </>
+              )}
+              {gamePhase === 'setup' && showConfirmDialog && (
+                <>
+                  <ActionButton onClick={handleConfirmOK}>
+                    OK (Use Random Setup)
+                  </ActionButton>
+                  <CancelButton onClick={handleConfirmCancel}>
+                    Cancel
+                  </CancelButton>
+                </>
+              )}
+            </div>
+          </div>
+          
+          {gamePhase === 'setup' && (
+            <div style={{ marginTop: '10px', fontSize: '0.9rem', textAlign: 'center' }}>
+              {!isPlayerReady && !showConfirmDialog && (
+                <div style={{ color: '#c19a6b' }}>
                   Pieces placed: {setupPieces.filter(p => p.position).length}/{setupPieces.length}
                 </div>
-              </>
-            )}
-            {showConfirmDialog && (
-              <>
-                <ActionButton onClick={handleConfirmOK}>
-                  OK (Use Random Setup)
-                </ActionButton>
-                <CancelButton onClick={handleConfirmCancel}>
-                  Cancel
-                </CancelButton>
-                <div style={{ marginTop: '10px', fontSize: '0.9rem', textAlign: 'center', color: '#fbbf24' }}>
+              )}
+              {showConfirmDialog && (
+                <div style={{ color: '#fbbf24' }}>
                   No pieces placed manually. Confirm to use random setup?
                 </div>
-              </>
-            )}
-            {isPlayerReady && (
-              <div style={{ marginTop: '10px', fontSize: '0.9rem', textAlign: 'center', color: '#4ade80' }}>
-                ✓ Setup confirmed! Waiting for opponent...
-              </div>
-            )}
-          </div>
-        )}
-      </BoardWrapper>
+              )}
+              {isPlayerReady && (
+                <div style={{ color: '#4ade80' }}>
+                  ✓ Setup confirmed! Waiting for opponent...
+                </div>
+              )}
+            </div>
+          )}
+        </BoardWrapper>
 
       <GameInfo>
         <PhaseIndicator phase={gamePhase}>
@@ -1208,7 +1295,7 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
         <InfoSection>
           <InfoTitle>Players</InfoTitle>
           {localPlayers.map(player => (
-            <PlayerInfo key={player.userId} color={player.side === 'home' ? '#3b82f6' : '#ef4444'}>
+            <PlayerInfo key={player.userId} color={player.side === 'home' ? '#6b8e23' : '#8b4513'}>
               <span>
                 {player.username} ({player.side === 'home' ? 'Home' : 'Away'})
                 {gamePhase === 'setup' && player.isReady && ' ✓'}

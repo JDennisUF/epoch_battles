@@ -1,7 +1,7 @@
 {
   "id": "labyrinth",
   "name": "Ancient Labyrinth",
-  "description": "A complex maze that limits movement and creates ambush opportunities",
+  "description": "A maze that limits movement and creates ambush spots",
   "boardSize": {
     "width": 10,
     "height": 10

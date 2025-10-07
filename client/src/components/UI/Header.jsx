@@ -10,9 +10,10 @@ const HeaderContainer = styled.header`
   left: 0;
   right: 0;
   height: 70px;
-  background: rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, rgba(45, 52, 54, 0.95) 0%, rgba(99, 110, 114, 0.95) 100%);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 2px solid #5a6c57;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -27,15 +28,15 @@ const HeaderContainer = styled.header`
 const Logo = styled(Link)`
   font-size: 1.5rem;
   font-weight: bold;
-  color: white;
+  color: #c19a6b;
   text-decoration: none;
-  background: linear-gradient(45deg, #fff, #f0f0f0);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  letter-spacing: 1px;
+  text-transform: uppercase;
 
   &:hover {
-    opacity: 0.8;
+    color: #daa520;
+    text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.8);
   }
 `;
 

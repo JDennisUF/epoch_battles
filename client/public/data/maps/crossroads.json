@@ -1,7 +1,7 @@
 {
   "id": "crossroads",
   "name": "Four Crossroads",
-  "description": "Multiple crossing paths create tactical opportunities and flanking routes",
+  "description": "Multiple crossing paths create tactical opportunities",
   "boardSize": {
     "width": 10,
     "height": 10

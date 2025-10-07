@@ -1,7 +1,7 @@
 {
   "id": "highlands",
   "name": "Highland Battleground", 
-  "description": "A diverse battlefield with rivers, dirt paths, and grasslands",
+  "description": "A battlefield with rivers, dirt paths, and grasslands",
   "boardSize": {
     "width": 10,
     "height": 10
