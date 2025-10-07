@@ -23,13 +23,13 @@
         "attacker": "spy",
         "defender": "marshal",
         "result": "attacker_wins",
-        "description": "Spy defeats Marshal when attacking"
+        "description": "Spy defeats top unit when attacking"
       },
       {
         "attacker": "marshal", 
         "defender": "spy",
         "result": "attacker_wins",
-        "description": "Marshal defeats Spy when attacking"
+        "description": "Spy always loses when attacked."
       },
       {
         "attacker": "*",
@@ -48,26 +48,22 @@
         "attacker": "*",
         "defender": "flag",
         "result": "attacker_wins",
-        "description": "Flag is captured!"
+        "description": "Home base is captured!"
       }
     ]
   },
   "movementRules": {
     "default": {
       "maxDistance": 1,
-      "directions": ["up", "down", "left", "right"],
-      "canJump": false
+      "directions": ["up", "down", "left", "right"]
     },
     "scout": {
-      "maxDistance": 4,
       "directions": ["up", "down", "left", "right"],
-      "canJump": false,
       "mustStop": "when_blocked_or_attacking"
     },
     "immobile": {
       "maxDistance": 0,
       "directions": [],
-      "canJump": false,
       "pieces": ["bomb", "flag"]
     }
   },

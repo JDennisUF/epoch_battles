@@ -16,6 +16,44 @@ const hasAbility = (piece, abilityName) => {
   });
 };
 
+// Helper function to check if piece is a mine/bomb type
+const isMineType = (piece) => {
+  return piece?.class === 'bomb' || piece?.class === 'mine';
+};
+
+// Helper function to check if this mine should be detected by trap_sense
+const isMineDetectedByTrapSense = (mineX, mineY, board, playerSide) => {
+  const directions = [
+    [0, -1],  // North
+    [1, 0],   // East
+    [0, 1],   // South
+    [-1, 0]   // West
+  ];
+  
+  for (const [dx, dy] of directions) {
+    const adjacentX = mineX + dx;
+    const adjacentY = mineY + dy;
+    
+    // Check bounds
+    if (adjacentX >= 0 && adjacentX < board[0].length && 
+        adjacentY >= 0 && adjacentY < board.length) {
+      const adjacentPiece = board[adjacentY][adjacentX];
+      
+      // Check if adjacent piece is a friendly unit with trap_sense OR is a miner class
+      const canDetectTraps = adjacentPiece && 
+                            adjacentPiece.side === playerSide && 
+                            (hasAbility(adjacentPiece, 'trap_sense') || adjacentPiece.class === 'miner');
+      
+      if (canDetectTraps) {
+        console.log(`🔍 Trap detected at (${mineX},${mineY}) by ${adjacentPiece.type} at (${adjacentX},${adjacentY})`);
+        return true;
+      }
+    }
+  }
+  
+  return false;
+};
+
 // Helper function to check if a piece is adjacent to enemies with Fear
 const getFearPenalty = (piece, x, y, board) => {
   if (!piece || !board) return 0;
@@ -188,6 +226,36 @@ const renderAbilityIndicators = (piece) => {
           src="/data/icons/abilities/veteran.png"
           alt="Veteran"
           title="Veteran: Gets stronger when defeating enemies"
+        />
+      </AbilityIndicator>
+    );
+  }
+  
+  if (hasAbility(piece, 'trap_sense')) {
+    indicators.push(
+      <AbilityIndicator 
+        key="trap_sense" 
+        position="topLeft"
+      >
+        <AbilityIcon 
+          src="/data/icons/abilities/trap_sense.png"
+          alt="Trap Sense"
+          title="Trap Sense: Can detect and avoid traps"
+        />
+      </AbilityIndicator>
+    );
+  }
+  
+  if (hasAbility(piece, 'assassin')) {
+    indicators.push(
+      <AbilityIndicator 
+        key="assassin" 
+        position="topLeft"
+      >
+        <AbilityIcon 
+          src="/data/icons/abilities/assassin.png"
+          alt="Assassin"
+          title="Assassin: Can eliminate high-ranking targets"
         />
       </AbilityIndicator>
     );
@@ -370,6 +438,8 @@ const PieceImage = styled.img`
 function GameSquare({ 
   x, 
   y, 
+  gameX,  // Game coordinates for terrain/logic calculations (new prop)
+  gameY,  // Game coordinates for terrain/logic calculations (new prop)
   piece, 
   playerSide, 
   playerArmy,
@@ -407,31 +477,58 @@ function GameSquare({
       loadOpponentArmyName();
     }
   }, [opponentArmy, opponentArmyName]);
-  const terrainType = getTerrainType(x, y, mapData);
+  // Use game coordinates for terrain calculations, fall back to display coords if game coords not provided
+  const terrainX = typeof gameX !== 'undefined' ? gameX : x;
+  const terrainY = typeof gameY !== 'undefined' ? gameY : y;
+  
+  const terrainType = getTerrainType(terrainX, terrainY, mapData);
   const isWater = terrainType === 'water';
   const clickable = !isWater && (isSetupArea || isValidMove || (piece && piece.side === playerSide));
   
-  // Debug actual terrain calculation
-  if (x === 2 && y === 4) {
-    console.log('🗺️ Terrain debug for water square (2,4):', {
-      terrainType,
-      mapData: mapData,
-      hasTerrainOverrides: !!mapData?.terrainOverrides,
-      waterOverrides: mapData?.terrainOverrides?.water
+  // Get the actual piece from the board (not the display piece which might be hidden)
+  const actualPiece = board?.[terrainY]?.[terrainX];
+  
+  // Debug: Log all pieces to see what we're working with
+  if (actualPiece) {
+    console.log(`🔍 Square at (${terrainX},${terrainY}):`, {
+      type: actualPiece.type,
+      class: actualPiece.class,
+      side: actualPiece.side,
+      revealed: actualPiece.revealed,
+      playerSide: playerSide,
+      isMine: isMineType(actualPiece),
+      isEnemyMine: isMineType(actualPiece) && actualPiece.side !== playerSide
     });
   }
   
-  const renderPiece = () => {
-    if (!piece) return null;
+  // Check if this mine should be revealed and highlighted due to trap_sense detection
+  const isTrapDetected = actualPiece && 
+                         isMineType(actualPiece) && 
+                         actualPiece.side !== playerSide && 
+                         board && 
+                         isMineDetectedByTrapSense(terrainX, terrainY, board, playerSide);
 
-    const symbol = getPieceSymbol(piece);
-    const color = piece.side === playerSide ? '#4ade80' : '#ef4444';
-    const isPlayerPiece = piece.side === playerSide;
-    const isDraggable = gamePhase === 'setup' && isPlayerPiece && piece.position;
+  // If trap is detected, reveal the mine
+  if (isTrapDetected && actualPiece && !actualPiece.revealed) {
+    actualPiece.revealed = true;
+    console.log(`🔍 Hidden mine revealed by trap sense: ${actualPiece.type} at (${terrainX},${terrainY})`);
+  }
+  
+  // Use actualPiece if it was revealed by trap sense, otherwise use the display piece
+  const pieceToRender = (actualPiece && actualPiece.revealed && actualPiece.side !== playerSide) ? actualPiece : piece;
+  
+  const renderPiece = () => {
+    
+    if (!pieceToRender) return null;
+
+    const symbol = getPieceSymbol(pieceToRender);
+    const color = pieceToRender.side === playerSide ? '#4ade80' : '#ef4444';
+    const isPlayerPiece = pieceToRender.side === playerSide;
+    const isDraggable = gamePhase === 'setup' && isPlayerPiece && pieceToRender.position;
     
     // Show image for player's own pieces if we have army data
-    if (isPlayerPiece && playerArmy && piece.type) {
-      const imagePath = `/data/armies/${playerArmy}/64x64/${piece.type}.png`;
+    if (isPlayerPiece && playerArmy && pieceToRender.type) {
+      const imagePath = `/data/armies/${playerArmy}/64x64/${pieceToRender.type}.png`;
       
       return (
         <PieceContainer 
@@ -444,28 +541,16 @@ function GameSquare({
           <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <PieceImage 
               src={imagePath} 
-              alt={piece.name || piece.type}
-              onError={(e) => {
-                // Fallback to symbol if image fails to load
-                console.log(`Failed to load image: ${imagePath}`);
-                e.target.style.display = 'none';
-                const symbolElement = e.target.parentNode.querySelector('[data-fallback="symbol"]');
-                if (symbolElement) {
-                  symbolElement.style.display = 'block';
-                }
-              }}
+              alt={pieceToRender.name || pieceToRender.type}
             />
-            <PieceSymbol data-fallback="symbol" style={{ display: 'none', fontSize: '2.2rem' }}>
-              {symbol}
-            </PieceSymbol>
             {terrainType === 'mountain' && (
               <DefensiveBonusIndicator title="Mountain Defense: +1 rank when defending">
                 🛡️
               </DefensiveBonusIndicator>
             )}
-            {renderAbilityIndicators(piece)}
-            {(piece.revealed || piece.side === playerSide) && piece.rank && (() => {
-              const rankInfo = getRankDisplay(piece, x, y, board);
+            {renderAbilityIndicators(pieceToRender)}
+            {(pieceToRender.revealed || pieceToRender.side === playerSide) && pieceToRender.rank && (() => {
+              const rankInfo = getRankDisplay(pieceToRender, terrainX, terrainY, board);
               return <PieceRank colorType={rankInfo.colorType}>{rankInfo.rank}</PieceRank>;
             })()}
           </div>
@@ -474,8 +559,8 @@ function GameSquare({
     }
     
     // Show revealed opponent pieces with their actual unit image
-    if (!isPlayerPiece && piece.revealed && opponentArmy && piece.type !== 'hidden') {
-      const imagePath = `/data/armies/${opponentArmy}/64x64/${piece.type}.png`;
+    if (!isPlayerPiece && pieceToRender.revealed && opponentArmy && pieceToRender.type !== 'hidden') {
+      const imagePath = `/data/armies/${opponentArmy}/64x64/${pieceToRender.type}.png`;
       
       return (
         <PieceContainer 
@@ -488,28 +573,16 @@ function GameSquare({
           <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <PieceImage 
               src={imagePath} 
-              alt={piece.name || piece.type}
-              onError={(e) => {
-                // Fallback to symbol if image fails to load
-                console.log(`Failed to load revealed opponent image: ${imagePath}`);
-                e.target.style.display = 'none';
-                const symbolElement = e.target.parentNode.querySelector('[data-fallback="symbol"]');
-                if (symbolElement) {
-                  symbolElement.style.display = 'block';
-                }
-              }}
+              alt={pieceToRender.name || pieceToRender.type}
             />
-            <PieceSymbol data-fallback="symbol" style={{ display: 'none', fontSize: '2.2rem' }}>
-              {symbol}
-            </PieceSymbol>
             {terrainType === 'mountain' && (
               <DefensiveBonusIndicator title="Mountain Defense: +1 rank when defending">
                 🛡️
               </DefensiveBonusIndicator>
             )}
-            {renderAbilityIndicators(piece)}
-            {piece.rank && (() => {
-              const rankInfo = getRankDisplay(piece, x, y, board);
+            {renderAbilityIndicators(pieceToRender)}
+            {pieceToRender.rank && (() => {
+              const rankInfo = getRankDisplay(pieceToRender, terrainX, terrainY, board);
               return <PieceRank colorType={rankInfo.colorType}>{rankInfo.rank}</PieceRank>;
             })()}
           </div>
@@ -519,14 +592,14 @@ function GameSquare({
     
     // Show army icon for hidden opponent pieces (including at game end)
     if (!isPlayerPiece && !piece.revealed && opponentArmy && (piece.type === 'hidden' || gamePhase === 'finished')) {
-      console.log('🎭 Rendering army icon for opponent piece:', { 
-        piece, 
-        opponentArmy, 
-        isPlayerPiece, 
-        revealed: piece.revealed,
-        gamePhase,
-        type: piece.type
-      });
+      // console.log('🎭 Rendering army icon for opponent piece:', { 
+      //   piece, 
+      //   opponentArmy, 
+      //   isPlayerPiece, 
+      //   revealed: piece.revealed,
+      //   gamePhase,
+      //   type: piece.type
+      // });
       const armyIconPath = `/data/armies/${opponentArmy}/${opponentArmy}.png`;
       
       return (
@@ -580,9 +653,9 @@ function GameSquare({
               🛡️
             </DefensiveBonusIndicator>
           )}
-          {renderAbilityIndicators(piece)}
-          {(piece.revealed || piece.side === playerSide) && piece.rank && (() => {
-            const rankInfo = getRankDisplay(piece, x, y, board);
+          {renderAbilityIndicators(pieceToRender)}
+          {(pieceToRender.revealed || pieceToRender.side === playerSide) && pieceToRender.rank && (() => {
+            const rankInfo = getRankDisplay(pieceToRender, terrainX, terrainY, board);
             return <PieceRank colorType={rankInfo.colorType}>{rankInfo.rank}</PieceRank>;
           })()}
         </div>
@@ -601,11 +674,11 @@ function GameSquare({
       onClick={clickable ? onClick : undefined}
       onDragOver={onDragOver}
       onDrop={onDrop}
-      title={isWater ? 'Water' : piece ? 
-        (piece.name ? `${piece.name} (${piece.side})` : 
-         piece.side === playerSide ? `Your ${piece.type}` : 
+      title={isWater ? 'Water' : pieceToRender ? 
+        (pieceToRender.name ? `${pieceToRender.name} (${pieceToRender.side})` : 
+         pieceToRender.side === playerSide ? `Your ${pieceToRender.type}` : 
          `${opponentArmyName || opponentArmy || 'Enemy'} army unit`) : 
-        `${terrainType} terrain (${x}, ${y})`}
+        `${terrainType} terrain (${terrainX}, ${terrainY})`}
     >
       {renderPiece()}
     </Square>

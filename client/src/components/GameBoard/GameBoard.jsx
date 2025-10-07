@@ -466,27 +466,81 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     };
   }, [socket]);
 
-  const handleSquareClick = (x, y) => {
-    if (gamePhase === 'setup') {
-      handleSetupClick(x, y);
-    } else if (gamePhase === 'playing' && isCurrentTurn) {
-      handleGameClick(x, y);
+  // Coordinate transformation helpers for flipping home player's view
+  const transformCoordinatesForDisplay = (gameX, gameY, playerSide, boardHeight = 10, boardWidth = 10) => {
+    if (playerSide === 'home') {
+      // Flip both vertically AND horizontally for home player (180 degree rotation)
+      return { 
+        x: (boardWidth - 1) - gameX,   // Flip horizontally
+        y: (boardHeight - 1) - gameY   // Flip vertically
+      };
+    } else {
+      // No transformation for away player
+      return { x: gameX, y: gameY };
     }
   };
 
-  const handleDragStart = (piece, x, y) => {
+  const transformCoordinatesFromDisplay = (displayX, displayY, playerSide, boardHeight = 10, boardWidth = 10) => {
+    if (playerSide === 'home') {
+      // Convert display coordinates back to game coordinates for home player (reverse 180 degree rotation)
+      return { 
+        x: (boardWidth - 1) - displayX,   // Reverse horizontal flip
+        y: (boardHeight - 1) - displayY   // Reverse vertical flip
+      };
+    } else {
+      // No transformation for away player
+      return { x: displayX, y: displayY };
+    }
+  };
+
+  const handleSquareClick = (displayX, displayY) => {
+    // Transform display coordinates back to game coordinates
+    const { x: gameX, y: gameY } = transformCoordinatesFromDisplay(
+      displayX, 
+      displayY, 
+      playerSide, 
+      mapData?.boardSize?.height || 10,
+      mapData?.boardSize?.width || 10
+    );
+    
+    if (gamePhase === 'setup') {
+      handleSetupClick(gameX, gameY);
+    } else if (gamePhase === 'playing' && isCurrentTurn) {
+      handleGameClick(gameX, gameY);
+    }
+  };
+
+  const handleDragStart = (piece, displayX, displayY) => {
     if (gamePhase !== 'setup') return;
     
+    // Transform display coordinates back to game coordinates
+    const { x: gameX, y: gameY } = transformCoordinatesFromDisplay(
+      displayX, 
+      displayY, 
+      playerSide, 
+      mapData?.boardSize?.height || 10,
+      mapData?.boardSize?.width || 10
+    );
+    
     setDraggedPiece(piece);
-    setDraggedFromPosition({ x, y });
+    setDraggedFromPosition({ x: gameX, y: gameY });
   };
 
   const handleDragOver = (e) => {
     e.preventDefault(); // Allow drop
   };
 
-  const handleDrop = (targetX, targetY) => {
+  const handleDrop = (displayTargetX, displayTargetY) => {
     if (!draggedPiece || !draggedFromPosition || gamePhase !== 'setup') return;
+
+    // Transform display coordinates back to game coordinates
+    const { x: targetX, y: targetY } = transformCoordinatesFromDisplay(
+      displayTargetX, 
+      displayTargetY, 
+      playerSide, 
+      mapData?.boardSize?.height || 10,
+      mapData?.boardSize?.width || 10
+    );
 
     const { x: fromX, y: fromY } = draggedFromPosition;
     
@@ -772,9 +826,9 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
         case 'fleet':
           return { name: 'Fleet', description: 'Can move multiple spaces', icon: '/data/icons/abilities/fleet.png' };
         case 'trap_sense':
-          return { name: 'Trap Sense', description: 'Can safely defuse bombs/traps', icon: null };
-        case 'veteran':
-          return { name: 'Veteran', description: 'Combat experience bonus', icon: null };
+          return { name: 'Trap Sense', description: 'Can detect and avoid traps', icon: '/data/icons/abilities/trap_sense.png' };
+        case 'assassin':
+          return { name: 'Assassin', description: 'Can eliminate high-ranking targets', icon: '/data/icons/abilities/assassin.png' };
         case 'charge':
           return { name: 'Charge', description: 'Can attack units 2 squares away', icon: '/data/icons/abilities/charge.png' };
         case 'sniper':
@@ -854,54 +908,87 @@ function GameBoard({ gameId, gameState: initialGameState, players }) {
     const boardHeight = mapData?.boardSize?.height || 10;
     const boardWidth = mapData?.boardSize?.width || 10;
     
-    for (let y = 0; y < boardHeight; y++) {
-      for (let x = 0; x < boardWidth; x++) {
+    // Create array to store squares in display order
+    const displaySquares = [];
+    
+    // Generate squares in game coordinate order first
+    for (let gameY = 0; gameY < boardHeight; gameY++) {
+      for (let gameX = 0; gameX < boardWidth; gameX++) {
         let piece = null;
         
         if (gamePhase === 'setup') {
-          // Show setup pieces
-          piece = setupPieces.find(p => p.position?.x === x && p.position?.y === y);
+          // Show setup pieces (using game coordinates)
+          piece = setupPieces.find(p => p.position?.x === gameX && p.position?.y === gameY);
         } else {
-          // Show game pieces
-          piece = gameState.board[y]?.[x];
+          // Show game pieces (using game coordinates)
+          piece = gameState?.board?.[gameY]?.[gameX];
         }
 
-        const isSelected = selectedSquare?.x === x && selectedSquare?.y === y;
+        // Transform game coordinates to display coordinates
+        const { x: displayX, y: displayY } = transformCoordinatesForDisplay(
+          gameX, 
+          gameY, 
+          playerSide, 
+          boardHeight,
+          boardWidth
+        );
+
+        const isSelected = selectedSquare?.x === gameX && selectedSquare?.y === gameY;
         const isValidMove = validMoves.some(move => {
           if (!move || typeof move.x === 'undefined' || typeof move.y === 'undefined') {
             console.error('Invalid move in validMoves array:', move, 'at index:', validMoves.indexOf(move));
             return false;
           }
-          return move.x === x && move.y === y;
+          return move.x === gameX && move.y === gameY;
         });
-        const isSetupArea = gamePhase === 'setup' && mapData.setupRows?.[playerSide]?.includes(y);
+        const isSetupArea = gamePhase === 'setup' && mapData.setupRows?.[playerSide]?.includes(gameY);
 
-        squares.push(
-          <GameSquare
-            key={`${x}-${y}`}
-            x={x}
-            y={y}
-            piece={piece}
-            playerSide={playerSide}
-            playerArmy={player?.army || selectedArmy}
-            opponentArmy={gameState?.opponentArmy}
-            gamePhase={gamePhase}
-            mapData={mapData}
-            board={gameState?.board}
-            isSelected={isSelected}
-            isValidMove={isValidMove}
-            isSetupArea={isSetupArea}
-            isDragTarget={draggedPiece && isSetupArea && isTerrainPassable(getTerrainType(x, y, mapData))}
-            onClick={() => handleSquareClick(x, y)}
-            onDragStart={() => piece && handleDragStart(piece, x, y)}
-            onDragOver={handleDragOver}
-            onDrop={() => handleDrop(x, y)}
-            onDragEnd={handleDragEnd}
-          />
-        );
+        const square = {
+          displayX,
+          displayY,
+          gameX,
+          gameY,
+          element: (
+            <GameSquare
+              key={`${gameX}-${gameY}`}
+              x={displayX}  // Display coordinates for click handling
+              y={displayY}
+              gameX={gameX}  // Game coordinates for terrain/logic calculations
+              gameY={gameY}
+              piece={piece}
+              playerSide={playerSide}
+              playerArmy={player?.army || selectedArmy}
+              opponentArmy={gameState?.opponentArmy}
+              gamePhase={gamePhase}
+              mapData={mapData}
+              board={gameState?.board}
+              isSelected={isSelected}
+              isValidMove={isValidMove}
+              isSetupArea={isSetupArea}
+              isDragTarget={draggedPiece && isSetupArea && isTerrainPassable(getTerrainType(gameX, gameY, mapData))}
+              onClick={() => handleSquareClick(displayX, displayY)}
+              onDragStart={() => piece && handleDragStart(piece, displayX, displayY)}
+              onDragOver={handleDragOver}
+              onDrop={() => handleDrop(displayX, displayY)}
+              onDragEnd={handleDragEnd}
+            />
+          )
+        };
+        
+        displaySquares.push(square);
       }
     }
-    return squares;
+    
+    // Sort squares by display coordinates for proper grid rendering
+    displaySquares.sort((a, b) => {
+      if (a.displayY !== b.displayY) {
+        return a.displayY - b.displayY; // Sort by row first
+      }
+      return a.displayX - b.displayX; // Then by column
+    });
+    
+    // Extract the sorted elements
+    return displaySquares.map(square => square.element);
   };
 
   const handleArmySelection = (armyId, armyDataObj) => {

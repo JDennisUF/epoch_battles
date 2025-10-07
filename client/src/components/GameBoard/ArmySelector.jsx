@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import UnitViewer from './UnitViewer';
 
 const SelectorContainer = styled.div`
   position: fixed;
@@ -158,6 +159,28 @@ const CancelButton = styled(ActionButton)`
   background: linear-gradient(45deg, #ef4444, #dc2626);
 `;
 
+const ViewUnitsLink = styled.button`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #4ade80;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  z-index: 10;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.9);
+    border-color: #4ade80;
+    transform: scale(1.05);
+  }
+`;
+
 // Army configurations
 const ARMIES = [
   {
@@ -238,6 +261,8 @@ function ArmySelector({ onSelectArmy, onCancel, playerSide }) {
   const [selectedArmy, setSelectedArmy] = useState(null);
   const [armyData, setArmyData] = useState({});
   const [loading, setLoading] = useState(true);
+  const [showUnitViewer, setShowUnitViewer] = useState(false);
+  const [viewingArmy, setViewingArmy] = useState(null);
   
   // Debug: Track when component unmounts unexpectedly
   React.useEffect(() => {
@@ -286,6 +311,19 @@ function ArmySelector({ onSelectArmy, onCancel, playerSide }) {
   const handleArmySelect = (armyId) => {
     console.log('Army card clicked:', armyId);
     setSelectedArmy(armyId);
+  };
+
+  const handleViewUnits = (e, armyId, armyName) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('View units clicked for:', armyId);
+    setViewingArmy({ id: armyId, name: armyName });
+    setShowUnitViewer(true);
+  };
+
+  const handleCloseUnitViewer = () => {
+    setShowUnitViewer(false);
+    setViewingArmy(null);
   };
 
   const handleConfirm = (e) => {
@@ -366,6 +404,12 @@ function ArmySelector({ onSelectArmy, onCancel, playerSide }) {
                 selected={selectedArmy === army.id}
                 onClick={() => handleArmySelect(army.id)}
               >
+                <ViewUnitsLink 
+                  onClick={(e) => handleViewUnits(e, army.id, army.name)}
+                  title="View all units in this army"
+                >
+                  View Units
+                </ViewUnitsLink>
                 <ArmyName>{army.name}</ArmyName>
                 <ArmyDescription>{army.description}</ArmyDescription>
                 
@@ -403,6 +447,14 @@ function ArmySelector({ onSelectArmy, onCancel, playerSide }) {
           </ActionButton>
         </ButtonContainer>
       </SelectorModal>
+
+      {showUnitViewer && viewingArmy && (
+        <UnitViewer
+          armyId={viewingArmy.id}
+          armyName={viewingArmy.name}
+          onClose={handleCloseUnitViewer}
+        />
+      )}
     </SelectorContainer>
   );
 }

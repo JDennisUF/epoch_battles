@@ -369,3 +369,13 @@ docker-compose run --rm client npm test
 - Mobile app (React Native)
 - Social features (friends, clans)
 - Seasonal rankings and rewards
+
+## NO FALLBACKS POLICY
+NEVER implement fallback systems for images, icons, or assets in this project. Fallbacks clutter the code and hide real problems that need to be fixed. If an image fails to load, let it fail visibly so the issue can be identified and resolved properly. This includes:
+- No emoji fallbacks for missing unit images
+- No onError handlers that hide broken images
+- No conditional rendering based on asset availability
+- No placeholder text or symbols when assets fail
+- No graceful degradation - assets should work or be fixed
+
+Assets should be properly provided and functional. If they're missing or broken, that's a problem to be solved, not hidden.

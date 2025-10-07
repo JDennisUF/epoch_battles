@@ -61,7 +61,7 @@
       "symbol": "🐜",
       "description": "Core soldiers of the hive",
       "class": "captain",
-      "abilities": ["veteran"]
+      "abilities": ["flying", { "id": "fleet", "spaces": 3 }]
     },
     "swarm_officer": {
       "id": "swarm_officer",
@@ -73,7 +73,8 @@
       "special": null,
       "symbol": "🦗",
       "description": "Mid-tier hive tactician",
-      "class": "lieutenant"
+      "class": "lieutenant",
+      "abilities": ["veteran"]
     },
     "spitter_beast": {
       "id": "spitter_beast",
