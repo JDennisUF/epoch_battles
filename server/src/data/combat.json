@@ -23,7 +23,7 @@
         "attacker": "spy",
         "defender": "marshal",
         "result": "attacker_wins",
-        "description": "Spy defeats top unit when attacking"
+        "description": "Spy defeats top ranked unit when attacking"
       },
       {
         "attacker": "marshal", 
@@ -42,7 +42,7 @@
         "attacker": "miner",
         "defender": "bomb", 
         "result": "defender_destroyed",
-        "description": "Miners can defuse bombs"
+        "description": "Trap defused!"
       },
       {
         "attacker": "*",

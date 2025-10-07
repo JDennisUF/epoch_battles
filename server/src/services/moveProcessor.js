@@ -658,6 +658,10 @@ class MoveProcessor {
     // Rule #3: Scout adjacency detection
     // Any enemy unit beside a scout at the end of a turn is revealed
     this.revealUnitsAdjacentToScouts(board);
+
+    // Rule #4: Trap Sense detection
+    // Any mine/bomb adjacent to a unit with trap_sense is permanently revealed
+    this.revealTrapsAdjacentToTrapSense(board);
   }
 
   // Check for units adjacent to scouts and reveal them
@@ -709,6 +713,58 @@ class MoveProcessor {
            piece.type === 'creeper' ||
            (piece.special && (piece.special.includes('move multiple spaces') || 
                             piece.special.includes('Moves multiple spaces')));
+  }
+
+  // Check for traps adjacent to trap sense units and reveal them permanently
+  revealTrapsAdjacentToTrapSense(board) {
+    const adjacentOffsets = [
+      { dx: 0, dy: -1 }, // North
+      { dx: 1, dy: 0 },  // East
+      { dx: 0, dy: 1 },  // South
+      { dx: -1, dy: 0 }  // West
+    ];
+
+    for (let y = 0; y < board.length; y++) {
+      for (let x = 0; x < board[y].length; x++) {
+        const piece = board[y][x];
+        
+        // Skip if no piece or piece doesn't have trap_sense ability or miner class
+        if (!piece || !(this.hasAbility(piece, 'trap_sense') || piece.class === 'miner')) continue;
+
+        // Check all adjacent squares for enemy mines/bombs
+        for (const offset of adjacentOffsets) {
+          const adjX = x + offset.dx;
+          const adjY = y + offset.dy;
+          
+          // Check bounds
+          if (adjX < 0 || adjX >= board[0].length || adjY < 0 || adjY >= board.length) continue;
+          
+          const adjacentPiece = board[adjY][adjX];
+          
+          // If there's an enemy mine/bomb adjacent to this trap sense unit, reveal it permanently
+          if (adjacentPiece && 
+              adjacentPiece.side !== piece.side && 
+              this.isMineType(adjacentPiece) &&
+              !adjacentPiece.revealed) {
+            adjacentPiece.revealed = true;
+            const detectorType = this.hasAbility(piece, 'trap_sense') ? 'trap sense' : 'miner';
+            console.log(`🔍 Trap revealed by ${detectorType}: ${adjacentPiece.name} at (${adjX},${adjY}) detected by ${piece.name} at (${x},${y})`);
+          }
+        }
+      }
+    }
+  }
+
+  // Helper method to check if a piece is a mine/bomb type
+  isMineType(piece) {
+    return piece.class === 'bomb' || 
+           piece.class === 'mine' ||
+           piece.type === 'bomb' ||
+           piece.type === 'mine' ||
+           piece.type === 'cursed_rune' ||
+           piece.type === 'trap' ||
+           piece.type === 'plasma_mine' ||
+           piece.type === 'explosives_cache';
   }
 }
 

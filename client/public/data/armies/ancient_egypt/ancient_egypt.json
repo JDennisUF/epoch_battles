@@ -145,7 +145,8 @@
       "special": "Can defeat the Pharaoh when attacking, weakest otherwise.",
       "symbol": "🗡️",
       "description": "Silent killer serving the will of the gods.",
-      "class": "spy"
+      "class": "spy",
+      "abilities": [ { "id": "fleet", "spaces": 2 }, "assassin" ]
     },
     "sacred_relic": {
       "id": "sacred_relic",

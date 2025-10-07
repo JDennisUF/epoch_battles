@@ -21,38 +21,6 @@ const isMineType = (piece) => {
   return piece?.class === 'bomb' || piece?.class === 'mine';
 };
 
-// Helper function to check if this mine should be detected by trap_sense
-const isMineDetectedByTrapSense = (mineX, mineY, board, playerSide) => {
-  const directions = [
-    [0, -1],  // North
-    [1, 0],   // East
-    [0, 1],   // South
-    [-1, 0]   // West
-  ];
-  
-  for (const [dx, dy] of directions) {
-    const adjacentX = mineX + dx;
-    const adjacentY = mineY + dy;
-    
-    // Check bounds
-    if (adjacentX >= 0 && adjacentX < board[0].length && 
-        adjacentY >= 0 && adjacentY < board.length) {
-      const adjacentPiece = board[adjacentY][adjacentX];
-      
-      // Check if adjacent piece is a friendly unit with trap_sense OR is a miner class
-      const canDetectTraps = adjacentPiece && 
-                            adjacentPiece.side === playerSide && 
-                            (hasAbility(adjacentPiece, 'trap_sense') || adjacentPiece.class === 'miner');
-      
-      if (canDetectTraps) {
-        console.log(`🔍 Trap detected at (${mineX},${mineY}) by ${adjacentPiece.type} at (${adjacentX},${adjacentY})`);
-        return true;
-      }
-    }
-  }
-  
-  return false;
-};
 
 // Helper function to check if a piece is adjacent to enemies with Fear
 const getFearPenalty = (piece, x, y, board) => {
@@ -485,37 +453,8 @@ function GameSquare({
   const isWater = terrainType === 'water';
   const clickable = !isWater && (isSetupArea || isValidMove || (piece && piece.side === playerSide));
   
-  // Get the actual piece from the board (not the display piece which might be hidden)
-  const actualPiece = board?.[terrainY]?.[terrainX];
-  
-  // Debug: Log all pieces to see what we're working with
-  if (actualPiece) {
-    console.log(`🔍 Square at (${terrainX},${terrainY}):`, {
-      type: actualPiece.type,
-      class: actualPiece.class,
-      side: actualPiece.side,
-      revealed: actualPiece.revealed,
-      playerSide: playerSide,
-      isMine: isMineType(actualPiece),
-      isEnemyMine: isMineType(actualPiece) && actualPiece.side !== playerSide
-    });
-  }
-  
-  // Check if this mine should be revealed and highlighted due to trap_sense detection
-  const isTrapDetected = actualPiece && 
-                         isMineType(actualPiece) && 
-                         actualPiece.side !== playerSide && 
-                         board && 
-                         isMineDetectedByTrapSense(terrainX, terrainY, board, playerSide);
-
-  // If trap is detected, reveal the mine
-  if (isTrapDetected && actualPiece && !actualPiece.revealed) {
-    actualPiece.revealed = true;
-    console.log(`🔍 Hidden mine revealed by trap sense: ${actualPiece.type} at (${terrainX},${terrainY})`);
-  }
-  
-  // Use actualPiece if it was revealed by trap sense, otherwise use the display piece
-  const pieceToRender = (actualPiece && actualPiece.revealed && actualPiece.side !== playerSide) ? actualPiece : piece;
+  // The server now handles permanent trap detection, so we just use the display piece
+  const pieceToRender = piece;
   
   const renderPiece = () => {
     
