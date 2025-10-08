@@ -4,7 +4,7 @@ import { useSocket } from '../../hooks/useSocket';
 import { useAuth } from '../../hooks/useAuth';
 import GameSquare from './GameSquare';
 import PieceSelector from './PieceSelector';
-import PlacementSelector from './PlacementSelector';
+import SavedPlacementsModal from './SavedPlacementsModal';
 import { GAME_CONFIG, getTerrainType, canMoveTo, generateArmy, loadTerrainData, loadAbilitiesData, isTerrainPassable } from '../../utils/gameLogic';
 import ArmySelector from './ArmySelector';
 import CombatModal from './CombatModal';
@@ -304,6 +304,7 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
   const [draggedPiece, setDraggedPiece] = useState(null);
   const [draggedFromPosition, setDraggedFromPosition] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
+  const [showSavedPlacements, setShowSavedPlacements] = useState(false);
   const { socket } = useSocket();
   const { user } = useAuth();
 
@@ -807,6 +808,7 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
       }));
   };
 
+
   const finalizeSetup = (useRandom) => {
     if (useRandom) {
       // Use random placement and confirm
@@ -1227,6 +1229,16 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
         />
       )}
       
+      <SavedPlacementsModal
+        isOpen={showSavedPlacements}
+        onClose={() => setShowSavedPlacements(false)}
+        mapId={mapData?.id}
+        currentPlacements={getCurrentPlacementData()}
+        onLoadPlacement={handleLoadPlacement}
+        onSavePlacement={handleSavePlacement}
+        expectedPieceCount={setupPieces.length}
+      />
+      
       <BoardContainer>
         <BoardWrapper>
           <Board>{renderBoard()}</Board>
@@ -1245,6 +1257,9 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
                 <>
                   <ActionButton onClick={handleRandomSetup}>
                     Random Setup
+                  </ActionButton>
+                  <ActionButton onClick={() => setShowSavedPlacements(true)}>
+                    Saved Placements
                   </ActionButton>
                   <ActionButton onClick={handleConfirmSetup}>
                     Confirm Setup
@@ -1308,14 +1323,6 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
         {gamePhase === 'setup' && (
           <InfoSection>
             <InfoTitle>Setup</InfoTitle>
-            <PlacementSelector
-              mapId={mapData?.id}
-              currentPlacements={getCurrentPlacementData()}
-              onLoadPlacement={handleLoadPlacement}
-              onSavePlacement={handleSavePlacement}
-              disabled={!hasSelectedArmy || !armyData}
-              expectedPieceCount={setupPieces.length}
-            />
             <PieceSelector
               pieces={setupPieces}
               selectedType={selectedPieceType}
