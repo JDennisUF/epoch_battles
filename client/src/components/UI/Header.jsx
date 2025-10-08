@@ -214,6 +214,12 @@ function Header() {
         >
           Abilities
         </NavLink>
+        <NavLink 
+          to="/help" 
+          className={isActive('/help') ? 'active' : ''}
+        >
+          Help
+        </NavLink>
       </Nav>
 
       <UserInfo>

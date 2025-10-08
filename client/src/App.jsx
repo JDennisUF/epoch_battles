@@ -9,6 +9,7 @@ import Home from './pages/Home';
 import Lobby from './pages/Lobby';
 import Armies from './pages/Armies';
 import Abilities from './pages/Abilities';
+import Help from './pages/Help';
 import Game from './pages/Game';
 import Profile from './pages/Profile';
 
@@ -71,6 +72,14 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <Abilities />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/help" 
+              element={
+                <ProtectedRoute>
+                  <Help />
                 </ProtectedRoute>
               } 
             />
