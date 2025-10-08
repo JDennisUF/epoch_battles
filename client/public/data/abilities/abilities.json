@@ -20,8 +20,8 @@
                 "aggressive"
             ]
         },
-        "fleet": {
-            "name": "Fleet",
+        "mobile": {
+            "name": "Mobile",
             "category": "movement",
             "description": "Can move multiple spaces per turn instead of one.",
             "effect": "May move 1..N tiles each turn (N default 2) but cannot attack after moving more than 1 space.",

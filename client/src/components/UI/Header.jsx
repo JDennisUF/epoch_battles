@@ -77,13 +77,28 @@ const UserInfo = styled.div`
   }
 `;
 
-const Username = styled.span`
+const Username = styled(Link)`
   color: white;
   font-weight: 600;
   font-size: 1.4rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  padding: 8px 12px;
+  border-radius: 6px;
+
+  &:hover {
+    color: #4ade80;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  &.active {
+    color: #4ade80;
+    background: rgba(255, 255, 255, 0.15);
+  }
 
   @media (max-width: 768px) {
     font-size: 1.2rem;
+    padding: 6px 10px;
   }
 
   @media (max-width: 480px) {
@@ -188,10 +203,16 @@ function Header() {
           Lobby
         </NavLink>
         <NavLink 
-          to={`/profile/${user?.username}`}
-          className={location.pathname.startsWith('/profile') ? 'active' : ''}
+          to="/armies" 
+          className={isActive('/armies') ? 'active' : ''}
         >
-          Profile
+          Armies
+        </NavLink>
+        <NavLink 
+          to="/abilities" 
+          className={isActive('/abilities') ? 'active' : ''}
+        >
+          Abilities
         </NavLink>
       </Nav>
 
@@ -203,7 +224,12 @@ function Header() {
         
         {user && (
           <>
-            <Username>{user.username}</Username>
+            <Username 
+              to={`/profile/${user.username}`}
+              className={location.pathname.startsWith('/profile') ? 'active' : ''}
+            >
+              {user.username}
+            </Username>
             <StatsDisplay>
               {user.stats.wins}W - {user.stats.losses}L
             </StatsDisplay>

@@ -209,9 +209,9 @@ export const canMoveTo = (fromX, fromY, toX, toY, board, playerSide, mapData = n
   const dy = Math.abs(toY - fromY);
   if (dx > 0 && dy > 0) return false;
 
-  // Distance check - handle Charge attacks and Fleet movement separately
+  // Distance check - handle Charge attacks and Mobile movement separately
   const distance = Math.max(dx, dy);
-  const movementRange = getFleetMovementRange(piece);
+  const movementRange = getMobileMovementRange(piece);
   const canMoveMultipleSpaces = movementRange > 1;
   const hasCharge = hasAbility(piece, 'charge');
   const hasSniper = hasAbility(piece, 'sniper');
@@ -221,7 +221,7 @@ export const canMoveTo = (fromX, fromY, toX, toY, board, playerSide, mapData = n
     // Charge or Sniper allows attacks up to 2 squares away
     if (distance > 2) return false;
   } else {
-    // Normal movement/attack uses Fleet range (or 1 if no Fleet)
+    // Normal movement/attack uses Mobile range (or 1 if no Mobile)
     if (distance > movementRange) return false;
   }
 
@@ -239,7 +239,17 @@ export const canMoveTo = (fromX, fromY, toX, toY, board, playerSide, mapData = n
       const checkY = fromY + stepY * i;
       
       // Check if square is occupied
-      if (board[checkY]?.[checkX]) return false;
+      const occupyingPiece = board[checkY]?.[checkX];
+      if (occupyingPiece) {
+        // Flying units can pass over allied units, but not enemy units
+        if (hasFlying && occupyingPiece.side === playerSide) {
+          // Flying unit can pass over allied unit, continue checking path
+          continue;
+        } else {
+          // Non-flying unit or enemy unit blocks the path
+          return false;
+        }
+      }
       
       // Check if path goes through water (only allowed with Flying or Sniper attacks)
       const pathTerrain = getTerrainType(checkX, checkY, currentMapData);
@@ -247,8 +257,8 @@ export const canMoveTo = (fromX, fromY, toX, toY, board, playerSide, mapData = n
     }
   }
 
-  // Fleet restriction: cannot attack after moving more than 1 space
-  if (isAttack && distance > 1 && hasAbility(piece, 'fleet')) {
+  // Mobile restriction: cannot attack after moving more than 1 space
+  if (isAttack && distance > 1 && hasAbility(piece, 'mobile')) {
     return false;
   }
 
@@ -292,7 +302,7 @@ export const loadAbilitiesData = async () => {
       // Fallback abilities data
       abilitiesData = {
         abilities: {
-          fleet: {
+          mobile: {
             parameters: {
               spaces: { default: 2 }
             }
@@ -318,28 +328,28 @@ export const hasAbility = (piece, abilityName) => {
   });
 };
 
-// Get Fleet movement range for a piece
-export const getFleetMovementRange = (piece) => {
-  if (!hasAbility(piece, 'fleet')) {
+// Get Mobile movement range for a piece
+export const getMobileMovementRange = (piece) => {
+  if (!hasAbility(piece, 'mobile')) {
     return 1; // Default movement
   }
   
-  // Find the Fleet ability in the piece's abilities array
-  const fleetAbility = piece.abilities.find(ability => {
+  // Find the Mobile ability in the piece's abilities array
+  const mobileAbility = piece.abilities.find(ability => {
     if (typeof ability === 'object') {
-      return ability.id === 'fleet';
+      return ability.id === 'mobile';
     }
-    return ability === 'fleet';
+    return ability === 'mobile';
   });
   
-  // If Fleet ability has custom spaces parameter, use it
-  if (fleetAbility && typeof fleetAbility === 'object' && fleetAbility.spaces) {
-    return fleetAbility.spaces;
+  // If Mobile ability has custom spaces parameter, use it
+  if (mobileAbility && typeof mobileAbility === 'object' && mobileAbility.spaces) {
+    return mobileAbility.spaces;
   }
   
-  // Default Fleet movement from abilities.json
-  if (abilitiesData && abilitiesData.abilities.fleet) {
-    return abilitiesData.abilities.fleet.parameters.spaces.default;
+  // Default Mobile movement from abilities.json
+  if (abilitiesData && abilitiesData.abilities.mobile) {
+    return abilitiesData.abilities.mobile.parameters.spaces.default;
   }
   
   // Final fallback

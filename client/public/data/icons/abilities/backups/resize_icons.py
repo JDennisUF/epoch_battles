@@ -22,7 +22,7 @@ def get_file_size_kb(filepath):
     """Get file size in kilobytes."""
     return os.path.getsize(filepath) / 1024
 
-def resize_image(input_path, output_path, size=(24, 24)):
+def resize_image(input_path, output_path, size=(48, 48)):
     """Resize image to specified size with high-quality resampling."""
     try:
         with Image.open(input_path) as img:
@@ -37,8 +37,8 @@ def resize_image(input_path, output_path, size=(24, 24)):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Resize larger PNG icons to a square size, writing *_<pixels>.png variants.")
-    parser.add_argument("--pixels", "-p", type=int, default=24,
-                        help="Square dimension in pixels (default: 24 → produces size PxP).")
+    parser.add_argument("--pixels", "-p", type=int, default=48,
+                        help="Square dimension in pixels (default: 48 → produces size PxP).")
     parser.add_argument("--threshold-kb", "-t", type=float, default=50,
                         help="Only resize files strictly larger than this size in KB (default: 50).")
     parser.add_argument("--force", "-f", action="store_true",

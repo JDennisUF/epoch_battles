@@ -33,27 +33,27 @@ class GameLogic {
     });
   }
 
-  // Get Fleet movement range for a piece
-  getFleetMovementRange(piece) {
-    if (!this.hasAbility(piece, 'fleet')) {
+  // Get Mobile movement range for a piece
+  getMobileMovementRange(piece) {
+    if (!this.hasAbility(piece, 'mobile')) {
       return 1; // Default movement
     }
     
-    // Find the Fleet ability in the piece's abilities array
-    const fleetAbility = piece.abilities.find(ability => {
+    // Find the Mobile ability in the piece's abilities array
+    const mobileAbility = piece.abilities.find(ability => {
       if (typeof ability === 'object') {
-        return ability.id === 'fleet';
+        return ability.id === 'mobile';
       }
-      return ability === 'fleet';
+      return ability === 'mobile';
     });
     
-    // If Fleet ability has custom spaces parameter, use it
-    if (fleetAbility && typeof fleetAbility === 'object' && fleetAbility.spaces) {
-      return fleetAbility.spaces;
+    // If Mobile ability has custom spaces parameter, use it
+    if (mobileAbility && typeof mobileAbility === 'object' && mobileAbility.spaces) {
+      return mobileAbility.spaces;
     }
     
-    // Default Fleet movement from abilities.json
-    return this.abilities.fleet.parameters.spaces.default;
+    // Default Mobile movement from abilities.json
+    return this.abilities.mobile.parameters.spaces.default;
   }
 
   // Load army data by ID
@@ -284,7 +284,7 @@ class GameLogic {
     }
 
     // Get movement range for this piece
-    const movementRange = this.getFleetMovementRange(piece);
+    const movementRange = this.getMobileMovementRange(piece);
     const canMoveMultipleSpaces = movementRange > 1;
     
     // Check movement distance and direction
@@ -309,7 +309,7 @@ class GameLogic {
         return { valid: false, reason: `${abilityName} attack too far (max 2 squares)` };
       }
     } else {
-      // Normal movement/attack uses Fleet range (or 1 if no Fleet)
+      // Normal movement/attack uses Mobile range (or 1 if no Mobile)
       if (distance > movementRange) {
         return { valid: false, reason: 'Move too far' };
       }
@@ -323,15 +323,15 @@ class GameLogic {
       }
     }
     
-    // Fleet restriction: cannot attack after moving more than 1 space
-    if (isAttack && distance > 1 && this.hasAbility(piece, 'fleet')) {
+    // Mobile restriction: cannot attack after moving more than 1 space
+    if (isAttack && distance > 1 && this.hasAbility(piece, 'mobile')) {
       return { valid: false, reason: 'Cannot attack after moving multiple spaces' };
     }
     
     return { valid: true, isAttack };
   }
 
-  // Check if path is clear for Fleet movement
+  // Check if path is clear for Mobile movement
   isPathClear(board, fromX, fromY, toX, toY, mapData, piece) {
     const dx = toX - fromX;
     const dy = toY - fromY;
@@ -347,8 +347,16 @@ class GameLogic {
       const checkY = fromY + (stepY * i);
       
       // Check if square is occupied by another piece
-      if (board[checkY][checkX] !== null) {
-        return { valid: false, reason: 'Path blocked' };
+      const occupyingPiece = board[checkY][checkX];
+      if (occupyingPiece !== null) {
+        // Flying units can pass over allied units, but not enemy units
+        if (hasFlying && occupyingPiece.side === piece.side) {
+          // Flying unit can pass over allied unit, continue checking path
+          continue;
+        } else {
+          // Non-flying unit or enemy unit blocks the path
+          return { valid: false, reason: 'Path blocked' };
+        }
       }
       
       // Check if square has water terrain

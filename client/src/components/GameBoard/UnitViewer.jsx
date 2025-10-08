@@ -109,6 +109,28 @@ const UnitImage = styled.img`
   object-fit: cover;
 `;
 
+const AbilityIndicator = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['position'].includes(prop)
+})`
+  position: absolute;
+  ${props => props.position === 'topLeft' ? 'top: 4px; left: 4px;' : ''}
+  ${props => props.position === 'topRight' ? 'top: 4px; right: 4px;' : ''}
+  ${props => props.position === 'bottomLeft' ? 'bottom: 4px; left: 4px;' : ''}
+  ${props => props.position === 'bottomRight' ? 'bottom: 4px; right: 4px;' : ''}
+  background: transparent;
+  z-index: 3;
+  line-height: 1;
+`;
+
+const AbilityIconSmall = styled.img`
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.8));
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+`;
+
 
 const UnitInfo = styled.div`
   flex: 1;
@@ -182,7 +204,7 @@ const AbilityItem = styled.div`
   border: 1px solid rgba(255, 255, 255, 0.1);
 `;
 
-const AbilityIcon = styled.img`
+const AbilityIconLarge = styled.img`
   width: 48px;
   height: 48px;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
@@ -250,6 +272,162 @@ function UnitViewer({ armyId, armyName, onClose }) {
     }
   }, [armyId]);
 
+  // Helper function to check if piece has a specific ability
+  const hasAbility = (piece, abilityName) => {
+    if (!piece?.abilities) return false;
+    
+    return piece.abilities.some(ability => {
+      if (typeof ability === 'string') {
+        return ability === abilityName;
+      } else if (typeof ability === 'object') {
+        return ability.id === abilityName;
+      }
+      return false;
+    });
+  };
+
+  // Helper function to render ability indicators on unit image
+  const renderAbilityIndicators = (unitData) => {
+    const indicators = [];
+    
+    if (hasAbility(unitData, 'flying')) {
+      indicators.push(
+        <AbilityIndicator 
+          key="flying" 
+          position="topLeft"
+        >
+          <AbilityIconSmall 
+            src="/data/icons/abilities/flying_48.png"
+            alt="Flying"
+            title="Flying: Can move over water terrain"
+          />
+        </AbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(unitData, 'mobile')) {
+      indicators.push(
+        <AbilityIndicator 
+          key="mobile" 
+          position="bottomRight"
+        >
+          <AbilityIconSmall 
+            src="/data/icons/abilities/mobile_48.png"
+            alt="Mobile"
+            title="Mobile: Can move multiple spaces"
+          />
+        </AbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(unitData, 'charge')) {
+      indicators.push(
+        <AbilityIndicator 
+          key="charge" 
+          position="topRight"
+        >
+          <AbilityIconSmall 
+            src="/data/icons/abilities/charge_48.png"
+            alt="Charge"
+            title="Charge: Can attack units 2 squares away"
+          />
+        </AbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(unitData, 'sniper')) {
+      indicators.push(
+        <AbilityIndicator 
+          key="sniper" 
+          position="topRight"
+        >
+          <AbilityIconSmall 
+            src="/data/icons/abilities/sniper_48.png"
+            alt="Sniper"
+            title="Sniper: Can attack units 2 squares away, shoots over water"
+          />
+        </AbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(unitData, 'fear')) {
+      indicators.push(
+        <AbilityIndicator 
+          key="fear" 
+          position="topLeft"
+        >
+          <AbilityIconSmall 
+            src="/data/icons/abilities/fear_48.png"
+            alt="Fear"
+            title="Fear: Adjacent enemies lose 1 rank in combat"
+          />
+        </AbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(unitData, 'curse')) {
+      indicators.push(
+        <AbilityIndicator 
+          key="curse" 
+          position="bottomLeft"
+        >
+          <AbilityIconSmall 
+            src="/data/icons/abilities/curse_48.png"
+            alt="Curse"
+            title="Curse: Units that defeat this unit are permanently weakened"
+          />
+        </AbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(unitData, 'veteran')) {
+      indicators.push(
+        <AbilityIndicator 
+          key="veteran" 
+          position="topRight"
+        >
+          <AbilityIconSmall 
+            src="/data/icons/abilities/veteran_48.png"
+            alt="Veteran"
+            title="Veteran: Gets stronger when defeating enemies"
+          />
+        </AbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(unitData, 'trap_sense')) {
+      indicators.push(
+        <AbilityIndicator 
+          key="trap_sense" 
+          position="bottomLeft"
+        >
+          <AbilityIconSmall 
+            src="/data/icons/abilities/trap_sense_48.png"
+            alt="Trap Sense"
+            title="Trap Sense: Can detect and avoid traps"
+          />
+        </AbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(unitData, 'assassin')) {
+      indicators.push(
+        <AbilityIndicator 
+          key="assassin" 
+          position="bottomLeft"
+        >
+          <AbilityIconSmall 
+            src="/data/icons/abilities/assassin_48.png"
+            alt="Assassin"
+            title="Assassin: Can eliminate high-ranking targets"
+          />
+        </AbilityIndicator>
+      );
+    }
+    
+    return indicators;
+  };
+
   const getAbilityInfo = (ability) => {
     const abilityId = typeof ability === 'string' ? ability : ability.id;
     
@@ -260,13 +438,13 @@ function UnitViewer({ armyId, armyName, onClose }) {
           description: 'Can move over water terrain',
           icon: '/data/icons/abilities/flying_48.png'
         };
-      case 'fleet':
+      case 'mobile':
         // Check if ability has custom spaces parameter
         const spaces = (typeof ability === 'object' && ability.spaces) ? ability.spaces : 2; // Default to 2 if not specified
         return { 
-          name: 'Fleet', 
+          name: 'Mobile', 
           description: `Can move ${spaces} spaces`,
-          icon: '/data/icons/abilities/fleet_48.png'
+          icon: '/data/icons/abilities/mobile_48.png'
         };
       case 'charge':
         return { 
@@ -324,16 +502,16 @@ function UnitViewer({ armyId, armyName, onClose }) {
       return '-';
     }
     
-    // Check if unit has Fleet ability
+    // Check if unit has Mobile ability
     if (unitData.abilities) {
-      const fleetAbility = unitData.abilities.find(ability => {
+      const mobileAbility = unitData.abilities.find(ability => {
         const abilityId = typeof ability === 'string' ? ability : ability.id;
-        return abilityId === 'fleet';
+        return abilityId === 'mobile';
       });
       
-      if (fleetAbility) {
-        // Return custom spaces if specified, otherwise default Fleet movement
-        return (typeof fleetAbility === 'object' && fleetAbility.spaces) ? fleetAbility.spaces : 2;
+      if (mobileAbility) {
+        // Return custom spaces if specified, otherwise default Mobile movement
+        return (typeof mobileAbility === 'object' && mobileAbility.spaces) ? mobileAbility.spaces : 2;
       }
     }
     
@@ -352,6 +530,7 @@ function UnitViewer({ armyId, armyName, onClose }) {
               src={imagePath}
               alt={unitData.name || unitId}
             />
+            {renderAbilityIndicators(unitData)}
           </UnitImageContainer>
           
           <UnitInfo>
@@ -360,10 +539,6 @@ function UnitViewer({ armyId, armyName, onClose }) {
               <UnitDetail>
                 <DetailLabel>Rank</DetailLabel>
                 <DetailValue>{unitData.rank || 'N/A'}</DetailValue>
-              </UnitDetail>
-              <UnitDetail>
-                <DetailLabel>Count</DetailLabel>
-                <DetailValue>{unitData.count || 1}</DetailValue>
               </UnitDetail>
               <UnitDetail>
                 <DetailLabel>Class</DetailLabel>
@@ -395,7 +570,7 @@ function UnitViewer({ armyId, armyName, onClose }) {
                 const abilityInfo = getAbilityInfo(ability);
                 return (
                   <AbilityItem key={index}>
-                    <AbilityIcon 
+                    <AbilityIconLarge 
                       src={abilityInfo.icon}
                       alt={abilityInfo.name}
                     />

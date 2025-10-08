@@ -10,7 +10,7 @@ This directory contains PNG icons for special unit abilities.
 - **Purpose**: Indicates units that can move over water terrain
 - **Position**: Top-left corner of unit
 
-### fleet.png  
+### mobile.png  
 - **Size**: 24x24 pixels (displayed at 20x20px)
 - **Design**: Lightning bolt with shadow and highlights in bright yellow/gold
 - **Purpose**: Indicates units that can move multiple spaces
@@ -24,4 +24,4 @@ This directory contains PNG icons for special unit abilities.
 - Test visibility over both light and dark unit images
 
 ## Fallback:
-If PNG files fail to load, the system will fall back to emoji characters (🪽 for flying, ⚡ for fleet).
+If PNG files fail to load, the system will fall back to emoji characters (🪽 for flying, ⚡ for mobile).

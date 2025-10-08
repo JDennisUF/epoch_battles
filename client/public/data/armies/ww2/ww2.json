@@ -107,7 +107,7 @@
       "description": "Fast-moving reconnaissance unit skilled at spotting enemy positions.",
       "abilities": [
         {
-          "id": "fleet",
+          "id": "mobile",
           "spaces": 9
         }
       ]
@@ -122,7 +122,7 @@
       "canAttack": true,
       "special": "Defeats the Supreme Commander when attacking.",
       "description": "A covert agent capable of taking down the top brass when striking first.",
-      "abilities": [ { "id": "fleet", "spaces": 2 }, "assassin" ]
+      "abilities": [ { "id": "mobile", "spaces": 2 }, "assassin" ]
     },
     "command_flag": {
       "id": "command_flag",

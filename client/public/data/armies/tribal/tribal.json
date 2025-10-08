@@ -126,7 +126,7 @@
       "class": "scout",
       "abilities": [
         {
-          "id": "fleet",
+          "id": "mobile",
           "spaces": 9
         }
       ]
@@ -142,7 +142,7 @@
       "symbol": "🌑",
       "description": "Stealthy assassin hidden in the night",
       "class": "spy",
-      "abilities": [ { "id": "fleet", "spaces": 2 }, "assassin" ]
+      "abilities": [ { "id": "mobile", "spaces": 2 }, "assassin" ]
     },
     "tribal_totem": {
       "id": "tribal_totem",

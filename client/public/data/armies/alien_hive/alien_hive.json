@@ -61,7 +61,7 @@
       "symbol": "🐜",
       "description": "Core soldiers of the hive",
       "class": "captain",
-      "abilities": ["flying", { "id": "fleet", "spaces": 3 }]
+      "abilities": ["flying", { "id": "mobile", "spaces": 3 }]
     },
     "swarm_officer": {
       "id": "swarm_officer",
@@ -114,7 +114,7 @@
       "description": "Fast-moving swarm units",
       "class": "scout",
       "abilities": [
-        { "id": "fleet", "spaces": 9 }
+        { "id": "mobile", "spaces": 9 }
       ]
     },
     "brain_leech": {
@@ -128,7 +128,7 @@
       "symbol": "🧠",
       "description": "Parasitic psychic assassin",
       "class": "spy",
-      "abilities": [ { "id": "fleet", "spaces": 2 }, "assassin" ]
+      "abilities": [ { "id": "mobile", "spaces": 2 }, "assassin" ]
     },
     "egg_cluster": {
       "id": "egg_cluster",

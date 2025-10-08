@@ -1,14 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 
-const ChatContainer = styled.div`
+const ChatContainer = styled.div.withConfig({
+  shouldForwardProp: (prop) => prop !== 'gamePhase'
+})`
   display: flex;
   flex-direction: column;
   background: linear-gradient(145deg, #4a5d4a 0%, #3e4a3b 100%);
   border: 2px solid #5a6c57;
   border-radius: 10px;
   padding: 15px;
-  height: 300px;
+  height: ${props => props.gamePhase === 'playing' ? '450px' : '300px'};
   min-width: 280px;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 `;
@@ -152,7 +154,7 @@ const EmptyState = styled.div`
   font-size: 0.9rem;
 `;
 
-function ChatBox({ messages = [], onSendMessage, currentUserId, players = [] }) {
+function ChatBox({ messages = [], onSendMessage, currentUserId, players = [], gamePhase = 'setup' }) {
   const [inputText, setInputText] = useState('');
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -195,7 +197,7 @@ function ChatBox({ messages = [], onSendMessage, currentUserId, players = [] }) 
   };
 
   return (
-    <ChatContainer>
+    <ChatContainer gamePhase={gamePhase}>
       <ChatHeader>Game Chat</ChatHeader>
       
       <MessagesContainer>

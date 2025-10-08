@@ -112,7 +112,7 @@
       "symbol": "\ud83d\udc0e",
       "description": "Fast mounted messenger",
       "class": "scout",
-      "abilities": [ { "id": "fleet", "spaces": 9 } ]
+      "abilities": [ { "id": "mobile", "spaces": 9 } ]
     },
     "assassin": {
       "id": "assassin",
@@ -125,7 +125,7 @@
       "symbol": "\ud83d\udde1",
       "description": "Secret killer trained for high-profile targets",
       "class": "spy",
-      "abilities": [ { "id": "fleet", "spaces": 2 }, "assassin" ]
+      "abilities": [ { "id": "mobile", "spaces": 2 }, "assassin" ]
     },
     "banner": {
       "id": "banner",

@@ -104,16 +104,16 @@ const renderAbilityIndicators = (piece) => {
     );
   }
   
-  if (hasAbility(piece, 'fleet')) {
+  if (hasAbility(piece, 'mobile')) {
     indicators.push(
       <AbilityIndicator 
-        key="fleet" 
+        key="mobile" 
         position="bottomRight"
       >
         <AbilityIcon 
-          src="/data/icons/abilities/fleet.png"
-          alt="Fleet"
-          title="Fleet: Can move multiple spaces"
+          src="/data/icons/abilities/mobile.png"
+          alt="Mobile"
+          title="Mobile: Can move multiple spaces"
           onError={(e) => {
             // Fallback to emoji if PNG fails to load
             e.target.style.display = 'none';

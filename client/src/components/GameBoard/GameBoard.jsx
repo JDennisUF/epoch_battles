@@ -895,8 +895,8 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
       switch (ability) {
         case 'flying':
           return { name: 'Flying', description: 'Can move over water terrain', icon: '/data/icons/abilities/flying.png' };
-        case 'fleet':
-          return { name: 'Fleet', description: 'Can move multiple spaces', icon: '/data/icons/abilities/fleet.png' };
+        case 'mobile':
+          return { name: 'Mobile', description: 'Can move multiple spaces', icon: '/data/icons/abilities/mobile.png' };
         case 'trap_sense':
           return { name: 'Trap Sense', description: 'Can detect and avoid traps', icon: '/data/icons/abilities/trap_sense.png' };
         case 'assassin':
@@ -916,7 +916,7 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
       }
     } else if (typeof ability === 'object') {
       const baseInfo = getAbilityInfo(ability.id);
-      if (ability.id === 'fleet' && ability.spaces) {
+      if (ability.id === 'mobile' && ability.spaces) {
         return { ...baseInfo, description: `Can move up to ${ability.spaces} spaces` };
       }
       return baseInfo;
@@ -1353,6 +1353,7 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
             onSendMessage={handleSendChatMessage}
             currentUserId={user.id}
             players={localPlayers}
+            gamePhase={gamePhase}
           />
         </InfoSection>
       </GameInfo>

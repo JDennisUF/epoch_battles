@@ -7,6 +7,8 @@ import { SocketProvider } from './hooks/useSocket';
 
 import Home from './pages/Home';
 import Lobby from './pages/Lobby';
+import Armies from './pages/Armies';
+import Abilities from './pages/Abilities';
 import Game from './pages/Game';
 import Profile from './pages/Profile';
 
@@ -53,6 +55,22 @@ function AppRoutes() {
               element={
                 <ProtectedRoute>
                   <Lobby />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/armies" 
+              element={
+                <ProtectedRoute>
+                  <Armies />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/abilities" 
+              element={
+                <ProtectedRoute>
+                  <Abilities />
                 </ProtectedRoute>
               } 
             />

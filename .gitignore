@@ -47,3 +47,6 @@ temp/
 
 # Backup files
 *.backup 
+
+# Ignore any folder named "backups" (recursively) and its contents
+**/backups/*.png
