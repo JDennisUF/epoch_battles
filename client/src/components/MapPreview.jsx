@@ -45,7 +45,9 @@ const MapGrid = styled.div`
   margin-bottom: 15px;
 `;
 
-const MapSquare = styled.div`
+const MapSquare = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['terrain', 'isSetupArea'].includes(prop)
+})`
   aspect-ratio: 1;
   border-radius: 2px;
   background-color: ${props => {

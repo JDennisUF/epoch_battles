@@ -128,7 +128,9 @@ const MiniMapGrid = styled.div`
   margin-bottom: 12px;
 `;
 
-const MiniMapSquare = styled.div`
+const MiniMapSquare = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['terrain', 'isSetupArea'].includes(prop)
+})`
   aspect-ratio: 1;
   border-radius: 1px;
   background-color: ${props => {

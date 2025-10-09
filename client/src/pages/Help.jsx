@@ -472,7 +472,6 @@ function Help() {
               <SubTitle>Reconnaissance Rules:</SubTitle>
               <RulesList>
                 <RuleItem><strong>Combat Revelation:</strong> Any unit engaged in battle reveals its identity to both players</RuleItem>
-                <RuleItem><strong>Mobile Detection:</strong> Units moving more than 1 space reveal themselves (Mobile ability)</RuleItem>
                 <RuleItem><strong>Scout Surveillance:</strong> Enemy units adjacent to Scouts are automatically identified</RuleItem>
                 <RuleItem><strong>Intelligence Value:</strong> Use revealed information to plan your strategy</RuleItem>
               </RulesList>
