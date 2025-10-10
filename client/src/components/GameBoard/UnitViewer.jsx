@@ -432,18 +432,20 @@ function UnitViewer({ armyId, armyName, onClose }) {
       const tokens = (typeof reconAbility === 'object') ? 
         (reconAbility.remainingTokens !== undefined ? reconAbility.remainingTokens : reconAbility.tokens) || 1 : 1;
       
-      indicators.push(
-        <AbilityIndicator 
-          key="recon" 
-          position="topRight"
-        >
-          <AbilityIconSmall 
-            src="/data/icons/abilities/recon_48.png"
-            alt="Recon"
-            title={`Recon: Can reveal ${tokens} enemy units per game`}
-          />
-        </AbilityIndicator>
-      );
+      if (tokens > 0) {
+        indicators.push(
+          <AbilityIndicator 
+            key="recon" 
+            position="topRight"
+          >
+            <AbilityIconSmall 
+              src="/data/icons/abilities/recon_48.png"
+              alt="Recon"
+              title={`Recon: Can reveal ${tokens} enemy units per game`}
+            />
+          </AbilityIndicator>
+        );
+      }
     }
     
     return indicators;

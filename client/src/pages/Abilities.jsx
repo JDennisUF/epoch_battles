@@ -828,18 +828,20 @@ function Abilities() {
       const tokens = (typeof reconAbility === 'object') ? 
         (reconAbility.remainingTokens !== undefined ? reconAbility.remainingTokens : reconAbility.tokens) || 1 : 1;
       
-      indicators.push(
-        <AbilityIndicator 
-          key="recon" 
-          position="topRight"
-        >
-          <AbilityIconSmall 
-            src="/data/icons/abilities/recon_48.png"
-            alt="Recon"
-            title={`Recon: Can reveal ${tokens} enemy units per game`}
-          />
-        </AbilityIndicator>
-      );
+      if (tokens > 0) {
+        indicators.push(
+          <AbilityIndicator 
+            key="recon" 
+            position="topRight"
+          >
+            <AbilityIconSmall 
+              src="/data/icons/abilities/recon_48.png"
+              alt="Recon"
+              title={`Recon: Can reveal ${tokens} enemy units per game`}
+            />
+          </AbilityIndicator>
+        );
+      }
     }
     
     return indicators;
@@ -985,18 +987,26 @@ function Abilities() {
     }
     
     if (hasAbility(unitData, 'recon')) {
-      indicators.push(
-        <SmallAbilityIndicator 
-          key="recon" 
-          position="topRight"
-        >
-          <SmallAbilityIcon 
-            src="/data/icons/abilities/recon_48.png"
-            alt="Recon"
-            title="Recon"
-          />
-        </SmallAbilityIndicator>
+      const reconAbility = unitData.abilities.find(ability => 
+        (typeof ability === 'object' && ability.id === 'recon') || ability === 'recon'
       );
+      const tokens = (typeof reconAbility === 'object') ? 
+        (reconAbility.remainingTokens !== undefined ? reconAbility.remainingTokens : reconAbility.tokens) || 1 : 1;
+      
+      if (tokens > 0) {
+        indicators.push(
+          <SmallAbilityIndicator 
+            key="recon" 
+            position="topRight"
+          >
+            <SmallAbilityIcon 
+              src="/data/icons/abilities/recon_48.png"
+              alt="Recon"
+              title="Recon"
+            />
+          </SmallAbilityIndicator>
+        );
+      }
     }
     
     return indicators;

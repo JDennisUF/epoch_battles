@@ -1161,18 +1161,20 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
     
     if (hasAbility(piece, 'recon')) {
       const tokens = getReconTokens(piece);
-      indicators.push(
-        <SelectedUnitAbilityIndicator 
-          key="recon" 
-          position="topRight"
-        >
-          <SelectedUnitAbilityIcon 
-            src="/data/icons/abilities/recon.png"
-            alt="Recon"
-            title={`Recon: Can reveal ${tokens} enemy units per game`}
-          />
-        </SelectedUnitAbilityIndicator>
-      );
+      if (tokens > 0) {
+        indicators.push(
+          <SelectedUnitAbilityIndicator 
+            key="recon" 
+            position="topRight"
+          >
+            <SelectedUnitAbilityIcon 
+              src="/data/icons/abilities/recon.png"
+              alt="Recon"
+              title={`Recon: Can reveal ${tokens} enemy units per game`}
+            />
+          </SelectedUnitAbilityIndicator>
+        );
+      }
     }
     
     return indicators;

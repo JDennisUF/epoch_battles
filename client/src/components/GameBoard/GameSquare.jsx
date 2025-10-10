@@ -217,18 +217,21 @@ const renderAbilityIndicators = (piece) => {
   }
   
   if (hasAbility(piece, 'recon')) {
-    indicators.push(
-      <AbilityIndicator 
-        key="recon" 
-        position="topRight"
-      >
-        <AbilityIcon 
-          src="/data/icons/abilities/recon.png"
-          alt="Recon"
-          title="Recon: Can reveal hidden enemy units"
-        />
-      </AbilityIndicator>
-    );
+    const tokens = getReconTokens(piece);
+    if (tokens > 0) {
+      indicators.push(
+        <AbilityIndicator 
+          key="recon" 
+          position="topRight"
+        >
+          <AbilityIcon 
+            src="/data/icons/abilities/recon.png"
+            alt="Recon"
+            title="Recon: Can reveal hidden enemy units"
+          />
+        </AbilityIndicator>
+      );
+    }
   }
   
   return indicators;
