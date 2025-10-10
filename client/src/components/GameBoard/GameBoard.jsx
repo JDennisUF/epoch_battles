@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import GameSquare from './GameSquare';
 import PieceSelector from './PieceSelector';
 import SavedPlacementsModal from './SavedPlacementsModal';
-import { GAME_CONFIG, getTerrainType, canMoveTo, generateArmy, loadTerrainData, loadAbilitiesData, isTerrainPassable } from '../../utils/gameLogic';
+import { GAME_CONFIG, getTerrainType, canMoveTo, generateArmy, loadTerrainData, loadAbilitiesData, isTerrainPassable, hasAbility, getReconTokens, arePositionsAdjacent } from '../../utils/gameLogic';
 import ArmySelector from './ArmySelector';
 import CombatModal from './CombatModal';
 import GameResultModal from './GameResultModal';
@@ -205,6 +205,7 @@ const UnitImageContainer = styled.div`
   display: flex;
   justify-content: center;
   margin-bottom: 10px;
+  position: relative;
 `;
 
 const UnitImage = styled.img`
@@ -256,6 +257,28 @@ const AbilityIconSmall = styled.img`
   filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.8));
 `;
 
+const SelectedUnitAbilityIndicator = styled.div.withConfig({
+  shouldForwardProp: (prop) => !['position'].includes(prop)
+})`
+  position: absolute;
+  ${props => props.position === 'topLeft' ? 'top: 4px; left: 4px;' : ''}
+  ${props => props.position === 'topRight' ? 'top: 4px; right: 4px;' : ''}
+  ${props => props.position === 'bottomLeft' ? 'bottom: 4px; left: 4px;' : ''}
+  ${props => props.position === 'bottomRight' ? 'bottom: 4px; right: 4px;' : ''}
+  background: transparent;
+  z-index: 3;
+  line-height: 1;
+`;
+
+const SelectedUnitAbilityIcon = styled.img`
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.8));
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+`;
+
 const BackButton = styled.button`
   background: linear-gradient(135deg, #8b7355 0%, #6b5b3c 100%);
   border: 2px solid #5a4a3a;
@@ -290,6 +313,7 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
   const [gameState, setGameState] = useState(initialGameState);
   const [selectedSquare, setSelectedSquare] = useState(null);
   const [validMoves, setValidMoves] = useState([]);
+  const [reconMode, setReconMode] = useState(null); // { piece: pieceData, fromX, fromY }
   const [setupPieces, setSetupPieces] = useState([]);
   const [selectedPieceType, setSelectedPieceType] = useState(null);
   const [selectedArmy, setSelectedArmy] = useState(null);
@@ -454,6 +478,25 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
       console.log('Game finished event received, result will be shown after combat modal closes');
     };
 
+    const handleReconUsed = (data) => {
+      console.log('Recon used:', data);
+      // Update game state with revealed unit and decremented tokens
+      setGameState(data.gameState);
+      // Exit recon mode
+      setReconMode(null);
+      setSelectedSquare(null);
+      setValidMoves([]);
+    };
+
+    const handleReconError = (data) => {
+      console.error('Recon error:', data);
+      alert(`Recon error: ${data.message}`);
+      // Exit recon mode on error
+      setReconMode(null);
+      setSelectedSquare(null);
+      setValidMoves([]);
+    };
+
     const handleRandomPlacement = (data) => {
       console.log('Received random placement:', data.pieces);
       setSetupPieces(data.pieces);
@@ -521,6 +564,8 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
       console.error('Chat error:', data);
       alert(`Chat error: ${data.message}`);
     });
+    socket.on('recon_used', handleReconUsed);
+    socket.on('recon_error', handleReconError);
 
     return () => {
       socket.off('pieces_placed', handlePiecesPlaced);
@@ -534,6 +579,8 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
       socket.off('army_selection_error', handleArmySelectionError);
       socket.off('chat_message', handleChatMessage);
       socket.off('chat_error');
+      socket.off('recon_used', handleReconUsed);
+      socket.off('recon_error', handleReconError);
     };
   }, [socket]);
 
@@ -688,11 +735,59 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
     const board = gameState.board;
     const clickedPiece = board[y]?.[x];
 
+    // Handle Recon mode
+    if (reconMode) {
+      // Check if clicking on enemy piece that is not adjacent to recon unit
+      if (clickedPiece && clickedPiece.side !== playerSide && !clickedPiece.revealed) {
+        const { fromX, fromY } = reconMode || {};
+        
+        // Ensure coordinates are valid
+        if (fromX === undefined || fromY === undefined) {
+          setReconMode(null);
+          return;
+        }
+        
+        // Check if target is not adjacent (using orthogonal adjacency only)
+        const isAdjacent = arePositionsAdjacent(fromX, fromY, x, y);
+        
+        if (!isAdjacent) {
+          // Execute Recon action
+          socket.emit('game_recon', {
+            gameId,
+            fromX,
+            fromY,
+            targetX: x,
+            targetY: y
+          });
+          
+          // Exit Recon mode
+          setReconMode(null);
+          setSelectedSquare(null);
+          setValidMoves([]);
+          return;
+        }
+      }
+      
+      // Cancel Recon mode if clicking elsewhere
+      setReconMode(null);
+      setSelectedSquare(null);
+      setValidMoves([]);
+      return;
+    }
+
     if (selectedSquare) {
       const { x: fromX, y: fromY } = selectedSquare;
+      const selectedPiece = board[fromY]?.[fromX];
       
       if (fromX === x && fromY === y) {
-        // Deselect
+        // If clicking same piece again, check for Recon ability
+        if (hasAbility(selectedPiece, 'recon') && getReconTokens(selectedPiece) > 0) {
+          setReconMode({ piece: selectedPiece, fromX, fromY });
+          setValidMoves([]); // Clear movement highlights
+          return;
+        }
+        
+        // Otherwise deselect
         setSelectedSquare(null);
         setValidMoves([]);
       } else if (validMoves.some(move => move && move.x === x && move.y === y)) {
@@ -717,6 +812,7 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
       selectPiece(x, y, clickedPiece);
     }
   };
+
 
   const selectPiece = (x, y, piece) => {
     setSelectedSquare({ x, y });
@@ -924,6 +1020,164 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
     return { name: 'Unknown', description: 'Special ability', icon: null };
   };
 
+  // Helper function to render ability indicators for selected unit
+  const renderSelectedUnitAbilityIndicators = (piece) => {
+    const indicators = [];
+    
+    if (hasAbility(piece, 'flying')) {
+      indicators.push(
+        <SelectedUnitAbilityIndicator 
+          key="flying" 
+          position="topLeft"
+        >
+          <SelectedUnitAbilityIcon 
+            src="/data/icons/abilities/flying.png"
+            alt="Flying"
+            title="Flying: Can move over water terrain"
+          />
+        </SelectedUnitAbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(piece, 'mobile')) {
+      indicators.push(
+        <SelectedUnitAbilityIndicator 
+          key="mobile" 
+          position="bottomRight"
+        >
+          <SelectedUnitAbilityIcon 
+            src="/data/icons/abilities/mobile.png"
+            alt="Mobile"
+            title="Mobile: Can move multiple spaces"
+          />
+        </SelectedUnitAbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(piece, 'charge')) {
+      indicators.push(
+        <SelectedUnitAbilityIndicator 
+          key="charge" 
+          position="topLeft"
+        >
+          <SelectedUnitAbilityIcon 
+            src="/data/icons/abilities/charge.png"
+            alt="Charge"
+            title="Charge: Can attack units 2 squares away"
+          />
+        </SelectedUnitAbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(piece, 'sniper')) {
+      indicators.push(
+        <SelectedUnitAbilityIndicator 
+          key="sniper" 
+          position="topRight"
+        >
+          <SelectedUnitAbilityIcon 
+            src="/data/icons/abilities/sniper.png"
+            alt="Sniper"
+            title="Sniper: Can attack units 2 squares away, shoots over water"
+          />
+        </SelectedUnitAbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(piece, 'fear')) {
+      indicators.push(
+        <SelectedUnitAbilityIndicator 
+          key="fear" 
+          position="topLeft"
+        >
+          <SelectedUnitAbilityIcon 
+            src="/data/icons/abilities/fear.png"
+            alt="Fear"
+            title="Fear: Adjacent enemies lose 1 rank in combat"
+          />
+        </SelectedUnitAbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(piece, 'curse')) {
+      indicators.push(
+        <SelectedUnitAbilityIndicator 
+          key="curse" 
+          position="bottomLeft"
+        >
+          <SelectedUnitAbilityIcon 
+            src="/data/icons/abilities/curse.png"
+            alt="Curse"
+            title="Curse: Units that defeat this unit are permanently weakened"
+          />
+        </SelectedUnitAbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(piece, 'veteran')) {
+      indicators.push(
+        <SelectedUnitAbilityIndicator 
+          key="veteran" 
+          position="topRight"
+        >
+          <SelectedUnitAbilityIcon 
+            src="/data/icons/abilities/veteran.png"
+            alt="Veteran"
+            title="Veteran: Gets stronger when defeating enemies"
+          />
+        </SelectedUnitAbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(piece, 'trap_sense')) {
+      indicators.push(
+        <SelectedUnitAbilityIndicator 
+          key="trap_sense" 
+          position="bottomLeft"
+        >
+          <SelectedUnitAbilityIcon 
+            src="/data/icons/abilities/trap_sense.png"
+            alt="Trap Sense"
+            title="Trap Sense: Can detect and avoid traps"
+          />
+        </SelectedUnitAbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(piece, 'assassin')) {
+      indicators.push(
+        <SelectedUnitAbilityIndicator 
+          key="assassin" 
+          position="bottomLeft"
+        >
+          <SelectedUnitAbilityIcon 
+            src="/data/icons/abilities/assassin.png"
+            alt="Assassin"
+            title="Assassin: Can eliminate high-ranking targets"
+          />
+        </SelectedUnitAbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(piece, 'recon')) {
+      const tokens = getReconTokens(piece);
+      indicators.push(
+        <SelectedUnitAbilityIndicator 
+          key="recon" 
+          position="topRight"
+        >
+          <SelectedUnitAbilityIcon 
+            src="/data/icons/abilities/recon.png"
+            alt="Recon"
+            title={`Recon: Can reveal ${tokens} enemy units per game`}
+          />
+        </SelectedUnitAbilityIndicator>
+      );
+    }
+    
+    return indicators;
+  };
+
   // Render the selected unit panel
   const renderSelectedUnitPanel = () => {
     const piece = getSelectedPiece();
@@ -941,6 +1195,7 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
             src={imagePath} 
             alt={piece.name || piece.type}
           />
+          {renderSelectedUnitAbilityIndicators(piece)}
         </UnitImageContainer>
         <UnitName>{piece.name || piece.type}</UnitName>
         {piece.rank && <UnitRank>Rank {piece.rank}</UnitRank>}
@@ -1014,6 +1269,11 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
           return move.x === gameX && move.y === gameY;
         });
         const isSetupArea = gamePhase === 'setup' && mapData.setupRows?.[playerSide]?.includes(gameY);
+        
+        // Check if this square is a valid Recon target
+        const isReconTarget = reconMode && reconMode.fromX !== undefined && reconMode.fromY !== undefined && 
+          piece && piece.side !== playerSide && !piece.revealed && 
+          !arePositionsAdjacent(reconMode.fromX, reconMode.fromY, gameX, gameY);
 
         const square = {
           displayX,
@@ -1037,6 +1297,7 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
               isSelected={isSelected}
               isValidMove={isValidMove}
               isSetupArea={isSetupArea}
+              isReconTarget={isReconTarget}
               isDragTarget={draggedPiece && isSetupArea && isTerrainPassable(getTerrainType(gameX, gameY, mapData))}
               onClick={() => handleSquareClick(displayX, displayY)}
               onDragStart={() => piece && handleDragStart(piece, displayX, displayY)}
@@ -1172,7 +1433,7 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
             <InfoTitle>Game Status</InfoTitle>
             <div>Turn: {gameState.turnNumber}</div>
             <div>Current Player: {gameState.currentPlayer}</div>
-            {gameState.lastMove && (
+            {gameState.lastMove && gameState.lastMove.from && gameState.lastMove.to && (
               <LastMoveInfo>
                 Last Move: {gameState.lastMove.type} from ({gameState.lastMove.from.x}, {gameState.lastMove.from.y}) to ({gameState.lastMove.to.x}, {gameState.lastMove.to.y})
               </LastMoveInfo>
@@ -1337,7 +1598,7 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
             <InfoTitle>Game Status</InfoTitle>
             <div>Turn: {gameState.turnNumber}</div>
             <div>Current Player: {gameState.currentPlayer}</div>
-            {gameState.lastMove && (
+            {gameState.lastMove && gameState.lastMove.from && gameState.lastMove.to && (
               <LastMoveInfo>
                 Last Move: {gameState.lastMove.type} from ({gameState.lastMove.from.x}, {gameState.lastMove.from.y}) to ({gameState.lastMove.to.x}, {gameState.lastMove.to.y})
               </LastMoveInfo>

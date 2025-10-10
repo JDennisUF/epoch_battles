@@ -109,6 +109,27 @@
                 "special",
                 "tactical"
             ]
+        },
+        "recon": {
+            "name": "Recon",
+            "category": "utility",
+            "description": "Can reveal hidden enemy units by skipping turn.",
+            "effect": "Skip your turn to reveal any non-adjacent enemy unit permanently. Limited uses per game.",
+            "tags": [
+                "intelligence",
+                "utility",
+                "strategic"
+            ],
+            "configurable": true,
+            "parameters": {
+                "tokens": {
+                    "type": "integer",
+                    "min": 1,
+                    "max": 5,
+                    "default": 2,
+                    "description": "Number of times this ability can be used per game."
+                }
+            }
         }
     }
 }

@@ -21,10 +21,13 @@
       "count": 1,
       "moveable": true,
       "canAttack": true,
-      "special": null,
+      "special": "Commands royal spy networks for intelligence gathering",
       "symbol": "\u2655",
       "description": "Second in command, powerful leader",
-      "class": "general"
+      "class": "general",
+      "abilities": [
+        { "id": "recon", "tokens": 2 }
+      ]
     },
     "knight_commander": {
       "id": "knight_commander",

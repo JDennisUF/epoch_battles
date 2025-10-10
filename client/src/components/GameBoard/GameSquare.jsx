@@ -1,20 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { getPieceSymbol, getPieceColor, getTerrainType } from '../../utils/gameLogic';
+import { getPieceSymbol, getPieceColor, getTerrainType, hasAbility, getReconTokens } from '../../utils/gameLogic';
 
-// Helper function to check if piece has a specific ability
-const hasAbility = (piece, abilityName) => {
-  if (!piece?.abilities) return false;
-  
-  return piece.abilities.some(ability => {
-    if (typeof ability === 'string') {
-      return ability === abilityName;
-    } else if (typeof ability === 'object') {
-      return ability.id === abilityName;
-    }
-    return false;
-  });
-};
 
 // Helper function to check if piece is a mine/bomb type
 const isMineType = (piece) => {
@@ -229,18 +216,36 @@ const renderAbilityIndicators = (piece) => {
     );
   }
   
+  if (hasAbility(piece, 'recon')) {
+    indicators.push(
+      <AbilityIndicator 
+        key="recon" 
+        position="topRight"
+      >
+        <AbilityIcon 
+          src="/data/icons/abilities/recon.png"
+          alt="Recon"
+          title="Recon: Can reveal hidden enemy units"
+        />
+      </AbilityIndicator>
+    );
+  }
+  
   return indicators;
 };
 
 const Square = styled.div.withConfig({
-  shouldForwardProp: (prop) => !['clickable', 'terrainType', 'isSetupArea', 'isSelected', 'isValidMove', 'isDragTarget'].includes(prop)
+  shouldForwardProp: (prop) => !['clickable', 'terrainType', 'isSetupArea', 'isSelected', 'isValidMove', 'isReconTarget', 'isDragTarget'].includes(prop)
 })`
   width: 100%;
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: ${props => props.clickable ? 'pointer' : 'default'};
+  cursor: ${props => {
+    if (props.isReconTarget) return 'url(/data/icons/abilities/recon_48.png) 24 24, pointer';
+    return props.clickable ? 'pointer' : 'default';
+  }};
   font-size: 1.5rem;
   font-weight: bold;
   border: 2px solid transparent;
@@ -287,6 +292,7 @@ const Square = styled.div.withConfig({
       if (props.isSetupArea) return 'rgba(107, 142, 35, 0.3)'; // Olive green
       if (props.isSelected) return 'rgba(218, 165, 32, 0.5)'; // Military gold
       if (props.isValidMove) return 'rgba(107, 142, 35, 0.5)'; // Olive green
+      if (props.isReconTarget) return 'rgba(123, 31, 162, 0.4)'; // Purple for Recon targets
       return 'transparent';
     }};
     pointer-events: none;
@@ -297,6 +303,7 @@ const Square = styled.div.withConfig({
     if (props.isDragTarget) return '#8b7355'; // Desert tan
     if (props.isSelected) return '#daa520'; // Military gold
     if (props.isValidMove) return '#6b8e23'; // Olive green
+    if (props.isReconTarget) return '#7b1fa2'; // Purple for Recon targets
     return 'transparent';
   }};
 
@@ -346,7 +353,7 @@ const AbilityIndicator = styled.div.withConfig({
 })`
   position: absolute;
   ${props => props.position === 'topLeft' ? 'top: 2px; left: 2px;' : ''}
-  ${props => props.position === 'topRight' ? 'top: 2px; right: 26px;' : ''}
+  ${props => props.position === 'topRight' ? 'top: 2px; right: 2px;' : ''}
   ${props => props.position === 'bottomLeft' ? 'bottom: 2px; left: 2px;' : ''}
   ${props => props.position === 'bottomRight' ? 'bottom: 2px; right: 2px;' : ''}
   background: transparent;
@@ -390,6 +397,20 @@ const PieceRank = styled.div.withConfig({
   z-index: 3;
 `;
 
+const ReconTokens = styled.div`
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fbbf24; /* Bright yellow */
+  background: rgba(0, 0, 0, 0.8);
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1;
+  z-index: 3;
+`;
+
 const PieceImage = styled.img`
   width: 84px;
   height: 84px;
@@ -418,6 +439,7 @@ function GameSquare({
   isSelected, 
   isValidMove, 
   isSetupArea,
+  isReconTarget,
   isDragTarget,
   onClick,
   onDragStart,
@@ -451,7 +473,7 @@ function GameSquare({
   
   const terrainType = getTerrainType(terrainX, terrainY, mapData);
   const isWater = terrainType === 'water';
-  const clickable = !isWater && (isSetupArea || isValidMove || (piece && piece.side === playerSide));
+  const clickable = !isWater && (isSetupArea || isValidMove || isReconTarget || (piece && piece.side === playerSide));
   
   // The server now handles permanent trap detection, so we just use the display piece
   const pieceToRender = piece;
@@ -492,6 +514,10 @@ function GameSquare({
               const rankInfo = getRankDisplay(pieceToRender, terrainX, terrainY, board);
               return <PieceRank colorType={rankInfo.colorType}>{rankInfo.rank}</PieceRank>;
             })()}
+            {pieceToRender.side === playerSide && hasAbility(pieceToRender, 'recon') && (() => {
+              const tokens = getReconTokens(pieceToRender);
+              return tokens > 0 ? <ReconTokens>{tokens}</ReconTokens> : null;
+            })()}
           </div>
         </PieceContainer>
       );
@@ -523,6 +549,10 @@ function GameSquare({
             {pieceToRender.rank && (() => {
               const rankInfo = getRankDisplay(pieceToRender, terrainX, terrainY, board);
               return <PieceRank colorType={rankInfo.colorType}>{rankInfo.rank}</PieceRank>;
+            })()}
+            {hasAbility(pieceToRender, 'recon') && (() => {
+              const tokens = getReconTokens(pieceToRender);
+              return tokens > 0 ? <ReconTokens>{tokens}</ReconTokens> : null;
             })()}
           </div>
         </PieceContainer>
@@ -609,6 +639,7 @@ function GameSquare({
       isSelected={isSelected}
       isValidMove={isValidMove}
       isSetupArea={isSetupArea}
+      isReconTarget={isReconTarget}
       isDragTarget={isDragTarget}
       onClick={clickable ? onClick : undefined}
       onDragOver={onDragOver}

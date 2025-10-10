@@ -21,10 +21,13 @@
       "count": 1,
       "moveable": true,
       "canAttack": true,
-      "special": null,
+      "special": "Can use magical scrying to reveal enemy units",
       "symbol": "\ud83e\ude84",
       "description": "Master of arcane magic",
-      "class": "general"
+      "class": "general",
+      "abilities": [
+        { "id": "recon", "tokens": 2 }
+      ]
     },
     "paladin": {
       "id": "paladin",

@@ -328,6 +328,52 @@ export const hasAbility = (piece, abilityName) => {
   });
 };
 
+// Get number of Recon tokens for a piece
+export const getReconTokens = (piece) => {
+  if (!hasAbility(piece, 'recon')) {
+    return 0;
+  }
+  
+  // Find the Recon ability in the piece's abilities array
+  const reconAbility = piece.abilities.find(ability => {
+    if (typeof ability === 'object') {
+      return ability.id === 'recon';
+    }
+    return ability === 'recon';
+  });
+  
+  // If Recon ability has custom tokens parameter, use remaining tokens if available
+  if (reconAbility && typeof reconAbility === 'object') {
+    // Check for remaining tokens first (updated by server), then fall back to initial tokens
+    if (reconAbility.remainingTokens !== undefined) {
+      return reconAbility.remainingTokens;
+    }
+    if (reconAbility.tokens !== undefined) {
+      return reconAbility.tokens;
+    }
+  }
+  
+  // Check for legacy remainingReconTokens property on the piece itself
+  if (piece.remainingReconTokens !== undefined) {
+    return piece.remainingReconTokens;
+  }
+  
+  // Default Recon tokens from abilities.json
+  if (abilitiesData && abilitiesData.abilities.recon) {
+    return abilitiesData.abilities.recon.parameters.tokens.default;
+  }
+  
+  // Final fallback
+  return 2;
+};
+
+// Check if two positions are adjacent (orthogonally, not diagonally)
+export const arePositionsAdjacent = (x1, y1, x2, y2) => {
+  const dx = Math.abs(x2 - x1);
+  const dy = Math.abs(y2 - y1);
+  return (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
+};
+
 // Get Mobile movement range for a piece
 export const getMobileMovementRange = (piece) => {
   if (!hasAbility(piece, 'mobile')) {

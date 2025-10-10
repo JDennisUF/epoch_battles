@@ -319,6 +319,134 @@ const gameEvents = (socket, io) => {
     }
   });
 
+  // Handle Recon ability usage
+  socket.on('game_recon', async (data) => {
+    const { gameId, fromX, fromY, targetX, targetY } = data;
+    
+    try {
+      const game = await Game.findByPk(gameId);
+      if (!game) {
+        socket.emit('recon_error', { message: 'Game not found' });
+        return;
+      }
+
+      // Validate it's the player's turn
+      const playerSide = game.players.find(p => p.userId === socket.user.id)?.side;
+      if (!playerSide || game.gameState.currentPlayer !== playerSide) {
+        socket.emit('recon_error', { message: 'Not your turn' });
+        return;
+      }
+
+      // Get the piece performing recon
+      const board = game.gameState.board;
+      const reconPiece = board[fromY] && board[fromY][fromX];
+      if (!reconPiece || reconPiece.side !== playerSide) {
+        socket.emit('recon_error', { message: 'Invalid recon unit' });
+        return;
+      }
+
+      // Check if piece has Recon ability and tokens
+      const hasReconAbility = reconPiece.abilities && reconPiece.abilities.some(ability => 
+        (typeof ability === 'string' && ability === 'recon') ||
+        (typeof ability === 'object' && ability.id === 'recon')
+      );
+      
+      if (!hasReconAbility) {
+        socket.emit('recon_error', { message: 'Unit does not have Recon ability' });
+        return;
+      }
+
+      // Get remaining tokens
+      const reconAbility = reconPiece.abilities.find(ability => 
+        (typeof ability === 'string' && ability === 'recon') ||
+        (typeof ability === 'object' && ability.id === 'recon')
+      );
+      
+      let remainingTokens;
+      if (typeof reconAbility === 'object') {
+        remainingTokens = reconAbility.remainingTokens ?? reconAbility.tokens ?? 2;
+      } else {
+        remainingTokens = reconPiece.remainingReconTokens ?? 2;
+      }
+
+      if (remainingTokens <= 0) {
+        socket.emit('recon_error', { message: 'No recon tokens remaining' });
+        return;
+      }
+
+      // Get target piece
+      const targetPiece = board[targetY] && board[targetY][targetX];
+      if (!targetPiece || targetPiece.side === playerSide || targetPiece.revealed) {
+        socket.emit('recon_error', { message: 'Invalid recon target' });
+        return;
+      }
+
+      // Check if target is not adjacent
+      const dx = Math.abs(targetX - fromX);
+      const dy = Math.abs(targetY - fromY);
+      const isAdjacent = (dx === 1 && dy === 0) || (dx === 0 && dy === 1);
+      
+      if (isAdjacent) {
+        socket.emit('recon_error', { message: 'Cannot recon adjacent units' });
+        return;
+      }
+
+      // Execute recon: reveal target and decrement tokens
+      targetPiece.revealed = true;
+      
+      // Decrement tokens
+      if (typeof reconAbility === 'object') {
+        reconAbility.remainingTokens = remainingTokens - 1;
+      } else {
+        reconPiece.remainingReconTokens = (reconPiece.remainingReconTokens ?? 2) - 1;
+      }
+
+      // Add recon action to history
+      const reconResult = {
+        type: 'recon',
+        from: { x: fromX, y: fromY },
+        to: { x: targetX, y: targetY },
+        piece: reconPiece,
+        revealedPiece: targetPiece,
+        timestamp: new Date()
+      };
+
+      game.gameState.moveHistory = game.gameState.moveHistory || [];
+      game.gameState.moveHistory.push(reconResult);
+      game.gameState.lastMove = reconResult;
+
+      // Switch turns (match move processor logic)
+      game.gameState.currentPlayer = playerSide === 'home' ? 'away' : 'home';
+      game.gameState.turnNumber += playerSide === 'away' ? 1 : 0;
+
+      // Mark gameState as changed for Sequelize
+      game.changed('gameState', true);
+
+      // Save game state
+      await game.save();
+
+      // Notify both players
+      game.players.forEach(player => {
+        const playerSockets = [...io.sockets.sockets.values()].filter(s => s.user?.id === player.userId);
+        playerSockets.forEach(playerSocket => {
+          playerSocket.emit('recon_used', {
+            fromX,
+            fromY,
+            targetX,
+            targetY,
+            revealedUnit: targetPiece,
+            remainingTokens: remainingTokens - 1,
+            gameState: game.getGameStateForPlayer(player.userId)
+          });
+        });
+      });
+
+    } catch (error) {
+      console.error('Recon error:', error);
+      socket.emit('recon_error', { message: 'Failed to process recon' });
+    }
+  });
+
   // Handle army selection
   socket.on('select_army', async (data) => {
     const { gameId, armyId } = data;

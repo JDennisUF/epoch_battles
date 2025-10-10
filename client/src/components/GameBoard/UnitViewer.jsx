@@ -425,6 +425,27 @@ function UnitViewer({ armyId, armyName, onClose }) {
       );
     }
     
+    if (hasAbility(unitData, 'recon')) {
+      const reconAbility = unitData.abilities.find(ability => 
+        (typeof ability === 'object' && ability.id === 'recon') || ability === 'recon'
+      );
+      const tokens = (typeof reconAbility === 'object') ? 
+        (reconAbility.remainingTokens !== undefined ? reconAbility.remainingTokens : reconAbility.tokens) || 1 : 1;
+      
+      indicators.push(
+        <AbilityIndicator 
+          key="recon" 
+          position="topRight"
+        >
+          <AbilityIconSmall 
+            src="/data/icons/abilities/recon_48.png"
+            alt="Recon"
+            title={`Recon: Can reveal ${tokens} enemy units per game`}
+          />
+        </AbilityIndicator>
+      );
+    }
+    
     return indicators;
   };
 
@@ -487,6 +508,15 @@ function UnitViewer({ armyId, armyName, onClose }) {
           name: 'Assassin', 
           description: 'Can eliminate high-ranking targets',
           icon: '/data/icons/abilities/assassin_48.png'
+        };
+      case 'recon':
+        // Check if ability has custom tokens parameter (prefer remaining tokens if available)
+        const tokens = (typeof ability === 'object') ? 
+          (ability.remainingTokens !== undefined ? ability.remainingTokens : ability.tokens) || 1 : 1;
+        return { 
+          name: 'Recon', 
+          description: `Can reveal ${tokens} enemy units per game`,
+          icon: '/data/icons/abilities/recon_48.png'
         };
       default:
         return { 

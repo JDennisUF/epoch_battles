@@ -9,10 +9,13 @@
       "count": 1,
       "moveable": true,
       "canAttack": true,
-      "special": "Supreme alien, defeated only by Brain Leech when attacked",
+      "special": "Supreme alien, defeated only by Brain Leech when attacked. Psychic hive mind connection",
       "symbol": "👑",
       "description": "Mother of the hive",
-      "class": "marshal"
+      "class": "marshal",
+      "abilities": [
+        { "id": "recon", "tokens": 2 }
+      ]
     },
     "broodlord": {
       "id": "broodlord",

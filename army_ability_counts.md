@@ -1,26 +1,26 @@
 # Army Ability Counts
 
-Generated: 2025-10-08T05:45:19.925963Z
+Generated: 2025-10-09T23:45:13.401829Z
 
 Counts reflect distinct unit types that declare a non-empty abilities array.
 
 | Army             | Units With Abilities |
 | ---------------- | -------------------- |
-| Alien Hive       | 8                    |
+| Alien Hive       | 9                    |
 | Ancient Egypt    | 8                    |
 | Classic Army     | 3                    |
-| Fantasy          | 4                    |
-| Medieval         | 5                    |
+| Fantasy          | 5                    |
+| Medieval         | 6                    |
 | Post-Apocalyptic | 6                    |
 | Roman Legion     | 5                    |
-| Sci-Fi           | 5                    |
+| Sci-Fi           | 6                    |
 | Shogun Dynasty   | 6                    |
 | Tribal           | 7                    |
 | Undead Legion    | 7                    |
 | World War I      | 6                    |
 | WWII             | 5                    |
 
-Total units-with-abilities across armies: 75
+Total units-with-abilities across armies: 79
 
 ## Ability Breakdown by Army
 
@@ -32,6 +32,7 @@ Total units-with-abilities across armies: 75
 | charge     | 1          |
 | fear       | 1          |
 | flying     | 1          |
+| recon      | 1          |
 | sniper     | 1          |
 | trap_sense | 1          |
 | veteran    | 1          |
@@ -61,6 +62,7 @@ Total units-with-abilities across armies: 75
 | mobile     | 2          |
 | assassin   | 1          |
 | flying     | 1          |
+| recon      | 1          |
 | sniper     | 1          |
 | trap_sense | 1          |
 
@@ -71,6 +73,7 @@ Total units-with-abilities across armies: 75
 | assassin   | 1          |
 | charge     | 1          |
 | fear       | 1          |
+| recon      | 1          |
 | trap_sense | 1          |
 
 ### Post-Apocalyptic
@@ -99,6 +102,7 @@ Total units-with-abilities across armies: 75
 | assassin   | 1          |
 | charge     | 1          |
 | flying     | 1          |
+| recon      | 1          |
 | trap_sense | 1          |
 | veteran    | 1          |
 

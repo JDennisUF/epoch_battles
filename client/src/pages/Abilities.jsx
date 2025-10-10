@@ -529,6 +529,23 @@ const ABILITIES = [
       { name: 'Hacker', army: 'sci_fi' },
       { name: 'Assassin', army: 'medieval' }
     ]
+  },
+  {
+    id: 'recon',
+    name: 'Recon',
+    type: 'Utility',
+    description: 'Strategic intelligence gathering ability that allows commanders to reveal enemy unit identities. Skip your turn and choose any non-adjacent enemy unit to reveal permanently.',
+    details: {
+      'Action Cost': 'Skip Turn',
+      'Uses Per Game': 'Limited Tokens',
+      'Target Range': 'Any Non-Adjacent',
+      'Tactical Role': 'Intelligence'
+    },
+    realUnits: [
+      { name: 'Archmage', army: 'fantasy' },
+      { name: 'Queen', army: 'medieval' },
+      { name: 'Overlord AI', army: 'sci_fi' }
+    ]
   }
 ];
 
@@ -804,7 +821,28 @@ function Abilities() {
       );
     }
     
-      return indicators;
+    if (hasAbility(unitData, 'recon')) {
+      const reconAbility = unitData.abilities.find(ability => 
+        (typeof ability === 'object' && ability.id === 'recon') || ability === 'recon'
+      );
+      const tokens = (typeof reconAbility === 'object') ? 
+        (reconAbility.remainingTokens !== undefined ? reconAbility.remainingTokens : reconAbility.tokens) || 1 : 1;
+      
+      indicators.push(
+        <AbilityIndicator 
+          key="recon" 
+          position="topRight"
+        >
+          <AbilityIconSmall 
+            src="/data/icons/abilities/recon_48.png"
+            alt="Recon"
+            title={`Recon: Can reveal ${tokens} enemy units per game`}
+          />
+        </AbilityIndicator>
+      );
+    }
+    
+    return indicators;
   };
 
   // Helper function to render small ability indicators for example unit icons
@@ -941,6 +979,21 @@ function Abilities() {
             src="/data/icons/abilities/assassin_48.png"
             alt="Assassin"
             title="Assassin"
+          />
+        </SmallAbilityIndicator>
+      );
+    }
+    
+    if (hasAbility(unitData, 'recon')) {
+      indicators.push(
+        <SmallAbilityIndicator 
+          key="recon" 
+          position="topRight"
+        >
+          <SmallAbilityIcon 
+            src="/data/icons/abilities/recon_48.png"
+            alt="Recon"
+            title="Recon"
           />
         </SmallAbilityIndicator>
       );

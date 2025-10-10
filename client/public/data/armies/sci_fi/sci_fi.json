@@ -9,10 +9,13 @@
       "count": 1,
       "moveable": true,
       "canAttack": true,
-      "special": "Strongest unit, defeated only by Hacker when attacked",
+      "special": "Strongest unit, defeated only by Hacker when attacked. Advanced surveillance systems",
       "symbol": "\ud83e\udd16",
       "description": "The ruling artificial intelligence",
-      "class": "marshal"
+      "class": "marshal",
+      "abilities": [
+        { "id": "recon", "tokens": 3 }
+      ]
     },
     "warlord": {
       "id": "warlord",
