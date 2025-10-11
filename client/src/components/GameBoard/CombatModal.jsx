@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled, { keyframes, css } from 'styled-components';
+import { playCombatSound, playBombExplosionSound, playFlagCaptureSound } from '../../utils/sounds';
 
 const fadeIn = keyframes`
   from { opacity: 0; }
@@ -173,8 +174,49 @@ function CombatModal({ combatData, onClose }) {
   const [showDefenderShake, setShowDefenderShake] = useState(false);
   const [showLoser, setShowLoser] = useState(false);
 
-  // Generate combat sounds programmatically
-  const playCombatSound = (outcome) => {
+  // Play combat sounds using the new MP3 sound system
+  const handleCombatSound = async (combatData) => {
+    try {
+      const { attacker, defender, result } = combatData;
+      
+      console.log('🔊 Combat sound debug:', {
+        attackerUnit: attacker.unit.name,
+        attackerClass: attacker.unit.class,
+        attackerId: attacker.unit.id,
+        attackerArmy: attacker.army,
+        defenderUnit: defender.unit.name,
+        defenderClass: defender.unit.class
+      });
+      
+      // Special case for bomb explosions
+      if (defender.unit.class === 'bomb' || attacker.unit.class === 'bomb') {
+        console.log('🔊 Playing bomb explosion sound');
+        await playBombExplosionSound();
+        return;
+      }
+      
+      // Special case for flag capture
+      if (defender.unit.class === 'flag') {
+        console.log('🔊 Playing flag capture sound');
+        await playFlagCaptureSound();
+        return;
+      }
+      
+      // For regular combat, play the attacker's sound (since they initiated)
+      console.log('🔊 Playing combat sound for:', attacker.unit.class, attacker.unit.id, attacker.army || 'default');
+      await playCombatSound(
+        attacker.unit.class, 
+        attacker.unit.id, 
+        attacker.army || 'default'
+      );
+      
+    } catch (err) {
+      console.log('Combat sound playback failed:', err);
+    }
+  };
+
+  // Generate combat sounds programmatically (DEPRECATED - keeping for fallback)
+  const playSyntheticCombatSound = (outcome) => {
     try {
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       
@@ -308,9 +350,8 @@ function CombatModal({ combatData, onClose }) {
         soundOutcome = 'loss';
       }
       
-      if (soundOutcome) {
-        playCombatSound(soundOutcome);
-      }
+      // Play the new MP3 combat sound
+      handleCombatSound(combatData);
       
       // Wait a moment then make loser disappear
       await new Promise(resolve => setTimeout(resolve, 500));

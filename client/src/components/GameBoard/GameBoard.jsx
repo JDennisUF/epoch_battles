@@ -10,6 +10,7 @@ import ArmySelector from './ArmySelector';
 import CombatModal from './CombatModal';
 import GameResultModal from './GameResultModal';
 import ChatBox from '../UI/ChatBox';
+import { playMoveSound, playScoutRevealSound, playVictorySound, playDefeatSound } from '../../utils/sounds';
 
 const BoardContainer = styled.div`
   display: flex;
@@ -465,14 +466,26 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
       setSelectedSquare(null);
       setValidMoves([]);
       
-      // Show combat modal if this was a combat move
+      // Play appropriate sound
       if (data.combatResult) {
+        // Combat sound will be played by CombatModal
         setCombatData(data.combatResult);
+      } else {
+        // Regular movement sound
+        playMoveSound();
       }
     };
 
     const handleGameFinished = (data) => {
       console.log('Game finished:', data);
+      
+      // Play appropriate sound based on game outcome
+      if (data.winner === user.id) {
+        playVictorySound();
+      } else {
+        playDefeatSound();
+      }
+      
       // Don't show the game result immediately - let it be shown when combat modal closes
       // The combat modal's onClose handler will check for finished games and show the result
       console.log('Game finished event received, result will be shown after combat modal closes');
@@ -480,6 +493,10 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
 
     const handleReconUsed = (data) => {
       console.log('Recon used:', data);
+      
+      // Play scout reveal sound
+      playScoutRevealSound();
+      
       // Update game state with revealed unit and decremented tokens
       setGameState(data.gameState);
       // Exit recon mode

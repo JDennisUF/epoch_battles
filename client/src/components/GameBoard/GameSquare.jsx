@@ -414,13 +414,30 @@ const ReconTokens = styled.div`
   z-index: 3;
 `;
 
-const PieceImage = styled.img`
+const PieceImage = styled.img.withConfig({
+  shouldForwardProp: (prop) => !['isRevealed', 'isOwnPiece'].includes(prop)
+})`
   width: 84px;
   height: 84px;
   object-fit: cover;
   border-radius: 6px;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, border 0.3s ease;
+  
+  /* Add revealed unit border - only for own pieces that are revealed to opponent */
+  border: ${props => {
+    if (props.isRevealed && props.isOwnPiece) {
+      // Color options to try:
+      // #ff6b35 - Bright orange (current)
+      // #ffd700 - Gold 
+      // #ff4757 - Red
+      // #00d2d3 - Cyan
+      // #ff9ff3 - Pink
+      // #54a0ff - Blue
+      return '2px solid #ff6b35'; // Orange border for revealed own pieces
+    }
+    return '2px solid transparent';
+  }};
   
   &:hover {
     transform: scale(1.05);
@@ -506,6 +523,8 @@ function GameSquare({
             <PieceImage 
               src={imagePath} 
               alt={pieceToRender.name || pieceToRender.type}
+              isRevealed={pieceToRender.revealed}
+              isOwnPiece={isPlayerPiece}
             />
             {terrainType === 'mountain' && (
               <DefensiveBonusIndicator title="Mountain Defense: +1 rank when defending">
@@ -542,6 +561,8 @@ function GameSquare({
             <PieceImage 
               src={imagePath} 
               alt={pieceToRender.name || pieceToRender.type}
+              isRevealed={pieceToRender.revealed}
+              isOwnPiece={isPlayerPiece}
             />
             {terrainType === 'mountain' && (
               <DefensiveBonusIndicator title="Mountain Defense: +1 rank when defending">
@@ -586,6 +607,8 @@ function GameSquare({
             <PieceImage 
               src={armyIconPath} 
               alt={`${opponentArmy} army piece`}
+              isRevealed={piece.revealed}
+              isOwnPiece={isPlayerPiece}
               onError={(e) => {
                 // Fallback to symbol if army icon fails to load
                 console.log(`Failed to load army icon: ${armyIconPath}`);
