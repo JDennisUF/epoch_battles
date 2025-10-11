@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { useAuth } from '../../hooks/useAuth';
@@ -176,11 +176,163 @@ const StatsDisplay = styled.div`
   }
 `;
 
+const InvitationContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 15px;
+
+  @media (max-width: 768px) {
+    margin-right: 10px;
+    gap: 6px;
+  }
+`;
+
+const MilitaryButton = styled.button`
+  background: linear-gradient(135deg, #2d3436 0%, #636e72 50%, #2d3436 100%);
+  border: 2px solid #5a6c57;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.5s ease;
+  }
+
+  &:hover::before {
+    left: 100%;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      0 4px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: 
+      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+      0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+
+  @media (max-width: 768px) {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+`;
+
+const AcceptButton = styled(MilitaryButton)`
+  background: linear-gradient(135deg, #1e3a1e 0%, #4ade80 50%, #1e3a1e 100%);
+  border-color: #22c55e;
+  
+  &:hover {
+    background: linear-gradient(135deg, #1e3a1e 0%, #22c55e 50%, #1e3a1e 100%);
+  }
+`;
+
+const DeclineButton = styled(MilitaryButton)`
+  background: linear-gradient(135deg, #3a1e1e 0%, #ef4444 50%, #3a1e1e 100%);
+  border-color: #dc2626;
+  
+  &:hover {
+    background: linear-gradient(135deg, #3a1e1e 0%, #dc2626 50%, #3a1e1e 100%);
+  }
+`;
+
+const InvitationBadge = styled.div`
+  background: linear-gradient(135deg, #8b5a3c 0%, #d4af37 50%, #8b5a3c 100%);
+  border: 2px solid #c19a6b;
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  box-shadow: 
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.3);
+  animation: pulse 2s infinite;
+
+  @keyframes pulse {
+    0%, 100% { 
+      box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 2px 4px rgba(0, 0, 0, 0.3),
+        0 0 0 0 rgba(212, 175, 55, 0.7);
+    }
+    50% { 
+      box-shadow: 
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 2px 4px rgba(0, 0, 0, 0.3),
+        0 0 0 8px rgba(212, 175, 55, 0);
+    }
+  }
+
+  @media (max-width: 768px) {
+    padding: 3px 6px;
+    font-size: 0.7rem;
+  }
+`;
+
 function Header() {
   const { user, logout } = useAuth();
-  const { connected } = useSocket();
+  const { socket, connected, respondToInvitation } = useSocket();
   const navigate = useNavigate();
   const location = useLocation();
+  const [gameInvitations, setGameInvitations] = useState([]);
+
+  // Handle game invitations
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleGameInvitation = (invitation) => {
+      setGameInvitations(prev => [...prev, { ...invitation, id: Date.now() }]);
+    };
+
+    const handleGameCreated = (gameData) => {
+      // Clear invitations when game is created
+      setGameInvitations([]);
+      navigate('/game', { state: { gameData } });
+    };
+
+    const handleInvitationDeclined = () => {
+      // Clear invitations if declined elsewhere
+      setGameInvitations([]);
+    };
+
+    socket.on('game_invitation', handleGameInvitation);
+    socket.on('game_created', handleGameCreated);
+    socket.on('invitation_declined', handleInvitationDeclined);
+
+    return () => {
+      socket.off('game_invitation', handleGameInvitation);
+      socket.off('game_created', handleGameCreated);
+      socket.off('invitation_declined', handleInvitationDeclined);
+    };
+  }, [socket, navigate]);
 
   const handleLogout = async () => {
     await logout();
@@ -190,6 +342,14 @@ function Header() {
   const isActive = (path) => {
     return location.pathname === path;
   };
+
+  const handleInvitationResponse = (invitation, accepted) => {
+    respondToInvitation(invitation.from.id, accepted, invitation.mapData);
+    setGameInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
+  };
+
+  // Get the most recent invitation for display
+  const currentInvitation = gameInvitations[gameInvitations.length - 1];
 
   return (
     <HeaderContainer>
@@ -223,6 +383,26 @@ function Header() {
       </Nav>
 
       <UserInfo>
+        {currentInvitation && (
+          <InvitationContainer>
+            <InvitationBadge>
+              Battle Request from {currentInvitation.from.username}
+            </InvitationBadge>
+            <AcceptButton 
+              onClick={() => handleInvitationResponse(currentInvitation, true)}
+              title="Accept Battle"
+            >
+              ⚔️ Accept
+            </AcceptButton>
+            <DeclineButton 
+              onClick={() => handleInvitationResponse(currentInvitation, false)}
+              title="Decline Battle"
+            >
+              🛡️ Decline
+            </DeclineButton>
+          </InvitationContainer>
+        )}
+        
         <ConnectionStatus>
           <StatusDot connected={connected} />
           {connected ? 'Online' : 'Offline'}

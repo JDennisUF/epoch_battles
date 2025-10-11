@@ -179,54 +179,12 @@ const Notification = styled.div`
   backdrop-filter: blur(10px);
 `;
 
-const InvitationCard = styled.div`
-  background: rgba(102, 126, 234, 0.2);
-  border: 1px solid rgba(102, 126, 234, 0.4);
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 10px;
-`;
-
-const InvitationActions = styled.div`
-  display: flex;
-  gap: 10px;
-  margin-top: 10px;
-`;
-
-const AcceptButton = styled.button`
-  background: #4ade80;
-  border: none;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-
-  &:hover {
-    background: #22c55e;
-  }
-`;
-
-const DeclineButton = styled.button`
-  background: #ef4444;
-  border: none;
-  color: white;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-
-  &:hover {
-    background: #dc2626;
-  }
-`;
 
 function Lobby() {
   const { user } = useAuth();
-  const { socket, connected, joinLobby, invitePlayer, respondToInvitation } = useSocket();
+  const { socket, connected, joinLobby, invitePlayer } = useSocket();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
-  const [gameInvitations, setGameInvitations] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [selectedMap, setSelectedMap] = useState(null);
   const [isLoadingInitialMap, setIsLoadingInitialMap] = useState(true);
@@ -330,12 +288,6 @@ function Lobby() {
   useEffect(() => {
     if (!socket) return;
 
-    const handleGameInvitation = (invitation) => {
-      setGameInvitations(prev => [...prev, { ...invitation, id: Date.now() }]);
-      // Play notification sound
-      playNotificationSound();
-    };
-
     const handleInvitationSent = (data) => {
       addNotification(`Invitation sent to ${data.targetUsername}`, 'success');
     };
@@ -373,7 +325,6 @@ function Lobby() {
       setOnlineUsers(prev => prev.filter(u => u.id !== userData.userId));
     };
 
-    socket.on('game_invitation', handleGameInvitation);
     socket.on('invitation_sent', handleInvitationSent);
     socket.on('invite_error', handleInviteError);
     socket.on('game_created', handleGameCreated);
@@ -382,7 +333,6 @@ function Lobby() {
     socket.on('user_offline', handleUserOffline);
 
     return () => {
-      socket.off('game_invitation', handleGameInvitation);
       socket.off('invitation_sent', handleInvitationSent);
       socket.off('invite_error', handleInviteError);
       socket.off('game_created', handleGameCreated);
@@ -407,11 +357,6 @@ function Lobby() {
       return;
     }
     invitePlayer(userId, selectedMap);
-  };
-
-  const handleInvitationResponse = (invitation, accepted) => {
-    respondToInvitation(invitation.from.id, accepted, invitation.mapData);
-    setGameInvitations(prev => prev.filter(inv => inv.id !== invitation.id));
   };
 
   const handleRandomMatch = () => {
@@ -490,35 +435,6 @@ function Lobby() {
             )}
           </SidebarCard>
 
-          {gameInvitations.length > 0 && (
-            <SidebarCard>
-              <SectionTitle>Game Invitations</SectionTitle>
-              {gameInvitations.map(invitation => (
-                <InvitationCard key={invitation.id}>
-                  <div>
-                    <strong>{invitation.from.username}</strong> invited you to a game
-                  </div>
-                  {invitation.mapData?.name && (
-                    <div style={{ fontSize: '0.9rem', opacity: 0.8, marginTop: '8px' }}>
-                      Map: <strong>{invitation.mapData.name}</strong>
-                    </div>
-                  )}
-                  <InvitationActions>
-                    <AcceptButton 
-                      onClick={() => handleInvitationResponse(invitation, true)}
-                    >
-                      Accept
-                    </AcceptButton>
-                    <DeclineButton 
-                      onClick={() => handleInvitationResponse(invitation, false)}
-                    >
-                      Decline
-                    </DeclineButton>
-                  </InvitationActions>
-                </InvitationCard>
-              ))}
-            </SidebarCard>
-          )}
         </Sidebar>
       </LobbyContainer>
 
