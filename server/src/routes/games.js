@@ -263,8 +263,7 @@ router.post('/forfeit', auth, async (req, res) => {
     
     await game.save();
 
-    // Update user stats and clear current game
-    // This will be implemented when we add stats tracking
+    // Clear current game
 
     res.json({ message: 'Game forfeited successfully' });
   } catch (error) {

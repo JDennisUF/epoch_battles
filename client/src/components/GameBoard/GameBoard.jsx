@@ -5,7 +5,7 @@ import { useAuth } from '../../hooks/useAuth';
 import GameSquare from './GameSquare';
 import PieceSelector from './PieceSelector';
 import SavedPlacementsModal from './SavedPlacementsModal';
-import { GAME_CONFIG, getTerrainType, canMoveTo, generateArmy, loadTerrainData, loadAbilitiesData, isTerrainPassable, hasAbility, getReconTokens, arePositionsAdjacent } from '../../utils/gameLogic';
+import { GAME_CONFIG, getTerrainType, canMoveTo, generateArmy, generateArmyWithPlacement, loadTerrainData, loadAbilitiesData, isTerrainPassable, hasAbility, getReconTokens, arePositionsAdjacent } from '../../utils/gameLogic';
 import ArmySelector from './ArmySelector';
 import CombatModal from './CombatModal';
 import GameResultModal from './GameResultModal';
@@ -400,7 +400,7 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
   const playNotificationSound = () => {
     try {
       // Try to load and play notification sound file first
-      const audio = new Audio('/sounds/message-notification.mp3');
+  const audio = new Audio('/sounds/message_notification.mp3');
       audio.volume = 0.3;
       audio.play().catch(() => {
         // Fallback to programmatic sound if file doesn't exist
@@ -973,7 +973,7 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
   // Initialize setup pieces if in setup phase and army is selected
   useEffect(() => {
     if (gamePhase === 'setup' && hasSelectedArmy && setupPieces.length === 0 && armyData) {
-      setSetupPieces(generateArmy(playerSide, armyData, mapData));
+      setSetupPieces(generateArmyWithPlacement(playerSide, armyData, mapData));
     }
   }, [gamePhase, hasSelectedArmy, setupPieces.length, playerSide, armyData, mapData]);
 

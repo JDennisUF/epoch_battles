@@ -161,20 +161,6 @@ const LogoutButton = styled.button`
   }
 `;
 
-const StatsDisplay = styled.div`
-  font-size: 1.3rem;
-  font-weight: 600;
-  color: #4ade80;
-  opacity: 1;
-
-  @media (max-width: 768px) {
-    font-size: 1.1rem;
-  }
-
-  @media (max-width: 600px) {
-    display: none;
-  }
-`;
 
 const InvitationContainer = styled.div`
   display: flex;
@@ -416,9 +402,6 @@ function Header() {
             >
               {user.username}
             </Username>
-            <StatsDisplay>
-              {user.stats.wins}W - {user.stats.losses}L
-            </StatsDisplay>
           </>
         )}
         

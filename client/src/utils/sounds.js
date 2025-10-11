@@ -1,5 +1,6 @@
 // Sound utilities using Web Audio API and HTML5 Audio
 import soundMappings from '../data/soundMappings.json';
+import movementSounds from '../data/movementSounds.json';
 
 let audioContext = null;
 let audioCache = new Map();
@@ -188,10 +189,50 @@ export const getCombatSound = (unitClass, unitId, armyId) => {
   return sound;
 };
 
+// Get movement sound for a specific unit
+export const getMovementSound = (unitClass, unitId, armyId) => {
+  console.log('🚶 getMovementSound debug:', { unitClass, unitId, armyId });
+  
+  // Check for special unit override first
+  if (movementSounds.movementSounds.specialUnits[unitId]) {
+    const sound = movementSounds.movementSounds.specialUnits[unitId];
+    console.log('🚶 Using special unit movement sound:', sound);
+    return sound;
+  }
+  
+  // Check for army-specific class mapping
+  if (movementSounds.movementSounds.byClass[unitClass] && 
+      movementSounds.movementSounds.byClass[unitClass][armyId]) {
+    const sound = movementSounds.movementSounds.byClass[unitClass][armyId];
+    console.log('🚶 Using army-specific class movement sound:', sound);
+    return sound;
+  }
+  
+  // Fall back to default class mapping
+  if (movementSounds.movementSounds.byClass[unitClass] && 
+      movementSounds.movementSounds.byClass[unitClass].default) {
+    const sound = movementSounds.movementSounds.byClass[unitClass].default;
+    console.log('🚶 Using default class movement sound:', sound);
+    return sound;
+  }
+  
+  // Final fallback to army theme
+  const sound = movementSounds.armyThemes[armyId] || movementSounds.armyThemes.default;
+  console.log('🚶 Using army theme fallback movement sound:', sound);
+  return sound;
+};
+
 // Play combat sound for a unit
 export const playCombatSound = async (unitClass, unitId, armyId) => {
   const soundFile = getCombatSound(unitClass, unitId, armyId);
   console.log('🔊 Playing combat sound file:', soundFile);
+  await playAudioFile(soundFile);
+};
+
+// Play movement sound for a unit
+export const playUnitMovementSound = async (unitClass, unitId, armyId) => {
+  const soundFile = getMovementSound(unitClass, unitId, armyId);
+  console.log('🚶 Playing movement sound file:', soundFile);
   await playAudioFile(soundFile);
 };
 
@@ -202,9 +243,10 @@ export const playGameSound = async (soundType) => {
   }
 };
 
-// Play piece movement sound
+// Play piece movement sound (fallback for when unit details aren't available)
 export const playMoveSound = async () => {
-  await playGameSound('pieceMove');
+  // Use default movement sound when unit-specific details aren't available
+  await playAudioFile(movementSounds.defaultSounds.movement);
 };
 
 // Play victory sound
@@ -253,7 +295,7 @@ export const getSoundSettings = () => {
 // Preload critical sounds for better performance
 export const preloadCriticalSounds = async () => {
   const criticalSounds = [
-    soundMappings.gameSounds.pieceMove,
+    movementSounds.defaultSounds.movement,
     soundMappings.gameSounds.victory,
     soundMappings.gameSounds.defeat,
     soundMappings.armyThemes.default

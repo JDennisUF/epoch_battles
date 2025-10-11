@@ -12,8 +12,8 @@ router.get('/online', auth, async (req, res) => {
         isOnline: true,
         id: { [require('sequelize').Op.ne]: req.user.id }
       },
-      attributes: ['id', 'username', 'gamesPlayed', 'wins', 'losses', 'ranking', 'isOnline'],
-      order: [['ranking', 'DESC']]
+      attributes: ['id', 'username', 'isOnline'],
+      order: [['username', 'ASC']]
     });
 
     res.json({ users: onlineUsers });
@@ -23,43 +23,6 @@ router.get('/online', auth, async (req, res) => {
   }
 });
 
-// Get leaderboard
-router.get('/leaderboard/:page?', async (req, res) => {
-  try {
-    const page = parseInt(req.params.page) || 1;
-    const limit = 20;
-    const skip = (page - 1) * limit;
-
-    const users = await User.findAll({
-      where: {
-        gamesPlayed: { [require('sequelize').Op.gte]: 5 }
-      },
-      attributes: ['id', 'username', 'gamesPlayed', 'wins', 'losses', 'ranking'],
-      order: [['ranking', 'DESC']],
-      offset: skip,
-      limit: limit
-    });
-
-    const totalUsers = await User.count({
-      where: {
-        gamesPlayed: { [require('sequelize').Op.gte]: 5 }
-      }
-    });
-
-    res.json({
-      users,
-      pagination: {
-        current: page,
-        total: Math.ceil(totalUsers / limit),
-        hasNext: page < Math.ceil(totalUsers / limit),
-        hasPrev: page > 1
-      }
-    });
-  } catch (error) {
-    console.error('Get leaderboard error:', error);
-    res.status(500).json({ message: 'Server error fetching leaderboard' });
-  }
-});
 
 // Get user profile by username
 router.get('/:username', async (req, res) => {
@@ -67,7 +30,7 @@ router.get('/:username', async (req, res) => {
     const { username } = req.params;
     const user = await User.findOne({ 
       where: { username },
-      attributes: ['id', 'username', 'gamesPlayed', 'wins', 'losses', 'ranking', 'createdAt']
+      attributes: ['id', 'username', 'createdAt']
     });
 
     if (!user) {
@@ -96,7 +59,7 @@ router.get('/search/:query', auth, async (req, res) => {
         id: { [require('sequelize').Op.ne]: req.user.id },
         isOnline: true
       },
-      attributes: ['id', 'username', 'gamesPlayed', 'wins', 'losses', 'ranking', 'isOnline'],
+      attributes: ['id', 'username', 'isOnline'],
       limit: 10,
       order: ['username']
     });

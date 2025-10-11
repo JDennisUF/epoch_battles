@@ -22,7 +22,8 @@ const ModalContent = styled.div`
   max-width: 900px;
   max-height: 90vh;
   width: 100%;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
   border: 2px solid rgba(255, 255, 255, 0.1);
 `;
@@ -57,7 +58,8 @@ const CloseButton = styled.button`
 const ModalBody = styled.div`
   padding: 30px;
   overflow-y: auto;
-  max-height: calc(90vh - 120px);
+  flex: 1;
+  min-height: 0;
 `;
 
 const GameSummary = styled.div`
@@ -174,7 +176,7 @@ const BoardGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   gap: 2px;
-  max-width: 500px;
+  max-width: 400px;
   margin: 0 auto;
   background: rgba(0, 0, 0, 0.3);
   padding: 10px;
@@ -363,31 +365,6 @@ function GameDetailsModal({ gameId, onClose, currentUserId }) {
         </ModalHeader>
         
         <ModalBody>
-          <GameResult result={result}>
-            {result === 'won' && '🏆 Victory!'}
-            {result === 'lost' && '💀 Defeat'}
-            {result === 'draw' && '🤝 Draw'}
-          </GameResult>
-
-          <GameSummary>
-            <SummaryItem>
-              <SummaryLabel>Duration</SummaryLabel>
-              <SummaryValue>{getGameDuration()}</SummaryValue>
-            </SummaryItem>
-            <SummaryItem>
-              <SummaryLabel>Turns</SummaryLabel>
-              <SummaryValue>{gameDetails.gameState.turnNumber}</SummaryValue>
-            </SummaryItem>
-            <SummaryItem>
-              <SummaryLabel>Moves</SummaryLabel>
-              <SummaryValue>{gameDetails.moveHistory.length}</SummaryValue>
-            </SummaryItem>
-            <SummaryItem>
-              <SummaryLabel>Finished</SummaryLabel>
-              <SummaryValue>{formatDate(gameDetails.finishedAt)}</SummaryValue>
-            </SummaryItem>
-          </GameSummary>
-
           <TabContainer>
             <Tab active={activeTab === 'summary'} onClick={() => setActiveTab('summary')}>
               Summary
@@ -399,6 +376,35 @@ function GameDetailsModal({ gameId, onClose, currentUserId }) {
               Final Board
             </Tab>
           </TabContainer>
+
+          {activeTab === 'summary' && (
+            <>
+              <GameResult result={result}>
+                {result === 'won' && '🏆 Victory!'}
+                {result === 'lost' && '💀 Defeat'}
+                {result === 'draw' && '🤝 Draw'}
+              </GameResult>
+
+              <GameSummary>
+                <SummaryItem>
+                  <SummaryLabel>Duration</SummaryLabel>
+                  <SummaryValue>{getGameDuration()}</SummaryValue>
+                </SummaryItem>
+                <SummaryItem>
+                  <SummaryLabel>Turns</SummaryLabel>
+                  <SummaryValue>{gameDetails.gameState.turnNumber}</SummaryValue>
+                </SummaryItem>
+                <SummaryItem>
+                  <SummaryLabel>Moves</SummaryLabel>
+                  <SummaryValue>{gameDetails.moveHistory.length}</SummaryValue>
+                </SummaryItem>
+                <SummaryItem>
+                  <SummaryLabel>Finished</SummaryLabel>
+                  <SummaryValue>{formatDate(gameDetails.finishedAt)}</SummaryValue>
+                </SummaryItem>
+              </GameSummary>
+            </>
+          )}
 
           {activeTab === 'moves' && (
             <MoveHistory>

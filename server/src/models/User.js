@@ -32,22 +32,6 @@ const User = sequelize.define('User', {
       len: [6, 255]
     }
   },
-  gamesPlayed: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0
-  },
-  wins: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0
-  },
-  losses: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0
-  },
-  ranking: {
-    type: DataTypes.INTEGER,
-    defaultValue: 1000
-  },
   isOnline: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
@@ -74,9 +58,6 @@ const User = sequelize.define('User', {
     {
       fields: ['email']
     },
-    {
-      fields: ['ranking']
-    }
   ]
 });
 
@@ -104,13 +85,6 @@ User.prototype.getPublicProfile = function() {
   return {
     id: this.id,
     username: this.username,
-    stats: {
-      gamesPlayed: this.gamesPlayed,
-      wins: this.wins,
-      losses: this.losses,
-      ranking: this.ranking,
-      winRate: this.gamesPlayed > 0 ? ((this.wins / this.gamesPlayed) * 100).toFixed(1) : 0
-    },
     isOnline: this.isOnline,
     createdAt: this.createdAt
   };

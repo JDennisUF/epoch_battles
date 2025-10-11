@@ -130,10 +130,6 @@ const UserName = styled.div`
   margin-bottom: 4px;
 `;
 
-const UserStats = styled.div`
-  font-size: 0.8rem;
-  opacity: 0.7;
-`;
 
 const InviteButton = styled.button`
   background: rgba(102, 126, 234, 0.3);
@@ -592,9 +588,6 @@ function Lobby() {
                   <UserItem key={user.id}>
                     <UserInfo>
                       <UserName>{user.username}</UserName>
-                      <UserStats>
-                        {user.wins || 0}W - {user.losses || 0}L
-                      </UserStats>
                     </UserInfo>
                     <InviteButton 
                       onClick={() => handleInvitePlayer(user.id)}

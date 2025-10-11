@@ -97,8 +97,8 @@ const GameStatus = styled.span`
 
 const GameInfo = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
   margin-bottom: 15px;
 `;
 
@@ -358,7 +358,6 @@ function GameHistory() {
                     <GameCard key={game.id} onClick={() => handleGameClick(game)}>
                       <GameHeader>
                         <GameTitle>vs {getOpponentName(game, user.id)}</GameTitle>
-                        <GameStatus status={game.status}>Completed</GameStatus>
                       </GameHeader>
                       
                       <GameInfo>
@@ -369,10 +368,6 @@ function GameHistory() {
                         <InfoItem>
                           <InfoLabel>Finished</InfoLabel>
                           <InfoValue>{formatDate(game.finishedAt)}</InfoValue>
-                        </InfoItem>
-                        <InfoItem>
-                          <InfoLabel>Duration</InfoLabel>
-                          <InfoValue>{game.gameState.turnNumber} turns</InfoValue>
                         </InfoItem>
                         <InfoItem>
                           <InfoLabel>Moves</InfoLabel>

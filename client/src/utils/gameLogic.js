@@ -478,3 +478,80 @@ export const generateArmy = (side, armyData = null, mapData = null) => {
   console.log(`⚔️ Generated army for ${side}:`, army.length, 'pieces');
   return army;
 };
+
+// Generate army with automatic ordered placement
+export const generateArmyWithPlacement = (side, armyData = null, mapData = null) => {
+  const army = generateArmy(side, armyData, mapData);
+  
+  // Get setup rows for this side
+  const currentMapData = mapData || GAME_CONFIG;
+  const setupRows = currentMapData.setupRows[side];
+  if (!setupRows || setupRows.length === 0) {
+    console.warn(`No setup rows found for side ${side}`);
+    return army;
+  }
+  
+  // Sort setup rows - for 'home' (bottom rows), go from bottom to top
+  // for 'away' (top rows), go from top to bottom
+  const sortedSetupRows = [...setupRows].sort((a, b) => {
+    return side === 'home' ? b - a : a - b; // home: descending, away: ascending
+  });
+  
+  // Get all valid placement positions, avoiding impassable terrain
+  const validPositions = [];
+  for (const row of sortedSetupRows) {
+    for (let col = 0; col < currentMapData.boardSize.width; col++) {
+      const terrainType = getTerrainType(col, row, currentMapData);
+      if (isTerrainPassable(terrainType)) {
+        validPositions.push({ x: col, y: row });
+      }
+    }
+  }
+  
+  if (validPositions.length < army.length) {
+    console.warn(`Not enough valid positions (${validPositions.length}) for army size (${army.length})`);
+  }
+  
+  // Sort army pieces for ordered placement
+  // 1. Flag first
+  // 2. Then by rank (1 is strongest, 10 is weakest)
+  // 3. Then bombs last
+  const sortedArmy = [...army].sort((a, b) => {
+    // Flag comes first
+    if (a.type === 'flag') return -1;
+    if (b.type === 'flag') return 1;
+    
+    // Bombs come last
+    if (a.type === 'bomb') return 1;
+    if (b.type === 'bomb') return -1;
+    
+    // Sort by rank (1 = strongest, 10 = weakest)
+    if (a.rank !== b.rank) {
+      // Handle null ranks (shouldn't happen with above logic)
+      if (a.rank === null) return 1;
+      if (b.rank === null) return -1;
+      return a.rank - b.rank;
+    }
+    
+    // Same rank - maintain original order
+    return 0;
+  });
+  
+  // Place pieces in order
+  const placedArmy = sortedArmy.map((piece, index) => {
+    if (index < validPositions.length) {
+      return {
+        ...piece,
+        position: validPositions[index]
+      };
+    } else {
+      // If we run out of positions, leave unplaced
+      return { ...piece, position: null };
+    }
+  });
+  
+  console.log(`⚔️ Generated and placed army for ${side}:`, placedArmy.length, 'pieces');
+  console.log(`📍 Placement order: Flag → Rank 1-10 → Bombs`);
+  
+  return placedArmy;
+};

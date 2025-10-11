@@ -302,8 +302,7 @@ const gameEvents = (socket, io) => {
         });
 
         if (result.result.gameWon) {
-          // Game finished, update player stats
-          // TODO: Implement stats update
+          // Game finished
           io.to(`game_${gameId}`).emit('game_finished', {
             winner: result.result.winner,
             reason: result.result.winReason || 'flag_captured'
