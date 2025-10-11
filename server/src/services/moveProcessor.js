@@ -132,7 +132,12 @@ class MoveProcessor {
                 combatResult.result === 'defender_wins' ? 'defender' : 'none',
         description: combatResult.description,
         cursed: combatResult.cursed || false,
-        veteran: combatResult.veteran || false
+        veteran: combatResult.veteran || false,
+        // Add bomb sound flag when bomb destroys attacker
+        playBombSound: (targetPiece.class === 'bomb' && 
+                       (combatResult.result === 'both_destroyed_bomb' || 
+                        combatResult.result === 'both_destroyed' || 
+                        combatResult.result === 'defender_wins'))
       };
 
       // Reveal both pieces
@@ -262,8 +267,15 @@ class MoveProcessor {
       }
     }
 
-    // Add move to history
-    game.gameState.moveHistory.push(moveResult);
+    // Add move to history with full board state for replay
+    const historyEntry = {
+      ...moveResult,
+      boardState: JSON.parse(JSON.stringify(board)), // Deep clone of board state
+      turnNumber: game.gameState.turnNumber,
+      currentPlayer: game.gameState.currentPlayer
+    };
+    
+    game.gameState.moveHistory.push(historyEntry);
     game.gameState.lastMove = moveResult;
 
     // Switch turns (if game not finished)

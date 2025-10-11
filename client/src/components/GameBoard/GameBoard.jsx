@@ -1527,7 +1527,12 @@ function GameBoard({ gameId, gameState: initialGameState, players, onBackToLobby
             <div style={{ flex: '0 0 auto' }}>
               {onBackToLobby && (
                 <BackButton onClick={onBackToLobby}>
-                  ← Back to Lobby
+                  {gamePhase === 'playing' ? 
+                    '⚠️ Forfeit Game' : 
+                    gamePhase === 'finished' ? 
+                    '← Return to Lobby' : 
+                    '← Back to Lobby'
+                  }
                 </BackButton>
               )}
             </div>

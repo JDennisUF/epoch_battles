@@ -1,6 +1,87 @@
 const { socketAuth } = require('../middleware/auth');
 const gameEvents = require('./gameEvents');
 const User = require('../models/User');
+const Game = require('../models/Game');
+
+// Handle player disconnection from game
+const handleGameDisconnection = async (gameId, userId, io) => {
+  try {
+    const game = await Game.findByPk(gameId);
+    if (!game || game.status === 'finished') return;
+
+    const player = game.players.find(p => p.userId === userId);
+    if (!player) return;
+
+    // Only preserve active games, not setup games
+    if (game.gameState.phase === 'playing') {
+      console.log(`🔄 Preserving game ${gameId} for player ${userId} disconnection`);
+      
+      // Mark player as disconnected but keep game alive
+      const updatedPlayers = game.players.map(p => {
+        if (p.userId === userId) {
+          return { ...p, isConnected: false, disconnectedAt: new Date() };
+        }
+        return p;
+      });
+
+      await game.update({ 
+        players: updatedPlayers,
+        status: 'paused' // Add paused status for preserved games
+      });
+
+      // Notify remaining player about disconnection
+      io.to(`game_${gameId}`).emit('player_disconnected', {
+        userId: userId,
+        username: player.username,
+        gamePreserved: true,
+        message: `${player.username} disconnected. Game paused for 5 minutes.`
+      });
+
+      // Set timeout to abandon game if player doesn't return
+      setTimeout(async () => {
+        try {
+          const gameCheck = await Game.findByPk(gameId);
+          if (gameCheck && gameCheck.status === 'paused') {
+            const disconnectedPlayer = gameCheck.players.find(p => p.userId === userId);
+            if (disconnectedPlayer && !disconnectedPlayer.isConnected) {
+              console.log(`⏰ Game ${gameId} timeout reached, abandoning game`);
+              
+              // Mark game as abandoned and clear currentGameId for both players
+              await gameCheck.update({ status: 'abandoned' });
+              await User.update({ currentGameId: null }, { 
+                where: { id: { [require('sequelize').Op.in]: gameCheck.players.map(p => p.userId) } }
+              });
+
+              // Notify remaining player
+              io.to(`game_${gameId}`).emit('game_abandoned', {
+                reason: 'Player did not reconnect within 5 minutes',
+                winner: gameCheck.players.find(p => p.userId !== userId)?.userId
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Error in game abandonment timeout:', error);
+        }
+      }, 5 * 60 * 1000); // 5 minutes
+
+    } else {
+      // For setup games, end immediately
+      console.log(`🚫 Ending setup game ${gameId} due to player disconnection`);
+      await game.update({ status: 'abandoned' });
+      await User.update({ currentGameId: null }, { 
+        where: { id: { [require('sequelize').Op.in]: game.players.map(p => p.userId) } }
+      });
+
+      io.to(`game_${gameId}`).emit('game_abandoned', {
+        reason: 'Player disconnected during setup',
+        winner: null
+      });
+    }
+
+  } catch (error) {
+    console.error('Error handling game disconnection:', error);
+  }
+};
 
 const socketHandler = (io) => {
   // Authentication middleware for sockets
@@ -79,10 +160,7 @@ const socketHandler = (io) => {
 
         // Handle game disconnection if user was in a game
         if (socket.user.currentGameId) {
-          socket.to(`game_${socket.user.currentGameId}`).emit('player_disconnected', {
-            userId: socket.user.id,
-            username: socket.user.username
-          });
+          await handleGameDisconnection(socket.user.currentGameId, socket.user.id, io);
         }
       } catch (error) {
         console.error('Error handling disconnect:', error);

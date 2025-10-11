@@ -26,7 +26,7 @@ const Game = sequelize.define('Game', {
     }
   },
   status: {
-    type: DataTypes.ENUM('waiting', 'setup', 'active', 'finished', 'abandoned'),
+    type: DataTypes.ENUM('waiting', 'setup', 'active', 'finished', 'abandoned', 'paused'),
     defaultValue: 'waiting'
   },
   timeControl: {

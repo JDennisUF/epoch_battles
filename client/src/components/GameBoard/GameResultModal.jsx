@@ -58,7 +58,9 @@ const WinnerSection = styled.div`
   margin: 30px 0;
 `;
 
-const ArmyImage = styled.img`
+const ArmyImage = styled.img.withConfig({
+  shouldForwardProp: (prop) => prop !== 'isWinner'
+})`
   width: 128px;
   height: 128px;
   object-fit: contain;

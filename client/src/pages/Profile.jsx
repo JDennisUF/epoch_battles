@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { useAuth } from '../hooks/useAuth';
+import GameHistory from '../components/GameHistory/GameHistory';
 
 const ProfileContainer = styled.div`
   max-width: 800px;
@@ -145,10 +146,8 @@ function Profile() {
         </Section>
 
         <Section>
-          <SectionTitle>Recent Games</SectionTitle>
-          <EmptyState>
-            Game history will be available once you start playing!
-          </EmptyState>
+          <SectionTitle>Game History</SectionTitle>
+          <GameHistory />
         </Section>
 
         <Section>

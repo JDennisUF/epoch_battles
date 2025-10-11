@@ -188,17 +188,17 @@ function CombatModal({ combatData, onClose }) {
         defenderClass: defender.unit.class
       });
       
-      // Special case for bomb explosions
-      if (defender.unit.class === 'bomb' || attacker.unit.class === 'bomb') {
-        console.log('🔊 Playing bomb explosion sound');
-        await playBombExplosionSound();
-        return;
-      }
-      
       // Special case for flag capture
       if (defender.unit.class === 'flag') {
         console.log('🔊 Playing flag capture sound');
         await playFlagCaptureSound();
+        return;
+      }
+      
+      // Check if this is bomb combat - play bomb sound for both players
+      if (combatData.playBombSound) {
+        console.log('🔊 Playing bomb explosion sound');
+        await playBombExplosionSound();
         return;
       }
       

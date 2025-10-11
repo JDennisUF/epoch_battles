@@ -70,7 +70,8 @@
       "special": "Non-Roman allied troops",
       "symbol": "🏹",
       "description": "Light infantry",
-      "class": "lieutenant"
+      "class": "lieutenant",
+      "abilities": ["sniper"]
     },
     "praetorian": {
       "id": "praetorian",

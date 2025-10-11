@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import axios from 'axios';
 import { useSocket } from '../hooks/useSocket';
@@ -179,15 +179,76 @@ const Notification = styled.div`
   backdrop-filter: blur(10px);
 `;
 
+const RejoinCard = styled.div`
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  border: 2px solid #d97706;
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  color: white;
+  box-shadow: 0 8px 25px rgba(251, 191, 36, 0.3);
+  animation: pulse 2s infinite;
+
+  @keyframes pulse {
+    0%, 100% { 
+      box-shadow: 0 8px 25px rgba(251, 191, 36, 0.3);
+    }
+    50% { 
+      box-shadow: 0 8px 35px rgba(251, 191, 36, 0.5);
+    }
+  }
+`;
+
+const RejoinTitle = styled.h3`
+  margin: 0 0 10px 0;
+  font-size: 1.3rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+`;
+
+const RejoinMessage = styled.p`
+  margin: 0 0 15px 0;
+  font-size: 1rem;
+  opacity: 0.9;
+`;
+
+const RejoinTimer = styled.div`
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 15px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+`;
+
+const RejoinButton = styled.button`
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border: none;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+  &:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+`;
+
 
 function Lobby() {
   const { user } = useAuth();
   const { socket, connected, joinLobby, invitePlayer } = useSocket();
   const navigate = useNavigate();
+  const location = useLocation();
   const [notifications, setNotifications] = useState([]);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [selectedMap, setSelectedMap] = useState(null);
   const [isLoadingInitialMap, setIsLoadingInitialMap] = useState(true);
+  const [rejoinableGame, setRejoinableGame] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(0);
 
   // Function to save map selection to server
   const saveMapSelection = async (mapData) => {
@@ -242,6 +303,78 @@ function Lobby() {
       });
     }
   }, [user]);
+
+  // Function to check for rejoinable games
+  const checkRejoinableGame = async () => {
+    try {
+      const response = await axios.get('/games/rejoinable');
+      if (response.data.hasRejoinableGame) {
+        setRejoinableGame(response.data);
+        setTimeLeft(response.data.timeLeftMs);
+      } else {
+        setRejoinableGame(null);
+        setTimeLeft(0);
+      }
+    } catch (error) {
+      console.error('Failed to check rejoinable games:', error);
+      // Clear rejoinable game on error to prevent infinite retries
+      setRejoinableGame(null);
+      setTimeLeft(0);
+      
+      // If it's a 404, the endpoint doesn't exist, so stop retrying
+      if (error.response?.status === 404) {
+        console.warn('Rejoinable games endpoint not found, disabling checks');
+        return false; // Signal to stop retrying
+      }
+    }
+    return true; // Signal that retries are okay
+  };
+
+  // Check for rejoinable games
+  useEffect(() => {
+    let interval;
+    
+    if (user) {
+      const startChecking = async () => {
+        const shouldContinue = await checkRejoinableGame();
+        if (shouldContinue) {
+          // Check every 10 seconds only if initial check succeeded
+          interval = setInterval(async () => {
+            const continueChecking = await checkRejoinableGame();
+            if (!continueChecking && interval) {
+              clearInterval(interval);
+            }
+          }, 10000);
+        }
+      };
+      
+      startChecking();
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [user]);
+
+  // Refresh rejoinable games when returning to lobby (e.g., from profile)
+  useEffect(() => {
+    if (user && location.pathname === '/lobby') {
+      checkRejoinableGame();
+    }
+  }, [location.pathname, user]);
+
+  // Countdown timer for rejoinable game
+  useEffect(() => {
+    if (timeLeft > 0) {
+      const timer = setTimeout(() => {
+        setTimeLeft(timeLeft - 1000);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (rejoinableGame && timeLeft <= 0) {
+      // Time expired, clear rejoinable game
+      setRejoinableGame(null);
+    }
+  }, [timeLeft, rejoinableGame]);
 
   // Fetch online users from API
   useEffect(() => {
@@ -367,11 +500,51 @@ function Lobby() {
     addNotification('Tournaments not yet implemented', 'info');
   };
 
+  const handleRejoinGame = async () => {
+    try {
+      const response = await axios.post('/games/rejoin');
+      if (response.data.game) {
+        addNotification('Rejoining game...', 'success');
+        setRejoinableGame(null);
+        setTimeLeft(0);
+        // Navigate to game with the resumed game data
+        setTimeout(() => {
+          navigate('/game', { state: { gameData: response.data.game } });
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('Failed to rejoin game:', error);
+      addNotification('Failed to rejoin game', 'error');
+      setRejoinableGame(null);
+    }
+  };
+
+  const formatTimeLeft = (ms) => {
+    const minutes = Math.floor(ms / 60000);
+    const seconds = Math.floor((ms % 60000) / 1000);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   return (
     <>
       <LobbyContainer>
         <MainContent>
           <Title>Game Lobby</Title>
+          
+          {rejoinableGame && (
+            <RejoinCard>
+              <RejoinTitle>⚠️ Game Awaiting Your Return</RejoinTitle>
+              <RejoinMessage>
+                You have an active game against {rejoinableGame.opponent} that was paused due to disconnection.
+              </RejoinMessage>
+              <RejoinTimer>
+                Time remaining: {formatTimeLeft(timeLeft)}
+              </RejoinTimer>
+              <RejoinButton onClick={handleRejoinGame}>
+                🎮 Rejoin Game
+              </RejoinButton>
+            </RejoinCard>
+          )}
           
           <WelcomeMessage>
             Welcome back, {user?.username}! Ready for battle?

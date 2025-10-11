@@ -207,7 +207,8 @@
       "lich": "ghost-moan.mp3",
       "skeleton_warrior": "sword_clash.mp3",
       "zombie": "claws_slash.mp3",
-      "archer_captain": "smack.mp3"
+      "archer_captain": "smack.mp3",
+      "tank_commander": "big_tank_shot.mp3"
     }
   },
   "armyThemes": {

@@ -33,7 +33,10 @@
       "count": 2,
       "moveable": true,
       "canAttack": true,
-      "description": "A seasoned battlefield officer in charge of regiments."
+      "description": "A seasoned battlefield officer in charge of regiments.",
+      "abilities": [
+        "fear"
+      ]
     },
     "major": {
       "id": "major",
